@@ -19,6 +19,10 @@ from position_features import (
     get_position_features
 )
 
+from episodes import (
+    group_critical_positions
+)
+
 
 PGN_PATH = "data/games/test_game.pgn"
 STOCKFISH_PATH = "/opt/homebrew/bin/stockfish"
@@ -264,6 +268,10 @@ if __name__ == "__main__":
 
     game, analyses = analyze_game()
 
+    # -------------------------
+    # Move-by-move analysis
+    # -------------------------
+
     for analysis in analyses:
 
         print(
@@ -275,9 +283,9 @@ if __name__ == "__main__":
             f"Clock: {analysis.clock_seconds}"
         )
 
-if __name__ == "__main__":
-
-    game, analyses = analyze_game()
+    # -------------------------
+    # Critical positions
+    # -------------------------
 
     print("\n" + "=" * 80)
     print("CRITICAL POSITIONS")
@@ -328,3 +336,31 @@ if __name__ == "__main__":
             f"PV: "
             f"{' '.join(analysis.principal_variation)}"
         )
+
+    # -------------------------
+    # Critical episodes
+    # -------------------------
+
+    episodes = group_critical_positions(
+        analyses
+    )
+
+    print("\n" + "=" * 80)
+    print("CRITICAL EPISODES")
+    print("=" * 80)
+
+    for i, episode in enumerate(
+        episodes,
+        start=1
+    ):
+
+        print(f"\nEpisode {i}")
+
+        for analysis in episode:
+
+            print(
+                f"Move {analysis.move_number}"
+                f"{'.' if analysis.color == 'White' else '...'} "
+                f"{analysis.played_move} "
+                f"({analysis.centipawn_loss} CPL)"
+            )
