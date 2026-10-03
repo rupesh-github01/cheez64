@@ -10,11 +10,23 @@ from critical import (
     find_critical_positions
 )
 
+from models import (
+    MoveAnalysis,
+    CandidateMove
+)
+
+from position_features import (
+    get_position_features
+)
+
 
 PGN_PATH = "data/games/test_game.pgn"
 STOCKFISH_PATH = "/opt/homebrew/bin/stockfish"
 
 DEPTH = 16
+MULTI_PV = 3
+
+
 
 
 def evaluate_position(engine, board):
@@ -77,15 +89,19 @@ def analyze_game():
 
         # Position before move
         fen_before = board.fen()
+        pos_features = get_position_features(board)
 
         # Actual move in SAN
         played_move = board.san(move)
 
         # Engine analysis before move
-        info_before = evaluate_position(
-            engine,
-            board
+        infos_before = engine.analyse(
+            board,
+            chess.engine.Limit(depth=DEPTH),
+            multipv=MULTI_PV
         )
+
+        info_before = infos_before[0]
 
         best_move = info_before["pv"][0]
 
@@ -183,7 +199,9 @@ def analyze_game():
 
             principal_variation=pv,
 
-            clock_seconds=clock_seconds
+            clock_seconds=clock_seconds,
+
+            position_features=pos_features
         )
 
         analyses.append(analysis)
@@ -194,6 +212,53 @@ def analyze_game():
 
     return game, analyses
 
+def get_candidate_moves(engine, board):
+
+    infos = engine.analyse(
+        board,
+        chess.engine.Limit(depth=DEPTH),
+        multipv=MULTI_PV
+    )
+
+    candidates = []
+
+    for info in infos:
+
+        move = info["pv"][0]
+
+        move_san = board.san(move)
+
+        evaluation = score_to_cp(
+            info["score"],
+            board.turn
+        )
+
+        pv_board = board.copy()
+
+        pv = []
+
+        for pv_move in info["pv"][:8]:
+
+            try:
+
+                pv.append(
+                    pv_board.san(pv_move)
+                )
+
+                pv_board.push(pv_move)
+
+            except ValueError:
+                break
+
+        candidates.append(
+            CandidateMove(
+                move=move_san,
+                evaluation=evaluation,
+                principal_variation=pv
+            )
+        )
+
+    return candidates
 
 if __name__ == "__main__":
 
