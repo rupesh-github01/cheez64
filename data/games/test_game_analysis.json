@@ -1,0 +1,4429 @@
+{
+  "schema_version": "1.0.0",
+  "metadata": {
+    "event": "Live Chess",
+    "site": "Chess.com",
+    "date": "2026.10.02",
+    "round": "?",
+    "white": "7alexbol7",
+    "black": "DrCheezFighter",
+    "result": "1-0",
+    "timecontrol": "300",
+    "whiteelo": "1453",
+    "blackelo": "1455",
+    "termination": "7alexbol7 won by resignation",
+    "eco": "A00",
+    "endtime": "22:58:45 GMT+0000",
+    "link": "https://www.chess.com/game/live/184728553470?move=0"
+  },
+  "summary": {
+    "total_plies": 39,
+    "total_full_moves": 20,
+    "critical_positions_count": 13,
+    "critical_episodes_count": 6
+  },
+  "moves": [
+    {
+      "ply": 1,
+      "move_number": 1,
+      "color": "White",
+      "played_move": "g4",
+      "played_move_uci": "g2g4",
+      "best_move": "d4",
+      "best_move_uci": "d2d4",
+      "is_forced": false,
+      "evaluation_before": 32,
+      "evaluation_after": -129,
+      "raw_centipawn_loss": 161,
+      "centipawn_loss": 161,
+      "classification": "serious_mistake",
+      "is_critical": true,
+      "episode_index": 1,
+      "fen_before": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "fen_after": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq - 0 1",
+      "clock_seconds": 299.1,
+      "principal_variation": [
+        "d4",
+        "d5",
+        "c4",
+        "e6",
+        "Nf3",
+        "Nf6",
+        "g3",
+        "dxc4"
+      ],
+      "candidates": [
+        {
+          "move": "d4",
+          "evaluation": 32,
+          "principal_variation": [
+            "d4",
+            "d5",
+            "c4",
+            "e6",
+            "Nf3",
+            "Nf6",
+            "g3",
+            "dxc4"
+          ]
+        },
+        {
+          "move": "e4",
+          "evaluation": 27,
+          "principal_variation": [
+            "e4",
+            "c5",
+            "Nc3",
+            "d6",
+            "Nf3",
+            "Nf6",
+            "Bc4",
+            "e6"
+          ]
+        },
+        {
+          "move": "Nf3",
+          "evaluation": 26,
+          "principal_variation": [
+            "Nf3",
+            "c5",
+            "e4",
+            "d6",
+            "Nc3",
+            "Nf6",
+            "Bc4",
+            "e6"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "side_to_move": "White",
+        "material": {
+          "white": 39,
+          "black": 39,
+          "difference": 0
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 20
+      }
+    },
+    {
+      "ply": 2,
+      "move_number": 1,
+      "color": "Black",
+      "played_move": "d5",
+      "played_move_uci": "d7d5",
+      "best_move": "d5",
+      "best_move_uci": "d7d5",
+      "is_forced": false,
+      "evaluation_before": 129,
+      "evaluation_after": 113,
+      "raw_centipawn_loss": 16,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq - 0 1",
+      "fen_after": "rnbqkbnr/ppp1pppp/8/3p4/6P1/8/PPPPPP1P/RNBQKBNR w KQkq - 0 2",
+      "clock_seconds": 299.2,
+      "principal_variation": [
+        "d5",
+        "g5",
+        "e5",
+        "d4",
+        "exd4",
+        "Nf3",
+        "c5",
+        "c3"
+      ],
+      "candidates": [
+        {
+          "move": "d5",
+          "evaluation": 129,
+          "principal_variation": [
+            "d5",
+            "g5",
+            "e5",
+            "d4",
+            "exd4",
+            "Nf3",
+            "c5",
+            "c3"
+          ]
+        },
+        {
+          "move": "e5",
+          "evaluation": 87,
+          "principal_variation": [
+            "e5",
+            "Bg2",
+            "h5",
+            "gxh5",
+            "d5",
+            "d4",
+            "exd4",
+            "c3"
+          ]
+        },
+        {
+          "move": "Nc6",
+          "evaluation": 80,
+          "principal_variation": [
+            "Nc6",
+            "d4",
+            "d5",
+            "h3",
+            "h5",
+            "g5",
+            "e5",
+            "dxe5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq - 0 1",
+        "side_to_move": "Black",
+        "material": {
+          "white": 39,
+          "black": 39,
+          "difference": 0
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 20
+      }
+    },
+    {
+      "ply": 3,
+      "move_number": 2,
+      "color": "White",
+      "played_move": "Bg2",
+      "played_move_uci": "f1g2",
+      "best_move": "c4",
+      "best_move_uci": "c2c4",
+      "is_forced": false,
+      "evaluation_before": -113,
+      "evaluation_after": -122,
+      "raw_centipawn_loss": 9,
+      "centipawn_loss": 9,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rnbqkbnr/ppp1pppp/8/3p4/6P1/8/PPPPPP1P/RNBQKBNR w KQkq - 0 2",
+      "fen_after": "rnbqkbnr/ppp1pppp/8/3p4/6P1/8/PPPPPPBP/RNBQK1NR b KQkq - 1 2",
+      "clock_seconds": 298.9,
+      "principal_variation": [
+        "c4",
+        "d4",
+        "Bg2",
+        "e5",
+        "d3",
+        "Nc6",
+        "h3",
+        "Nge7"
+      ],
+      "candidates": [
+        {
+          "move": "c4",
+          "evaluation": -113,
+          "principal_variation": [
+            "c4",
+            "d4",
+            "Bg2",
+            "e5",
+            "d3",
+            "Nc6",
+            "h3",
+            "Nge7"
+          ]
+        },
+        {
+          "move": "Bg2",
+          "evaluation": -116,
+          "principal_variation": [
+            "Bg2",
+            "Nc6",
+            "c4",
+            "d4",
+            "h3",
+            "e5",
+            "d3",
+            "Nge7"
+          ]
+        },
+        {
+          "move": "h3",
+          "evaluation": -131,
+          "principal_variation": [
+            "h3",
+            "e5",
+            "d4",
+            "exd4",
+            "Nf3",
+            "c5",
+            "c3",
+            "dxc3"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rnbqkbnr/ppp1pppp/8/3p4/6P1/8/PPPPPP1P/RNBQKBNR w KQkq - 0 2",
+        "side_to_move": "White",
+        "material": {
+          "white": 39,
+          "black": 39,
+          "difference": 0
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 21
+      }
+    },
+    {
+      "ply": 4,
+      "move_number": 2,
+      "color": "Black",
+      "played_move": "Bxg4",
+      "played_move_uci": "c8g4",
+      "best_move": "Bxg4",
+      "best_move_uci": "c8g4",
+      "is_forced": false,
+      "evaluation_before": 122,
+      "evaluation_after": 141,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rnbqkbnr/ppp1pppp/8/3p4/6P1/8/PPPPPPBP/RNBQK1NR b KQkq - 1 2",
+      "fen_after": "rn1qkbnr/ppp1pppp/8/3p4/6b1/8/PPPPPPBP/RNBQK1NR w KQkq - 0 3",
+      "clock_seconds": 297.5,
+      "principal_variation": [
+        "Bxg4",
+        "c4",
+        "c6",
+        "Qb3",
+        "e6",
+        "Qxb7",
+        "Nd7",
+        "h3"
+      ],
+      "candidates": [
+        {
+          "move": "Bxg4",
+          "evaluation": 122,
+          "principal_variation": [
+            "Bxg4",
+            "c4",
+            "c6",
+            "Qb3",
+            "e6",
+            "Qxb7",
+            "Nd7",
+            "h3"
+          ]
+        },
+        {
+          "move": "Nc6",
+          "evaluation": 113,
+          "principal_variation": [
+            "Nc6",
+            "c4",
+            "d4",
+            "h3",
+            "e5",
+            "d3",
+            "h5",
+            "g5"
+          ]
+        },
+        {
+          "move": "c6",
+          "evaluation": 88,
+          "principal_variation": [
+            "c6",
+            "h3",
+            "e5",
+            "e4",
+            "h5",
+            "gxh5",
+            "Nf6",
+            "exd5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rnbqkbnr/ppp1pppp/8/3p4/6P1/8/PPPPPPBP/RNBQK1NR b KQkq - 1 2",
+        "side_to_move": "Black",
+        "material": {
+          "white": 39,
+          "black": 39,
+          "difference": 0
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Bxg4"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 27
+      }
+    },
+    {
+      "ply": 5,
+      "move_number": 3,
+      "color": "White",
+      "played_move": "c4",
+      "played_move_uci": "c2c4",
+      "best_move": "c4",
+      "best_move_uci": "c2c4",
+      "is_forced": false,
+      "evaluation_before": -141,
+      "evaluation_after": -152,
+      "raw_centipawn_loss": 11,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rn1qkbnr/ppp1pppp/8/3p4/6b1/8/PPPPPPBP/RNBQK1NR w KQkq - 0 3",
+      "fen_after": "rn1qkbnr/ppp1pppp/8/3p4/2P3b1/8/PP1PPPBP/RNBQK1NR b KQkq - 0 3",
+      "clock_seconds": 297.7,
+      "principal_variation": [
+        "c4",
+        "c6",
+        "Qb3",
+        "e6",
+        "Qxb7",
+        "Nd7",
+        "Nc3",
+        "Ne7"
+      ],
+      "candidates": [
+        {
+          "move": "c4",
+          "evaluation": -141,
+          "principal_variation": [
+            "c4",
+            "c6",
+            "Qb3",
+            "e6",
+            "Qxb7",
+            "Nd7",
+            "Nc3",
+            "Ne7"
+          ]
+        },
+        {
+          "move": "h3",
+          "evaluation": -182,
+          "principal_variation": [
+            "h3",
+            "Bf5",
+            "c4",
+            "e6",
+            "cxd5",
+            "exd5",
+            "Nc3",
+            "Nf6"
+          ]
+        },
+        {
+          "move": "d4",
+          "evaluation": -182,
+          "principal_variation": [
+            "d4",
+            "e6",
+            "c4",
+            "Nc6",
+            "cxd5",
+            "exd5",
+            "Nc3",
+            "Bb4"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rn1qkbnr/ppp1pppp/8/3p4/6b1/8/PPPPPPBP/RNBQK1NR w KQkq - 0 3",
+        "side_to_move": "White",
+        "material": {
+          "white": 38,
+          "black": 39,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 7,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Bxd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 24
+      }
+    },
+    {
+      "ply": 6,
+      "move_number": 3,
+      "color": "Black",
+      "played_move": "c6",
+      "played_move_uci": "c7c6",
+      "best_move": "c6",
+      "best_move_uci": "c7c6",
+      "is_forced": false,
+      "evaluation_before": 152,
+      "evaluation_after": 148,
+      "raw_centipawn_loss": 4,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rn1qkbnr/ppp1pppp/8/3p4/2P3b1/8/PP1PPPBP/RNBQK1NR b KQkq - 0 3",
+      "fen_after": "rn1qkbnr/pp2pppp/2p5/3p4/2P3b1/8/PP1PPPBP/RNBQK1NR w KQkq - 0 4",
+      "clock_seconds": 291.9,
+      "principal_variation": [
+        "c6",
+        "cxd5",
+        "cxd5",
+        "Qb3",
+        "Nf6",
+        "Nc3",
+        "e6",
+        "Qxb7"
+      ],
+      "candidates": [
+        {
+          "move": "c6",
+          "evaluation": 152,
+          "principal_variation": [
+            "c6",
+            "cxd5",
+            "cxd5",
+            "Qb3",
+            "Nf6",
+            "Nc3",
+            "e6",
+            "Qxb7"
+          ]
+        },
+        {
+          "move": "Nf6",
+          "evaluation": 109,
+          "principal_variation": [
+            "Nf6",
+            "cxd5",
+            "c6",
+            "h3",
+            "Bh5",
+            "dxc6",
+            "Nxc6",
+            "Qa4"
+          ]
+        },
+        {
+          "move": "e6",
+          "evaluation": 86,
+          "principal_variation": [
+            "e6",
+            "Qa4+",
+            "b5",
+            "Qxb5+",
+            "c6",
+            "Qa4",
+            "Nf6",
+            "cxd5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rn1qkbnr/ppp1pppp/8/3p4/2P3b1/8/PP1PPPBP/RNBQK1NR b KQkq - 0 3",
+        "side_to_move": "Black",
+        "material": {
+          "white": 38,
+          "black": 39,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 7,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Bxe2",
+          "dxc4"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 33
+      }
+    },
+    {
+      "ply": 7,
+      "move_number": 4,
+      "color": "White",
+      "played_move": "Qb3",
+      "played_move_uci": "d1b3",
+      "best_move": "Qb3",
+      "best_move_uci": "d1b3",
+      "is_forced": false,
+      "evaluation_before": -148,
+      "evaluation_after": -149,
+      "raw_centipawn_loss": 1,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rn1qkbnr/pp2pppp/2p5/3p4/2P3b1/8/PP1PPPBP/RNBQK1NR w KQkq - 0 4",
+      "fen_after": "rn1qkbnr/pp2pppp/2p5/3p4/2P3b1/1Q6/PP1PPPBP/RNB1K1NR b KQkq - 1 4",
+      "clock_seconds": 295.5,
+      "principal_variation": [
+        "Qb3",
+        "e6",
+        "Qxb7",
+        "Nd7",
+        "Nc3",
+        "Ne7",
+        "cxd5",
+        "exd5"
+      ],
+      "candidates": [
+        {
+          "move": "Qb3",
+          "evaluation": -148,
+          "principal_variation": [
+            "Qb3",
+            "e6",
+            "Qxb7",
+            "Nd7",
+            "Nc3",
+            "Ne7",
+            "cxd5",
+            "exd5"
+          ]
+        },
+        {
+          "move": "cxd5",
+          "evaluation": -162,
+          "principal_variation": [
+            "cxd5",
+            "cxd5",
+            "Qb3",
+            "Nf6",
+            "Nc3",
+            "Nc6",
+            "Nxd5",
+            "Rc8"
+          ]
+        },
+        {
+          "move": "h3",
+          "evaluation": -179,
+          "principal_variation": [
+            "h3",
+            "Bh5",
+            "Qb3",
+            "e6",
+            "Qxb7",
+            "Nd7",
+            "d4",
+            "Ne7"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rn1qkbnr/pp2pppp/2p5/3p4/2P3b1/8/PP1PPPBP/RNBQK1NR w KQkq - 0 4",
+        "side_to_move": "White",
+        "material": {
+          "white": 38,
+          "black": 39,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 7,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Bxd5",
+          "cxd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 27
+      }
+    },
+    {
+      "ply": 8,
+      "move_number": 4,
+      "color": "Black",
+      "played_move": "Bc8",
+      "played_move_uci": "g4c8",
+      "best_move": "e6",
+      "best_move_uci": "e7e6",
+      "is_forced": false,
+      "evaluation_before": 149,
+      "evaluation_after": 38,
+      "raw_centipawn_loss": 111,
+      "centipawn_loss": 111,
+      "classification": "mistake",
+      "is_critical": true,
+      "episode_index": 2,
+      "fen_before": "rn1qkbnr/pp2pppp/2p5/3p4/2P3b1/1Q6/PP1PPPBP/RNB1K1NR b KQkq - 1 4",
+      "fen_after": "rnbqkbnr/pp2pppp/2p5/3p4/2P5/1Q6/PP1PPPBP/RNB1K1NR w KQkq - 2 5",
+      "clock_seconds": 289.2,
+      "principal_variation": [
+        "e6",
+        "Qxb7",
+        "Nd7",
+        "Nc3",
+        "Ne7",
+        "cxd5",
+        "exd5",
+        "d4"
+      ],
+      "candidates": [
+        {
+          "move": "e6",
+          "evaluation": 149,
+          "principal_variation": [
+            "e6",
+            "Qxb7",
+            "Nd7",
+            "Nc3",
+            "Ne7",
+            "cxd5",
+            "exd5",
+            "d4"
+          ]
+        },
+        {
+          "move": "Nf6",
+          "evaluation": 134,
+          "principal_variation": [
+            "Nf6",
+            "Nc3",
+            "e6",
+            "Qxb7",
+            "Nbd7",
+            "d4",
+            "Rb8",
+            "Qxc6"
+          ]
+        },
+        {
+          "move": "Qd7",
+          "evaluation": 71,
+          "principal_variation": [
+            "Qd7",
+            "cxd5",
+            "Nf6",
+            "h3",
+            "Bf5",
+            "Nc3",
+            "cxd5",
+            "Nxd5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rn1qkbnr/pp2pppp/2p5/3p4/2P3b1/1Q6/PP1PPPBP/RNB1K1NR b KQkq - 1 4",
+        "side_to_move": "Black",
+        "material": {
+          "white": 38,
+          "black": 39,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 7,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Bxe2",
+          "dxc4"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 34
+      }
+    },
+    {
+      "ply": 9,
+      "move_number": 5,
+      "color": "White",
+      "played_move": "cxd5",
+      "played_move_uci": "c4d5",
+      "best_move": "cxd5",
+      "best_move_uci": "c4d5",
+      "is_forced": false,
+      "evaluation_before": -38,
+      "evaluation_after": -31,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rnbqkbnr/pp2pppp/2p5/3p4/2P5/1Q6/PP1PPPBP/RNB1K1NR w KQkq - 2 5",
+      "fen_after": "rnbqkbnr/pp2pppp/2p5/3P4/8/1Q6/PP1PPPBP/RNB1K1NR b KQkq - 0 5",
+      "clock_seconds": 292.1,
+      "principal_variation": [
+        "cxd5",
+        "Nf6",
+        "Nc3",
+        "cxd5",
+        "Nxd5",
+        "Nc6",
+        "d4",
+        "Nxd5"
+      ],
+      "candidates": [
+        {
+          "move": "cxd5",
+          "evaluation": -38,
+          "principal_variation": [
+            "cxd5",
+            "Nf6",
+            "Nc3",
+            "cxd5",
+            "Nxd5",
+            "Nc6",
+            "d4",
+            "Nxd5"
+          ]
+        },
+        {
+          "move": "d4",
+          "evaluation": -119,
+          "principal_variation": [
+            "d4",
+            "e6",
+            "Nc3",
+            "a5",
+            "h4",
+            "Nf6",
+            "h5",
+            "Be7"
+          ]
+        },
+        {
+          "move": "Nf3",
+          "evaluation": -119,
+          "principal_variation": [
+            "Nf3",
+            "a5",
+            "Nc3",
+            "e6",
+            "d4",
+            "Nf6",
+            "O-O"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rnbqkbnr/pp2pppp/2p5/3p4/2P5/1Q6/PP1PPPBP/RNB1K1NR w KQkq - 2 5",
+        "side_to_move": "White",
+        "material": {
+          "white": 38,
+          "black": 39,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 7,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 8,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Qxb7",
+          "Bxd5",
+          "cxd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 37
+      }
+    },
+    {
+      "ply": 10,
+      "move_number": 5,
+      "color": "Black",
+      "played_move": "cxd5",
+      "played_move_uci": "c6d5",
+      "best_move": "Nf6",
+      "best_move_uci": "g8f6",
+      "is_forced": false,
+      "evaluation_before": 31,
+      "evaluation_after": -30,
+      "raw_centipawn_loss": 61,
+      "centipawn_loss": 61,
+      "classification": "inaccuracy",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rnbqkbnr/pp2pppp/2p5/3P4/8/1Q6/PP1PPPBP/RNB1K1NR b KQkq - 0 5",
+      "fen_after": "rnbqkbnr/pp2pppp/8/3p4/8/1Q6/PP1PPPBP/RNB1K1NR w KQkq - 0 6",
+      "clock_seconds": 288.2,
+      "principal_variation": [
+        "Nf6",
+        "Nc3",
+        "cxd5",
+        "Nxd5",
+        "Nc6",
+        "d4",
+        "Nxd5",
+        "Bxd5"
+      ],
+      "candidates": [
+        {
+          "move": "Nf6",
+          "evaluation": 31,
+          "principal_variation": [
+            "Nf6",
+            "Nc3",
+            "cxd5",
+            "Nxd5",
+            "Nc6",
+            "d4",
+            "Nxd5",
+            "Bxd5"
+          ]
+        },
+        {
+          "move": "a5",
+          "evaluation": -14,
+          "principal_variation": [
+            "a5",
+            "Nc3",
+            "Nf6",
+            "d4",
+            "Nxd5",
+            "Bxd5",
+            "cxd5",
+            "Qxd5"
+          ]
+        },
+        {
+          "move": "g6",
+          "evaluation": -16,
+          "principal_variation": [
+            "g6",
+            "d4",
+            "Bg7",
+            "Nc3",
+            "Nf6",
+            "e4",
+            "O-O",
+            "Nge2"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rnbqkbnr/pp2pppp/2p5/3P4/8/1Q6/PP1PPPBP/RNB1K1NR b KQkq - 0 5",
+        "side_to_move": "Black",
+        "material": {
+          "white": 38,
+          "black": 38,
+          "difference": 0
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 7,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 7,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Qxd5",
+          "cxd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 30
+      }
+    },
+    {
+      "ply": 11,
+      "move_number": 6,
+      "color": "White",
+      "played_move": "Bxd5",
+      "played_move_uci": "g2d5",
+      "best_move": "Bxd5",
+      "best_move_uci": "g2d5",
+      "is_forced": false,
+      "evaluation_before": 30,
+      "evaluation_after": 30,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rnbqkbnr/pp2pppp/8/3p4/8/1Q6/PP1PPPBP/RNB1K1NR w KQkq - 0 6",
+      "fen_after": "rnbqkbnr/pp2pppp/8/3B4/8/1Q6/PP1PPP1P/RNB1K1NR b KQkq - 0 6",
+      "clock_seconds": 290.3,
+      "principal_variation": [
+        "Bxd5",
+        "e6",
+        "Bxb7",
+        "Bxb7",
+        "Qxb7",
+        "Nd7",
+        "Nc3",
+        "Rb8"
+      ],
+      "candidates": [
+        {
+          "move": "Bxd5",
+          "evaluation": 30,
+          "principal_variation": [
+            "Bxd5",
+            "e6",
+            "Bxb7",
+            "Bxb7",
+            "Qxb7",
+            "Nd7",
+            "Nc3",
+            "Rb8"
+          ]
+        },
+        {
+          "move": "Qxd5",
+          "evaluation": -10,
+          "principal_variation": [
+            "Qxd5",
+            "Qxd5",
+            "Bxd5",
+            "Nf6",
+            "Bg2",
+            "Nc6",
+            "Nc3",
+            "Bg4"
+          ]
+        },
+        {
+          "move": "Qb5+",
+          "evaluation": -106,
+          "principal_variation": [
+            "Qb5+",
+            "Nc6",
+            "Qxd5",
+            "Bd7",
+            "Nf3",
+            "Nf6",
+            "Qb3",
+            "e5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rnbqkbnr/pp2pppp/8/3p4/8/1Q6/PP1PPPBP/RNB1K1NR w KQkq - 0 6",
+        "side_to_move": "White",
+        "material": {
+          "white": 37,
+          "black": 38,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 7,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qb5+",
+          "Qa4+"
+        ],
+        "captures_available": [
+          "Qxb7",
+          "Qxd5",
+          "Bxd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 37
+      }
+    },
+    {
+      "ply": 12,
+      "move_number": 6,
+      "color": "Black",
+      "played_move": "Be6",
+      "played_move_uci": "c8e6",
+      "best_move": "e6",
+      "best_move_uci": "e7e6",
+      "is_forced": false,
+      "evaluation_before": -30,
+      "evaluation_after": -278,
+      "raw_centipawn_loss": 248,
+      "centipawn_loss": 248,
+      "classification": "serious_mistake",
+      "is_critical": true,
+      "episode_index": 3,
+      "fen_before": "rnbqkbnr/pp2pppp/8/3B4/8/1Q6/PP1PPP1P/RNB1K1NR b KQkq - 0 6",
+      "fen_after": "rn1qkbnr/pp2pppp/4b3/3B4/8/1Q6/PP1PPP1P/RNB1K1NR w KQkq - 1 7",
+      "clock_seconds": 269.1,
+      "principal_variation": [
+        "e6",
+        "Bxb7",
+        "Bxb7",
+        "Qxb7",
+        "Nd7",
+        "d4",
+        "Rb8",
+        "Qg2"
+      ],
+      "candidates": [
+        {
+          "move": "e6",
+          "evaluation": -30,
+          "principal_variation": [
+            "e6",
+            "Bxb7",
+            "Bxb7",
+            "Qxb7",
+            "Nd7",
+            "d4",
+            "Rb8",
+            "Qg2"
+          ]
+        },
+        {
+          "move": "Nh6",
+          "evaluation": -75,
+          "principal_variation": [
+            "Nh6",
+            "d3",
+            "Qc7",
+            "Nc3",
+            "e6",
+            "Bxh6",
+            "gxh6",
+            "Be4"
+          ]
+        },
+        {
+          "move": "Be6",
+          "evaluation": -256,
+          "principal_variation": [
+            "Be6",
+            "Bxe6",
+            "fxe6",
+            "Qxb7",
+            "Nd7",
+            "Nc3",
+            "Rb8",
+            "Qxa7"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rnbqkbnr/pp2pppp/8/3B4/8/1Q6/PP1PPP1P/RNB1K1NR b KQkq - 0 6",
+        "side_to_move": "Black",
+        "material": {
+          "white": 37,
+          "black": 37,
+          "difference": 0
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Qxd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 29
+      }
+    },
+    {
+      "ply": 13,
+      "move_number": 7,
+      "color": "White",
+      "played_move": "Bxe6",
+      "played_move_uci": "d5e6",
+      "best_move": "Bxe6",
+      "best_move_uci": "d5e6",
+      "is_forced": false,
+      "evaluation_before": 278,
+      "evaluation_after": 269,
+      "raw_centipawn_loss": 9,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rn1qkbnr/pp2pppp/4b3/3B4/8/1Q6/PP1PPP1P/RNB1K1NR w KQkq - 1 7",
+      "fen_after": "rn1qkbnr/pp2pppp/4B3/8/8/1Q6/PP1PPP1P/RNB1K1NR b KQkq - 0 7",
+      "clock_seconds": 246.6,
+      "principal_variation": [
+        "Bxe6",
+        "fxe6",
+        "Qxb7",
+        "Nd7",
+        "Nc3",
+        "g6",
+        "Nf3",
+        "Rb8"
+      ],
+      "candidates": [
+        {
+          "move": "Bxe6",
+          "evaluation": 278,
+          "principal_variation": [
+            "Bxe6",
+            "fxe6",
+            "Qxb7",
+            "Nd7",
+            "Nc3",
+            "g6",
+            "Nf3",
+            "Rb8"
+          ]
+        },
+        {
+          "move": "Qb5+",
+          "evaluation": 90,
+          "principal_variation": [
+            "Qb5+",
+            "Nc6",
+            "Bxe6",
+            "fxe6",
+            "Qxb7",
+            "Nd4",
+            "Na3",
+            "Rb8"
+          ]
+        },
+        {
+          "move": "Qa4+",
+          "evaluation": 15,
+          "principal_variation": [
+            "Qa4+",
+            "Nc6",
+            "Bxe6",
+            "fxe6",
+            "b4",
+            "Nf6",
+            "Nf3",
+            "a6"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rn1qkbnr/pp2pppp/4b3/3B4/8/1Q6/PP1PPP1P/RNB1K1NR w KQkq - 1 7",
+        "side_to_move": "White",
+        "material": {
+          "white": 37,
+          "black": 37,
+          "difference": 0
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Bc6+",
+          "Qb5+",
+          "Qa4+"
+        ],
+        "captures_available": [
+          "Bxb7",
+          "Bxe6",
+          "Qxb7"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 38
+      }
+    },
+    {
+      "ply": 14,
+      "move_number": 7,
+      "color": "Black",
+      "played_move": "fxe6",
+      "played_move_uci": "f7e6",
+      "best_move": "fxe6",
+      "best_move_uci": "f7e6",
+      "is_forced": false,
+      "evaluation_before": -269,
+      "evaluation_after": -264,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rn1qkbnr/pp2pppp/4B3/8/8/1Q6/PP1PPP1P/RNB1K1NR b KQkq - 0 7",
+      "fen_after": "rn1qkbnr/pp2p1pp/4p3/8/8/1Q6/PP1PPP1P/RNB1K1NR w KQkq - 0 8",
+      "clock_seconds": 269.0,
+      "principal_variation": [
+        "fxe6",
+        "Qxb7",
+        "Nd7",
+        "Nf3",
+        "Qc8",
+        "Qxc8+",
+        "Rxc8",
+        "Nc3"
+      ],
+      "candidates": [
+        {
+          "move": "fxe6",
+          "evaluation": -269,
+          "principal_variation": [
+            "fxe6",
+            "Qxb7",
+            "Nd7",
+            "Nf3",
+            "Qc8",
+            "Qxc8+",
+            "Rxc8",
+            "Nc3"
+          ]
+        },
+        {
+          "move": "Nh6",
+          "evaluation": -807,
+          "principal_variation": [
+            "Nh6",
+            "Qxb7",
+            "fxe6",
+            "Qxa8",
+            "Nf5",
+            "Qe4",
+            "Nd7",
+            "Nf3"
+          ]
+        },
+        {
+          "move": "Qc7",
+          "evaluation": -924,
+          "principal_variation": [
+            "Qc7",
+            "Bxf7+",
+            "Kd8",
+            "Nc3",
+            "Nh6",
+            "Bc4",
+            "Nd7",
+            "e3"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rn1qkbnr/pp2pppp/4B3/8/8/1Q6/PP1PPP1P/RNB1K1NR b KQkq - 0 7",
+        "side_to_move": "Black",
+        "material": {
+          "white": 37,
+          "black": 34,
+          "difference": 3
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 2,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qxd2+"
+        ],
+        "captures_available": [
+          "Qxd2+",
+          "fxe6"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 26
+      }
+    },
+    {
+      "ply": 15,
+      "move_number": 8,
+      "color": "White",
+      "played_move": "Qxb7",
+      "played_move_uci": "b3b7",
+      "best_move": "Qxb7",
+      "best_move_uci": "b3b7",
+      "is_forced": false,
+      "evaluation_before": 264,
+      "evaluation_after": 268,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rn1qkbnr/pp2p1pp/4p3/8/8/1Q6/PP1PPP1P/RNB1K1NR w KQkq - 0 8",
+      "fen_after": "rn1qkbnr/pQ2p1pp/4p3/8/8/8/PP1PPP1P/RNB1K1NR b KQkq - 0 8",
+      "clock_seconds": 237.4,
+      "principal_variation": [
+        "Qxb7",
+        "Nd7",
+        "Nf3",
+        "Qc8",
+        "Qxc8+",
+        "Rxc8",
+        "Nc3",
+        "g6"
+      ],
+      "candidates": [
+        {
+          "move": "Qxb7",
+          "evaluation": 264,
+          "principal_variation": [
+            "Qxb7",
+            "Nd7",
+            "Nf3",
+            "Qc8",
+            "Qxc8+",
+            "Rxc8",
+            "Nc3",
+            "g6"
+          ]
+        },
+        {
+          "move": "Qxe6",
+          "evaluation": 202,
+          "principal_variation": [
+            "Qxe6",
+            "Nc6",
+            "Nf3",
+            "Qd6",
+            "Qc4",
+            "g6",
+            "Nc3",
+            "Bg7"
+          ]
+        },
+        {
+          "move": "Nf3",
+          "evaluation": 123,
+          "principal_variation": [
+            "Nf3",
+            "Qd5",
+            "Qa4+",
+            "Qc6",
+            "Nc3",
+            "g6",
+            "Qb3",
+            "Nd7"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rn1qkbnr/pp2p1pp/4p3/8/8/1Q6/PP1PPP1P/RNB1K1NR w KQkq - 0 8",
+        "side_to_move": "White",
+        "material": {
+          "white": 34,
+          "black": 34,
+          "difference": 0
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qb5+",
+          "Qa4+"
+        ],
+        "captures_available": [
+          "Qxb7",
+          "Qxe6"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 33
+      }
+    },
+    {
+      "ply": 16,
+      "move_number": 8,
+      "color": "Black",
+      "played_move": "Nd7",
+      "played_move_uci": "b8d7",
+      "best_move": "Nd7",
+      "best_move_uci": "b8d7",
+      "is_forced": false,
+      "evaluation_before": -268,
+      "evaluation_after": -265,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rn1qkbnr/pQ2p1pp/4p3/8/8/8/PP1PPP1P/RNB1K1NR b KQkq - 0 8",
+      "fen_after": "r2qkbnr/pQ1np1pp/4p3/8/8/8/PP1PPP1P/RNB1K1NR w KQkq - 1 9",
+      "clock_seconds": 264.8,
+      "principal_variation": [
+        "Nd7",
+        "Nc3",
+        "Rb8",
+        "Qxa7",
+        "g6",
+        "Qe3",
+        "e5",
+        "Nf3"
+      ],
+      "candidates": [
+        {
+          "move": "Nd7",
+          "evaluation": -268,
+          "principal_variation": [
+            "Nd7",
+            "Nc3",
+            "Rb8",
+            "Qxa7",
+            "g6",
+            "Qe3",
+            "e5",
+            "Nf3"
+          ]
+        },
+        {
+          "move": "Qd5",
+          "evaluation": -327,
+          "principal_variation": [
+            "Qd5",
+            "Qc8+",
+            "Kf7",
+            "Nf3",
+            "Nf6",
+            "Nc3",
+            "Nbd7",
+            "Qc7"
+          ]
+        },
+        {
+          "move": "Na6",
+          "evaluation": -759,
+          "principal_variation": [
+            "Na6",
+            "Qc6+",
+            "Kf7",
+            "Qxa6",
+            "Nf6",
+            "Nc3",
+            "Qb6",
+            "Qa4"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rn1qkbnr/pQ2p1pp/4p3/8/8/8/PP1PPP1P/RNB1K1NR b KQkq - 0 8",
+        "side_to_move": "Black",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qxd2+"
+        ],
+        "captures_available": [
+          "Qxd2+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 23
+      }
+    },
+    {
+      "ply": 17,
+      "move_number": 9,
+      "color": "White",
+      "played_move": "Nc3",
+      "played_move_uci": "b1c3",
+      "best_move": "Nc3",
+      "best_move_uci": "b1c3",
+      "is_forced": false,
+      "evaluation_before": 265,
+      "evaluation_after": 270,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "r2qkbnr/pQ1np1pp/4p3/8/8/8/PP1PPP1P/RNB1K1NR w KQkq - 1 9",
+      "fen_after": "r2qkbnr/pQ1np1pp/4p3/8/8/2N5/PP1PPP1P/R1B1K1NR b KQkq - 2 9",
+      "clock_seconds": 230.8,
+      "principal_variation": [
+        "Nc3",
+        "Qc8",
+        "Qe4",
+        "Rb8",
+        "Qxe6",
+        "Rb6",
+        "Qh3",
+        "Ngf6"
+      ],
+      "candidates": [
+        {
+          "move": "Nc3",
+          "evaluation": 265,
+          "principal_variation": [
+            "Nc3",
+            "Qc8",
+            "Qe4",
+            "Rb8",
+            "Qxe6",
+            "Rb6",
+            "Qh3",
+            "Ngf6"
+          ]
+        },
+        {
+          "move": "Nf3",
+          "evaluation": 243,
+          "principal_variation": [
+            "Nf3",
+            "Qc8",
+            "Qxc8+",
+            "Rxc8",
+            "Nc3",
+            "h6",
+            "d3",
+            "g5"
+          ]
+        },
+        {
+          "move": "Na3",
+          "evaluation": 237,
+          "principal_variation": [
+            "Na3",
+            "Ngf6",
+            "Nf3",
+            "g6",
+            "Qc6",
+            "Rc8",
+            "Qxe6",
+            "Nc5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "r2qkbnr/pQ1np1pp/4p3/8/8/8/PP1PPP1P/RNB1K1NR w KQkq - 1 9",
+        "side_to_move": "White",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qxd7+"
+        ],
+        "captures_available": [
+          "Qxa8",
+          "Qxd7+",
+          "Qxa7"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 34
+      }
+    },
+    {
+      "ply": 18,
+      "move_number": 9,
+      "color": "Black",
+      "played_move": "Qb8",
+      "played_move_uci": "d8b8",
+      "best_move": "Qc8",
+      "best_move_uci": "d8c8",
+      "is_forced": false,
+      "evaluation_before": -270,
+      "evaluation_after": -370,
+      "raw_centipawn_loss": 100,
+      "centipawn_loss": 100,
+      "classification": "mistake",
+      "is_critical": true,
+      "episode_index": 4,
+      "fen_before": "r2qkbnr/pQ1np1pp/4p3/8/8/2N5/PP1PPP1P/R1B1K1NR b KQkq - 2 9",
+      "fen_after": "rq2kbnr/pQ1np1pp/4p3/8/8/2N5/PP1PPP1P/R1B1K1NR w KQkq - 3 10",
+      "clock_seconds": 256.0,
+      "principal_variation": [
+        "Qc8",
+        "Qb3",
+        "Rb8",
+        "Qxe6",
+        "Rb6",
+        "Qh3",
+        "g6",
+        "Nf3"
+      ],
+      "candidates": [
+        {
+          "move": "Qc8",
+          "evaluation": -270,
+          "principal_variation": [
+            "Qc8",
+            "Qb3",
+            "Rb8",
+            "Qxe6",
+            "Rb6",
+            "Qh3",
+            "g6",
+            "Nf3"
+          ]
+        },
+        {
+          "move": "g6",
+          "evaluation": -285,
+          "principal_variation": [
+            "g6",
+            "Nf3",
+            "Qc8",
+            "Qxc8+",
+            "Rxc8",
+            "Ng5",
+            "Rc6",
+            "Nb5"
+          ]
+        },
+        {
+          "move": "Ngf6",
+          "evaluation": -286,
+          "principal_variation": [
+            "Ngf6",
+            "Nf3",
+            "Qc8",
+            "Qxc8+",
+            "Rxc8",
+            "d3",
+            "g6",
+            "Be3"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "r2qkbnr/pQ1np1pp/4p3/8/8/2N5/PP1PPP1P/R1B1K1NR b KQkq - 2 9",
+        "side_to_move": "Black",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 22
+      }
+    },
+    {
+      "ply": 19,
+      "move_number": 10,
+      "color": "White",
+      "played_move": "Qg2",
+      "played_move_uci": "b7g2",
+      "best_move": "Qe4",
+      "best_move_uci": "b7e4",
+      "is_forced": false,
+      "evaluation_before": 370,
+      "evaluation_after": 272,
+      "raw_centipawn_loss": 98,
+      "centipawn_loss": 98,
+      "classification": "mistake",
+      "is_critical": true,
+      "episode_index": 4,
+      "fen_before": "rq2kbnr/pQ1np1pp/4p3/8/8/2N5/PP1PPP1P/R1B1K1NR w KQkq - 3 10",
+      "fen_after": "rq2kbnr/p2np1pp/4p3/8/8/2N5/PP1PPPQP/R1B1K1NR b KQkq - 4 10",
+      "clock_seconds": 208.7,
+      "principal_variation": [
+        "Qe4",
+        "Qc8",
+        "Qxe6",
+        "Rb8",
+        "Nf3",
+        "Rb6",
+        "Qh3",
+        "Rh6"
+      ],
+      "candidates": [
+        {
+          "move": "Qe4",
+          "evaluation": 370,
+          "principal_variation": [
+            "Qe4",
+            "Qc8",
+            "Qxe6",
+            "Rb8",
+            "Nf3",
+            "Rb6",
+            "Qh3",
+            "Rh6"
+          ]
+        },
+        {
+          "move": "Qc6",
+          "evaluation": 367,
+          "principal_variation": [
+            "Qc6",
+            "Qc8",
+            "Qxe6",
+            "Rb8",
+            "Nf3",
+            "Rb6",
+            "Qh3",
+            "Rh6"
+          ]
+        },
+        {
+          "move": "Qa6",
+          "evaluation": 306,
+          "principal_variation": [
+            "Qa6",
+            "Qd6",
+            "Qc4",
+            "Nb6",
+            "Qb3",
+            "g6",
+            "Nf3",
+            "Bg7"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2kbnr/pQ1np1pp/4p3/8/8/2N5/PP1PPP1P/R1B1K1NR w KQkq - 3 10",
+        "side_to_move": "White",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qc8+",
+          "Qxb8+",
+          "Qxd7+"
+        ],
+        "captures_available": [
+          "Qxb8+",
+          "Qxa8",
+          "Qxd7+",
+          "Qxa7"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 39
+      }
+    },
+    {
+      "ply": 20,
+      "move_number": 10,
+      "color": "Black",
+      "played_move": "Ngf6",
+      "played_move_uci": "g8f6",
+      "best_move": "Ngf6",
+      "best_move_uci": "g8f6",
+      "is_forced": false,
+      "evaluation_before": -272,
+      "evaluation_after": -283,
+      "raw_centipawn_loss": 11,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2kbnr/p2np1pp/4p3/8/8/2N5/PP1PPPQP/R1B1K1NR b KQkq - 4 10",
+      "fen_after": "rq2kb1r/p2np1pp/4pn2/8/8/2N5/PP1PPPQP/R1B1K1NR w KQkq - 5 11",
+      "clock_seconds": 252.4,
+      "principal_variation": [
+        "Ngf6",
+        "Qc6",
+        "Qc8",
+        "Qxe6",
+        "Rb8",
+        "Nf3",
+        "Rb6",
+        "Qh3"
+      ],
+      "candidates": [
+        {
+          "move": "Ngf6",
+          "evaluation": -272,
+          "principal_variation": [
+            "Ngf6",
+            "Qc6",
+            "Qc8",
+            "Qxe6",
+            "Rb8",
+            "Nf3",
+            "Rb6",
+            "Qh3"
+          ]
+        },
+        {
+          "move": "a5",
+          "evaluation": -277,
+          "principal_variation": [
+            "a5",
+            "Qc6",
+            "Qc8",
+            "Qxe6",
+            "Ra6",
+            "Qh3",
+            "g6",
+            "Nf3"
+          ]
+        },
+        {
+          "move": "g6",
+          "evaluation": -342,
+          "principal_variation": [
+            "g6",
+            "Nb5",
+            "Kf7",
+            "Nc7",
+            "Qxc7",
+            "Qxa8",
+            "Ngf6",
+            "Qg2"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2kbnr/p2np1pp/4p3/8/8/2N5/PP1PPPQP/R1B1K1NR b KQkq - 4 10",
+        "side_to_move": "Black",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Qxh2",
+          "Qxb2"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 29
+      }
+    },
+    {
+      "ply": 21,
+      "move_number": 11,
+      "color": "White",
+      "played_move": "Nf3",
+      "played_move_uci": "g1f3",
+      "best_move": "Qc6",
+      "best_move_uci": "g2c6",
+      "is_forced": false,
+      "evaluation_before": 283,
+      "evaluation_after": 252,
+      "raw_centipawn_loss": 31,
+      "centipawn_loss": 31,
+      "classification": "inaccuracy",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2kb1r/p2np1pp/4pn2/8/8/2N5/PP1PPPQP/R1B1K1NR w KQkq - 5 11",
+      "fen_after": "rq2kb1r/p2np1pp/4pn2/8/8/2N2N2/PP1PPPQP/R1B1K2R b KQkq - 6 11",
+      "clock_seconds": 207.0,
+      "principal_variation": [
+        "Qc6",
+        "Qc8",
+        "Qxe6",
+        "Rb8",
+        "Nf3",
+        "Rb6",
+        "Qh3",
+        "g6"
+      ],
+      "candidates": [
+        {
+          "move": "Qc6",
+          "evaluation": 283,
+          "principal_variation": [
+            "Qc6",
+            "Qc8",
+            "Qxe6",
+            "Rb8",
+            "Nf3",
+            "Rb6",
+            "Qh3",
+            "g6"
+          ]
+        },
+        {
+          "move": "d4",
+          "evaluation": 282,
+          "principal_variation": [
+            "d4",
+            "Qc8",
+            "Nf3",
+            "Rb8",
+            "O-O",
+            "g5",
+            "Ne5",
+            "Rg8"
+          ]
+        },
+        {
+          "move": "Nf3",
+          "evaluation": 256,
+          "principal_variation": [
+            "Nf3",
+            "a5",
+            "b3",
+            "Rg8",
+            "d3",
+            "g5",
+            "Bd2",
+            "g4"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2kb1r/p2np1pp/4pn2/8/8/2N5/PP1PPPQP/R1B1K1NR w KQkq - 5 11",
+        "side_to_move": "White",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qg6+"
+        ],
+        "captures_available": [
+          "Qxa8",
+          "Qxg7"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 36
+      }
+    },
+    {
+      "ply": 22,
+      "move_number": 11,
+      "color": "Black",
+      "played_move": "g6",
+      "played_move_uci": "g7g6",
+      "best_move": "Qb7",
+      "best_move_uci": "b8b7",
+      "is_forced": false,
+      "evaluation_before": -252,
+      "evaluation_after": -298,
+      "raw_centipawn_loss": 46,
+      "centipawn_loss": 46,
+      "classification": "inaccuracy",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2kb1r/p2np1pp/4pn2/8/8/2N2N2/PP1PPPQP/R1B1K2R b KQkq - 6 11",
+      "fen_after": "rq2kb1r/p2np2p/4pnp1/8/8/2N2N2/PP1PPPQP/R1B1K2R w KQkq - 0 12",
+      "clock_seconds": 251.3,
+      "principal_variation": [
+        "Qb7",
+        "O-O",
+        "g5",
+        "d3",
+        "h6",
+        "Be3",
+        "Bg7",
+        "Rfc1"
+      ],
+      "candidates": [
+        {
+          "move": "Qb7",
+          "evaluation": -252,
+          "principal_variation": [
+            "Qb7",
+            "O-O",
+            "g5",
+            "d3",
+            "h6",
+            "Be3",
+            "Bg7",
+            "Rfc1"
+          ]
+        },
+        {
+          "move": "a5",
+          "evaluation": -263,
+          "principal_variation": [
+            "a5",
+            "Qh3",
+            "Ra6",
+            "Ng5",
+            "Qe5",
+            "d3",
+            "Qf5",
+            "Qh4"
+          ]
+        },
+        {
+          "move": "Qd6",
+          "evaluation": -287,
+          "principal_variation": [
+            "Qd6",
+            "d3",
+            "g6",
+            "Ng5",
+            "Rb8",
+            "Qh3",
+            "h6",
+            "Nxe6"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2kb1r/p2np1pp/4pn2/8/8/2N2N2/PP1PPPQP/R1B1K2R b KQkq - 6 11",
+        "side_to_move": "Black",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Qxh2",
+          "Qxb2"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 32
+      }
+    },
+    {
+      "ply": 23,
+      "move_number": 12,
+      "color": "White",
+      "played_move": "d3",
+      "played_move_uci": "d2d3",
+      "best_move": "Nd4",
+      "best_move_uci": "f3d4",
+      "is_forced": false,
+      "evaluation_before": 298,
+      "evaluation_after": 233,
+      "raw_centipawn_loss": 65,
+      "centipawn_loss": 65,
+      "classification": "inaccuracy",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2kb1r/p2np2p/4pnp1/8/8/2N2N2/PP1PPPQP/R1B1K2R w KQkq - 0 12",
+      "fen_after": "rq2kb1r/p2np2p/4pnp1/8/8/2NP1N2/PP2PPQP/R1B1K2R b KQkq - 0 12",
+      "clock_seconds": 203.7,
+      "principal_variation": [
+        "Nd4",
+        "Bh6",
+        "Nxe6",
+        "Kf7",
+        "Qh3",
+        "Qd6",
+        "Qxh6",
+        "Qxe6"
+      ],
+      "candidates": [
+        {
+          "move": "Nd4",
+          "evaluation": 298,
+          "principal_variation": [
+            "Nd4",
+            "Bh6",
+            "Nxe6",
+            "Kf7",
+            "Qh3",
+            "Qd6",
+            "Qxh6",
+            "Qxe6"
+          ]
+        },
+        {
+          "move": "Ng5",
+          "evaluation": 298,
+          "principal_variation": [
+            "Ng5",
+            "Bh6",
+            "Nxe6",
+            "Kf7",
+            "Qh3",
+            "Qd6",
+            "Qxh6",
+            "Qxe6"
+          ]
+        },
+        {
+          "move": "d3",
+          "evaluation": 281,
+          "principal_variation": [
+            "d3",
+            "a5",
+            "Qh3",
+            "Ra6",
+            "Ng5",
+            "e5",
+            "O-O",
+            "h6"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2kb1r/p2np2p/4pnp1/8/8/2N2N2/PP1PPPQP/R1B1K2R w KQkq - 0 12",
+        "side_to_move": "White",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qxg6+"
+        ],
+        "captures_available": [
+          "Qxg6+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 34
+      }
+    },
+    {
+      "ply": 24,
+      "move_number": 12,
+      "color": "Black",
+      "played_move": "Bg7",
+      "played_move_uci": "f8g7",
+      "best_move": "a5",
+      "best_move_uci": "a7a5",
+      "is_forced": false,
+      "evaluation_before": -233,
+      "evaluation_after": -378,
+      "raw_centipawn_loss": 145,
+      "centipawn_loss": 145,
+      "classification": "mistake",
+      "is_critical": true,
+      "episode_index": 5,
+      "fen_before": "rq2kb1r/p2np2p/4pnp1/8/8/2NP1N2/PP2PPQP/R1B1K2R b KQkq - 0 12",
+      "fen_after": "rq2k2r/p2np1bp/4pnp1/8/8/2NP1N2/PP2PPQP/R1B1K2R w KQkq - 1 13",
+      "clock_seconds": 249.5,
+      "principal_variation": [
+        "a5",
+        "Ng5",
+        "Ra6",
+        "Qh3",
+        "Qe5",
+        "f4",
+        "Qf5",
+        "Qg2"
+      ],
+      "candidates": [
+        {
+          "move": "a5",
+          "evaluation": -233,
+          "principal_variation": [
+            "a5",
+            "Ng5",
+            "Ra6",
+            "Qh3",
+            "Qe5",
+            "f4",
+            "Qf5",
+            "Qg2"
+          ]
+        },
+        {
+          "move": "Qd6",
+          "evaluation": -291,
+          "principal_variation": [
+            "Qd6",
+            "Ng5",
+            "Rb8",
+            "Qh3",
+            "e5",
+            "O-O",
+            "h6",
+            "Nge4"
+          ]
+        },
+        {
+          "move": "Qb7",
+          "evaluation": -291,
+          "principal_variation": [
+            "Qb7",
+            "O-O",
+            "Bg7",
+            "Qh3",
+            "a5",
+            "Be3",
+            "Ra6",
+            "Rac1"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2kb1r/p2np2p/4pnp1/8/8/2NP1N2/PP2PPQP/R1B1K2R b KQkq - 0 12",
+        "side_to_move": "Black",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Qxh2",
+          "Qxb2"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 33
+      }
+    },
+    {
+      "ply": 25,
+      "move_number": 13,
+      "color": "White",
+      "played_move": "b3",
+      "played_move_uci": "b2b3",
+      "best_move": "Ng5",
+      "best_move_uci": "f3g5",
+      "is_forced": false,
+      "evaluation_before": 378,
+      "evaluation_after": 84,
+      "raw_centipawn_loss": 294,
+      "centipawn_loss": 294,
+      "classification": "blunder",
+      "is_critical": true,
+      "episode_index": 5,
+      "fen_before": "rq2k2r/p2np1bp/4pnp1/8/8/2NP1N2/PP2PPQP/R1B1K2R w KQkq - 1 13",
+      "fen_after": "rq2k2r/p2np1bp/4pnp1/8/8/1PNP1N2/P3PPQP/R1B1K2R b KQkq - 0 13",
+      "clock_seconds": 192.2,
+      "principal_variation": [
+        "Ng5",
+        "a5",
+        "Nxe6",
+        "Ra6",
+        "Nxg7+",
+        "Kf7",
+        "O-O",
+        "Kxg7"
+      ],
+      "candidates": [
+        {
+          "move": "Ng5",
+          "evaluation": 378,
+          "principal_variation": [
+            "Ng5",
+            "a5",
+            "Nxe6",
+            "Ra6",
+            "Nxg7+",
+            "Kf7",
+            "O-O",
+            "Kxg7"
+          ]
+        },
+        {
+          "move": "Nd4",
+          "evaluation": 274,
+          "principal_variation": [
+            "Nd4",
+            "Kf7",
+            "Nf3",
+            "h6",
+            "Rg1",
+            "Nf8",
+            "Ne5+",
+            "Qxe5"
+          ]
+        },
+        {
+          "move": "Qh3",
+          "evaluation": 253,
+          "principal_variation": [
+            "Qh3",
+            "Qd6",
+            "O-O",
+            "Rb8",
+            "Ng5",
+            "Nf8",
+            "Be3",
+            "h6"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p2np1bp/4pnp1/8/8/2NP1N2/PP2PPQP/R1B1K2R w KQkq - 1 13",
+        "side_to_move": "White",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qxg6+"
+        ],
+        "captures_available": [
+          "Qxg6+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 40
+      }
+    },
+    {
+      "ply": 26,
+      "move_number": 13,
+      "color": "Black",
+      "played_move": "Nd5",
+      "played_move_uci": "f6d5",
+      "best_move": "Nh5",
+      "best_move_uci": "f6h5",
+      "is_forced": false,
+      "evaluation_before": -84,
+      "evaluation_after": -87,
+      "raw_centipawn_loss": 3,
+      "centipawn_loss": 3,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2k2r/p2np1bp/4pnp1/8/8/1PNP1N2/P3PPQP/R1B1K2R b KQkq - 0 13",
+      "fen_after": "rq2k2r/p2np1bp/4p1p1/3n4/8/1PNP1N2/P3PPQP/R1B1K2R w KQkq - 1 14",
+      "clock_seconds": 227.8,
+      "principal_variation": [
+        "Nh5",
+        "Bd2",
+        "Bxc3",
+        "Bxc3",
+        "Nf4",
+        "Qg3",
+        "O-O",
+        "Rg1"
+      ],
+      "candidates": [
+        {
+          "move": "Nh5",
+          "evaluation": -84,
+          "principal_variation": [
+            "Nh5",
+            "Bd2",
+            "Bxc3",
+            "Bxc3",
+            "Nf4",
+            "Qg3",
+            "O-O",
+            "Rg1"
+          ]
+        },
+        {
+          "move": "Qc8",
+          "evaluation": -101,
+          "principal_variation": [
+            "Qc8",
+            "Bd2",
+            "Nd5",
+            "d4",
+            "Nxc3",
+            "Rc1",
+            "Qb7",
+            "Rxc3"
+          ]
+        },
+        {
+          "move": "Nd5",
+          "evaluation": -102,
+          "principal_variation": [
+            "Nd5",
+            "Nxd5",
+            "exd5",
+            "Rb1",
+            "O-O",
+            "Qh3",
+            "Nc5",
+            "b4"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p2np1bp/4pnp1/8/8/1PNP1N2/P3PPQP/R1B1K2R b KQkq - 0 13",
+        "side_to_move": "Black",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [
+          "Qxb3",
+          "Qxh2"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 36
+      }
+    },
+    {
+      "ply": 27,
+      "move_number": 14,
+      "color": "White",
+      "played_move": "Nxd5",
+      "played_move_uci": "c3d5",
+      "best_move": "Nxd5",
+      "best_move_uci": "c3d5",
+      "is_forced": false,
+      "evaluation_before": 87,
+      "evaluation_after": 91,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2k2r/p2np1bp/4p1p1/3n4/8/1PNP1N2/P3PPQP/R1B1K2R w KQkq - 1 14",
+      "fen_after": "rq2k2r/p2np1bp/4p1p1/3N4/8/1P1P1N2/P3PPQP/R1B1K2R b KQkq - 0 14",
+      "clock_seconds": 162.4,
+      "principal_variation": [
+        "Nxd5",
+        "exd5",
+        "Rb1",
+        "Qd6",
+        "Qh3",
+        "Rc8",
+        "Bd2",
+        "Rc2"
+      ],
+      "candidates": [
+        {
+          "move": "Nxd5",
+          "evaluation": 87,
+          "principal_variation": [
+            "Nxd5",
+            "exd5",
+            "Rb1",
+            "Qd6",
+            "Qh3",
+            "Rc8",
+            "Bd2",
+            "Rc2"
+          ]
+        },
+        {
+          "move": "d4",
+          "evaluation": -386,
+          "principal_variation": [
+            "d4",
+            "Nxc3",
+            "Ng5",
+            "Bf6",
+            "Bf4",
+            "e5",
+            "dxe5",
+            "Bxg5"
+          ]
+        },
+        {
+          "move": "Bd2",
+          "evaluation": -410,
+          "principal_variation": [
+            "Bd2",
+            "Bxc3",
+            "Bxc3",
+            "Nxc3",
+            "Ng5",
+            "Nd5",
+            "O-O",
+            "Qe5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p2np1bp/4p1p1/3n4/8/1PNP1N2/P3PPQP/R1B1K2R w KQkq - 1 14",
+        "side_to_move": "White",
+        "material": {
+          "white": 34,
+          "black": 33,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qxg6+"
+        ],
+        "captures_available": [
+          "Nxd5",
+          "Qxg6+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 41
+      }
+    },
+    {
+      "ply": 28,
+      "move_number": 14,
+      "color": "Black",
+      "played_move": "Bxa1",
+      "played_move_uci": "g7a1",
+      "best_move": "exd5",
+      "best_move_uci": "e6d5",
+      "is_forced": false,
+      "evaluation_before": -91,
+      "evaluation_after": -155,
+      "raw_centipawn_loss": 64,
+      "centipawn_loss": 64,
+      "classification": "inaccuracy",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2k2r/p2np1bp/4p1p1/3N4/8/1P1P1N2/P3PPQP/R1B1K2R b KQkq - 0 14",
+      "fen_after": "rq2k2r/p2np2p/4p1p1/3N4/8/1P1P1N2/P3PPQP/b1B1K2R w Kkq - 0 15",
+      "clock_seconds": 226.4,
+      "principal_variation": [
+        "exd5",
+        "Rb1",
+        "O-O",
+        "Be3",
+        "Rf5",
+        "O-O",
+        "Rh5",
+        "Rbc1"
+      ],
+      "candidates": [
+        {
+          "move": "exd5",
+          "evaluation": -91,
+          "principal_variation": [
+            "exd5",
+            "Rb1",
+            "O-O",
+            "Be3",
+            "Rf5",
+            "O-O",
+            "Rh5",
+            "Rbc1"
+          ]
+        },
+        {
+          "move": "Qd6",
+          "evaluation": -113,
+          "principal_variation": [
+            "Qd6",
+            "Bf4",
+            "Qxd5",
+            "Rc1",
+            "O-O",
+            "Qg4",
+            "a5",
+            "O-O"
+          ]
+        },
+        {
+          "move": "Qb7",
+          "evaluation": -123,
+          "principal_variation": [
+            "Qb7",
+            "Rb1",
+            "exd5",
+            "Ng5",
+            "Bc3+",
+            "Bd2",
+            "Bxd2+",
+            "Kxd2"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p2np1bp/4p1p1/3N4/8/1P1P1N2/P3PPQP/R1B1K2R b KQkq - 0 14",
+        "side_to_move": "Black",
+        "material": {
+          "white": 34,
+          "black": 30,
+          "difference": 4
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qb4+",
+          "Bc3+"
+        ],
+        "captures_available": [
+          "Qxb3",
+          "Qxh2",
+          "Bxa1",
+          "exd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 39
+      }
+    },
+    {
+      "ply": 29,
+      "move_number": 15,
+      "color": "White",
+      "played_move": "Bf4",
+      "played_move_uci": "c1f4",
+      "best_move": "Bf4",
+      "best_move_uci": "c1f4",
+      "is_forced": false,
+      "evaluation_before": 155,
+      "evaluation_after": 140,
+      "raw_centipawn_loss": 15,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2k2r/p2np2p/4p1p1/3N4/8/1P1P1N2/P3PPQP/b1B1K2R w Kkq - 0 15",
+      "fen_after": "rq2k2r/p2np2p/4p1p1/3N4/5B2/1P1P1N2/P3PPQP/b3K2R b Kkq - 1 15",
+      "clock_seconds": 135.9,
+      "principal_variation": [
+        "Bf4",
+        "e5",
+        "Bg5",
+        "Nb6",
+        "Nxe7",
+        "Bc3+",
+        "Kf1",
+        "Qd6"
+      ],
+      "candidates": [
+        {
+          "move": "Bf4",
+          "evaluation": 155,
+          "principal_variation": [
+            "Bf4",
+            "e5",
+            "Bg5",
+            "Nb6",
+            "Nxe7",
+            "Bc3+",
+            "Kf1",
+            "Qd6"
+          ]
+        },
+        {
+          "move": "Ne3",
+          "evaluation": -1,
+          "principal_variation": [
+            "Ne3",
+            "Qd6",
+            "h4",
+            "Rc8",
+            "O-O",
+            "Bf6",
+            "Nc4",
+            "Qd5"
+          ]
+        },
+        {
+          "move": "Nf4",
+          "evaluation": -24,
+          "principal_variation": [
+            "Nf4",
+            "Qd6",
+            "O-O",
+            "Rc8",
+            "Qh3",
+            "Rc6",
+            "b4",
+            "Be5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p2np2p/4p1p1/3N4/8/1P1P1N2/P3PPQP/b1B1K2R w Kkq - 0 15",
+        "side_to_move": "White",
+        "material": {
+          "white": 29,
+          "black": 30,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Nc7+",
+          "Nf6+",
+          "Qxg6+"
+        ],
+        "captures_available": [
+          "Nxe7",
+          "Qxg6+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 42
+      }
+    },
+    {
+      "ply": 30,
+      "move_number": 15,
+      "color": "Black",
+      "played_move": "Be5",
+      "played_move_uci": "a1e5",
+      "best_move": "Ne5",
+      "best_move_uci": "d7e5",
+      "is_forced": false,
+      "evaluation_before": -140,
+      "evaluation_after": -268,
+      "raw_centipawn_loss": 128,
+      "centipawn_loss": 128,
+      "classification": "mistake",
+      "is_critical": true,
+      "episode_index": 6,
+      "fen_before": "rq2k2r/p2np2p/4p1p1/3N4/5B2/1P1P1N2/P3PPQP/b3K2R b Kkq - 1 15",
+      "fen_after": "rq2k2r/p2np2p/4p1p1/3Nb3/5B2/1P1P1N2/P3PPQP/4K2R w Kkq - 2 16",
+      "clock_seconds": 178.5,
+      "principal_variation": [
+        "Ne5",
+        "d4",
+        "exd5",
+        "Bxe5",
+        "Qb4+",
+        "Kf1",
+        "Rf8",
+        "Qh3"
+      ],
+      "candidates": [
+        {
+          "move": "Ne5",
+          "evaluation": -140,
+          "principal_variation": [
+            "Ne5",
+            "d4",
+            "exd5",
+            "Bxe5",
+            "Qb4+",
+            "Kf1",
+            "Rf8",
+            "Qh3"
+          ]
+        },
+        {
+          "move": "e5",
+          "evaluation": -149,
+          "principal_variation": [
+            "e5",
+            "Bg5",
+            "Nb6",
+            "Nxe7",
+            "Bc3+",
+            "Kf1",
+            "Qd6",
+            "Qg4"
+          ]
+        },
+        {
+          "move": "Be5",
+          "evaluation": -293,
+          "principal_variation": [
+            "Be5",
+            "Nxe5",
+            "exd5",
+            "Qxd5",
+            "Nxe5",
+            "Bxe5",
+            "Qc8",
+            "Kd2"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p2np2p/4p1p1/3N4/5B2/1P1P1N2/P3PPQP/b3K2R b Kkq - 1 15",
+        "side_to_move": "Black",
+        "material": {
+          "white": 29,
+          "black": 30,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qb4+",
+          "Bc3+"
+        ],
+        "captures_available": [
+          "Qxf4",
+          "Qxb3",
+          "exd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 35
+      }
+    },
+    {
+      "ply": 31,
+      "move_number": 16,
+      "color": "White",
+      "played_move": "Nxe5",
+      "played_move_uci": "f3e5",
+      "best_move": "Nxe5",
+      "best_move_uci": "f3e5",
+      "is_forced": false,
+      "evaluation_before": 268,
+      "evaluation_after": 267,
+      "raw_centipawn_loss": 1,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "rq2k2r/p2np2p/4p1p1/3Nb3/5B2/1P1P1N2/P3PPQP/4K2R w Kkq - 2 16",
+      "fen_after": "rq2k2r/p2np2p/4p1p1/3NN3/5B2/1P1P4/P3PPQP/4K2R b Kkq - 0 16",
+      "clock_seconds": 112.2,
+      "principal_variation": [
+        "Nxe5",
+        "exd5",
+        "Qxd5",
+        "Nxe5",
+        "Bxe5",
+        "Qc8",
+        "Kd2",
+        "Rf8"
+      ],
+      "candidates": [
+        {
+          "move": "Nxe5",
+          "evaluation": 268,
+          "principal_variation": [
+            "Nxe5",
+            "exd5",
+            "Qxd5",
+            "Nxe5",
+            "Bxe5",
+            "Qc8",
+            "Kd2",
+            "Rf8"
+          ]
+        },
+        {
+          "move": "Bxe5",
+          "evaluation": -78,
+          "principal_variation": [
+            "Bxe5",
+            "Nxe5",
+            "Ne3",
+            "Qb4+",
+            "Kf1",
+            "Qc3",
+            "Qg3",
+            "Nxf3"
+          ]
+        },
+        {
+          "move": "Qg5",
+          "evaluation": -108,
+          "principal_variation": [
+            "Qg5",
+            "exd5",
+            "Nxe5",
+            "Qb4+",
+            "Bd2",
+            "Qd6",
+            "Nf3",
+            "Rc8"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p2np2p/4p1p1/3Nb3/5B2/1P1P1N2/P3PPQP/4K2R w Kkq - 2 16",
+        "side_to_move": "White",
+        "material": {
+          "white": 29,
+          "black": 30,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 1,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Nc7+",
+          "Nf6+",
+          "Qxg6+"
+        ],
+        "captures_available": [
+          "Nxe7",
+          "Bxe5",
+          "Nxe5",
+          "Qxg6+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 41
+      }
+    },
+    {
+      "ply": 32,
+      "move_number": 16,
+      "color": "Black",
+      "played_move": "Nxe5",
+      "played_move_uci": "d7e5",
+      "best_move": "exd5",
+      "best_move_uci": "e6d5",
+      "is_forced": false,
+      "evaluation_before": -267,
+      "evaluation_after": -508,
+      "raw_centipawn_loss": 241,
+      "centipawn_loss": 241,
+      "classification": "serious_mistake",
+      "is_critical": true,
+      "episode_index": 6,
+      "fen_before": "rq2k2r/p2np2p/4p1p1/3NN3/5B2/1P1P4/P3PPQP/4K2R b Kkq - 0 16",
+      "fen_after": "rq2k2r/p3p2p/4p1p1/3Nn3/5B2/1P1P4/P3PPQP/4K2R w Kkq - 0 17",
+      "clock_seconds": 175.6,
+      "principal_variation": [
+        "exd5",
+        "Qxd5",
+        "Nxe5",
+        "Bxe5",
+        "Qc8",
+        "Kd2",
+        "Rf8",
+        "Rc1"
+      ],
+      "candidates": [
+        {
+          "move": "exd5",
+          "evaluation": -267,
+          "principal_variation": [
+            "exd5",
+            "Qxd5",
+            "Nxe5",
+            "Bxe5",
+            "Qc8",
+            "Kd2",
+            "Rf8",
+            "Rc1"
+          ]
+        },
+        {
+          "move": "Nxe5",
+          "evaluation": -462,
+          "principal_variation": [
+            "Nxe5",
+            "Nc7+",
+            "Kd7",
+            "Bxe5",
+            "Qb4+",
+            "Kd1",
+            "Rac8",
+            "Bxh8"
+          ]
+        },
+        {
+          "move": "Rf8",
+          "evaluation": -794,
+          "principal_variation": [
+            "Rf8",
+            "Nxd7",
+            "Kxd7",
+            "Nf6+",
+            "exf6",
+            "Bxb8",
+            "Raxb8",
+            "Kd2"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p2np2p/4p1p1/3NN3/5B2/1P1P4/P3PPQP/4K2R b Kkq - 0 16",
+        "side_to_move": "Black",
+        "material": {
+          "white": 29,
+          "black": 27,
+          "difference": 2
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 2,
+            "bishop": 1,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qb4+"
+        ],
+        "captures_available": [
+          "Qxe5",
+          "Qxb3",
+          "Nxe5",
+          "exd5"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 26
+      }
+    },
+    {
+      "ply": 33,
+      "move_number": 17,
+      "color": "White",
+      "played_move": "Ne3",
+      "played_move_uci": "d5e3",
+      "best_move": "Nc7+",
+      "best_move_uci": "d5c7",
+      "is_forced": false,
+      "evaluation_before": 508,
+      "evaluation_after": -67,
+      "raw_centipawn_loss": 575,
+      "centipawn_loss": 575,
+      "classification": "blunder",
+      "is_critical": true,
+      "episode_index": 6,
+      "fen_before": "rq2k2r/p3p2p/4p1p1/3Nn3/5B2/1P1P4/P3PPQP/4K2R w Kkq - 0 17",
+      "fen_after": "rq2k2r/p3p2p/4p1p1/4n3/5B2/1P1PN3/P3PPQP/4K2R b Kkq - 1 17",
+      "clock_seconds": 96.4,
+      "principal_variation": [
+        "Nc7+",
+        "Kd7",
+        "Bxe5",
+        "Qb4+",
+        "Kd1",
+        "Rac8",
+        "Bxh8",
+        "Rxh8"
+      ],
+      "candidates": [
+        {
+          "move": "Nc7+",
+          "evaluation": 508,
+          "principal_variation": [
+            "Nc7+",
+            "Kd7",
+            "Bxe5",
+            "Qb4+",
+            "Kd1",
+            "Rac8",
+            "Bxh8",
+            "Rxh8"
+          ]
+        },
+        {
+          "move": "Nxe7",
+          "evaluation": 137,
+          "principal_variation": [
+            "Nxe7",
+            "Kxe7",
+            "O-O",
+            "Rf8",
+            "Qg5+",
+            "Ke8",
+            "Bxe5",
+            "Qd8"
+          ]
+        },
+        {
+          "move": "O-O",
+          "evaluation": 18,
+          "principal_variation": [
+            "O-O",
+            "exd5",
+            "Qxd5",
+            "Qd8",
+            "Qxe5",
+            "Rf8",
+            "Rc1",
+            "Rc8"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p3p2p/4p1p1/3Nn3/5B2/1P1P4/P3PPQP/4K2R w Kkq - 0 17",
+        "side_to_move": "White",
+        "material": {
+          "white": 26,
+          "black": 27,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 1,
+            "bishop": 1,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Nc7+",
+          "Nf6+",
+          "Qxg6+"
+        ],
+        "captures_available": [
+          "Nxe7",
+          "Bxe5",
+          "Qxg6+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 38
+      }
+    },
+    {
+      "ply": 34,
+      "move_number": 17,
+      "color": "Black",
+      "played_move": "Qb4+",
+      "played_move_uci": "b8b4",
+      "best_move": "O-O",
+      "best_move_uci": "e8g8",
+      "is_forced": false,
+      "evaluation_before": 67,
+      "evaluation_after": -552,
+      "raw_centipawn_loss": 619,
+      "centipawn_loss": 619,
+      "classification": "blunder",
+      "is_critical": true,
+      "episode_index": 6,
+      "fen_before": "rq2k2r/p3p2p/4p1p1/4n3/5B2/1P1PN3/P3PPQP/4K2R b Kkq - 1 17",
+      "fen_after": "r3k2r/p3p2p/4p1p1/4n3/1q3B2/1P1PN3/P3PPQP/4K2R w Kkq - 2 18",
+      "clock_seconds": 174.3,
+      "principal_variation": [
+        "O-O",
+        "Bg3",
+        "Qb4+",
+        "Kf1",
+        "Rac8",
+        "Qh3",
+        "Qd6",
+        "Kg2"
+      ],
+      "candidates": [
+        {
+          "move": "O-O",
+          "evaluation": 67,
+          "principal_variation": [
+            "O-O",
+            "Bg3",
+            "Qb4+",
+            "Kf1",
+            "Rac8",
+            "Qh3",
+            "Qd6",
+            "Kg2"
+          ]
+        },
+        {
+          "move": "Nxd3+",
+          "evaluation": -554,
+          "principal_variation": [
+            "Nxd3+",
+            "exd3",
+            "Qb4+",
+            "Ke2",
+            "O-O",
+            "Nc4",
+            "Qc3",
+            "Rc1"
+          ]
+        },
+        {
+          "move": "Qb4+",
+          "evaluation": -561,
+          "principal_variation": [
+            "Qb4+",
+            "Kd1",
+            "O-O",
+            "Bxe5",
+            "Qa5",
+            "f4",
+            "Qxa2",
+            "Qb7"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "rq2k2r/p3p2p/4p1p1/4n3/5B2/1P1PN3/P3PPQP/4K2R b Kkq - 1 17",
+        "side_to_move": "Black",
+        "material": {
+          "white": 26,
+          "black": 27,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 1,
+            "bishop": 1,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qb4+",
+          "Nf3+",
+          "Nxd3+"
+        ],
+        "captures_available": [
+          "Qxb3",
+          "Nxd3+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 28
+      }
+    },
+    {
+      "ply": 35,
+      "move_number": 18,
+      "color": "White",
+      "played_move": "Kf1",
+      "played_move_uci": "e1f1",
+      "best_move": "Kd1",
+      "best_move_uci": "e1d1",
+      "is_forced": false,
+      "evaluation_before": 552,
+      "evaluation_after": -60,
+      "raw_centipawn_loss": 612,
+      "centipawn_loss": 612,
+      "classification": "blunder",
+      "is_critical": true,
+      "episode_index": 6,
+      "fen_before": "r3k2r/p3p2p/4p1p1/4n3/1q3B2/1P1PN3/P3PPQP/4K2R w Kkq - 2 18",
+      "fen_after": "r3k2r/p3p2p/4p1p1/4n3/1q3B2/1P1PN3/P3PPQP/5K1R b kq - 3 18",
+      "clock_seconds": 88.9,
+      "principal_variation": [
+        "Kd1",
+        "O-O",
+        "Bxe5",
+        "Qa5",
+        "f4",
+        "Qxa2",
+        "Qb7",
+        "a5"
+      ],
+      "candidates": [
+        {
+          "move": "Kd1",
+          "evaluation": 552,
+          "principal_variation": [
+            "Kd1",
+            "O-O",
+            "Bxe5",
+            "Qa5",
+            "f4",
+            "Qxa2",
+            "Qb7",
+            "a5"
+          ]
+        },
+        {
+          "move": "Kf1",
+          "evaluation": -58,
+          "principal_variation": [
+            "Kf1",
+            "Rc8",
+            "Qg3",
+            "Rc1+",
+            "Kg2",
+            "Rxh1",
+            "Kxh1",
+            "Nf7"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "r3k2r/p3p2p/4p1p1/4n3/1q3B2/1P1PN3/P3PPQP/4K2R w Kkq - 2 18",
+        "side_to_move": "White",
+        "material": {
+          "white": 26,
+          "black": 27,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 1,
+            "bishop": 1,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [],
+        "in_check": true,
+        "is_checkmate": false,
+        "legal_moves": 2
+      }
+    },
+    {
+      "ply": 36,
+      "move_number": 18,
+      "color": "Black",
+      "played_move": "Qxf4",
+      "played_move_uci": "b4f4",
+      "best_move": "Rc8",
+      "best_move_uci": "a8c8",
+      "is_forced": false,
+      "evaluation_before": 60,
+      "evaluation_after": -750,
+      "raw_centipawn_loss": 810,
+      "centipawn_loss": 810,
+      "classification": "blunder",
+      "is_critical": true,
+      "episode_index": 6,
+      "fen_before": "r3k2r/p3p2p/4p1p1/4n3/1q3B2/1P1PN3/P3PPQP/5K1R b kq - 3 18",
+      "fen_after": "r3k2r/p3p2p/4p1p1/4n3/5q2/1P1PN3/P3PPQP/5K1R w kq - 0 19",
+      "clock_seconds": 173.2,
+      "principal_variation": [
+        "Rc8",
+        "Qg3",
+        "Rc1+",
+        "Kg2",
+        "Rxh1",
+        "Kxh1",
+        "Nf7",
+        "Kg2"
+      ],
+      "candidates": [
+        {
+          "move": "Rc8",
+          "evaluation": 60,
+          "principal_variation": [
+            "Rc8",
+            "Qg3",
+            "Rc1+",
+            "Kg2",
+            "Rxh1",
+            "Kxh1",
+            "Nf7",
+            "Kg2"
+          ]
+        },
+        {
+          "move": "Nxd3",
+          "evaluation": -545,
+          "principal_variation": [
+            "Nxd3",
+            "exd3",
+            "O-O",
+            "Nc4",
+            "Qc3",
+            "Qe4",
+            "Qf6",
+            "Bg3"
+          ]
+        },
+        {
+          "move": "O-O",
+          "evaluation": -639,
+          "principal_variation": [
+            "O-O",
+            "Bxe5",
+            "Rac8",
+            "Nc4",
+            "Rxc4",
+            "dxc4",
+            "Qc5",
+            "Qg3"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "r3k2r/p3p2p/4p1p1/4n3/1q3B2/1P1PN3/P3PPQP/5K1R b kq - 3 18",
+        "side_to_move": "Black",
+        "material": {
+          "white": 26,
+          "black": 27,
+          "difference": -1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 1,
+            "bishop": 1,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qe1+"
+        ],
+        "captures_available": [
+          "Nxd3",
+          "Qxf4",
+          "Qxb3"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 40
+      }
+    },
+    {
+      "ply": 37,
+      "move_number": 19,
+      "color": "White",
+      "played_move": "Qxa8+",
+      "played_move_uci": "g2a8",
+      "best_move": "Qxa8+",
+      "best_move_uci": "g2a8",
+      "is_forced": false,
+      "evaluation_before": 750,
+      "evaluation_after": 790,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "r3k2r/p3p2p/4p1p1/4n3/5q2/1P1PN3/P3PPQP/5K1R w kq - 0 19",
+      "fen_after": "Q3k2r/p3p2p/4p1p1/4n3/5q2/1P1PN3/P3PP1P/5K1R b k - 0 19",
+      "clock_seconds": 84.6,
+      "principal_variation": [
+        "Qxa8+",
+        "Kf7",
+        "Qxh8",
+        "h5",
+        "Qa8",
+        "Ng4",
+        "Nxg4",
+        "Qxg4"
+      ],
+      "candidates": [
+        {
+          "move": "Qxa8+",
+          "evaluation": 750,
+          "principal_variation": [
+            "Qxa8+",
+            "Kf7",
+            "Qxh8",
+            "h5",
+            "Qa8",
+            "Ng4",
+            "Nxg4",
+            "Qxg4"
+          ]
+        },
+        {
+          "move": "Qg3",
+          "evaluation": -673,
+          "principal_variation": [
+            "Qg3",
+            "Qxg3",
+            "fxg3",
+            "Nf7",
+            "Ke1",
+            "Nd6",
+            "Kd2",
+            "e5"
+          ]
+        },
+        {
+          "move": "Kg1",
+          "evaluation": -719,
+          "principal_variation": [
+            "Kg1",
+            "Rc8",
+            "Qg3",
+            "Qf6",
+            "h4",
+            "Rf8",
+            "Kg2",
+            "Nd7"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "r3k2r/p3p2p/4p1p1/4n3/5q2/1P1PN3/P3PPQP/5K1R w kq - 0 19",
+        "side_to_move": "White",
+        "material": {
+          "white": 23,
+          "black": 27,
+          "difference": -4
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 2,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qxa8+",
+          "Qxg6+",
+          "Qc6+"
+        ],
+        "captures_available": [
+          "Qxa8+",
+          "Qxg6+"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 28
+      }
+    },
+    {
+      "ply": 38,
+      "move_number": 19,
+      "color": "Black",
+      "played_move": "Kf7",
+      "played_move_uci": "e8f7",
+      "best_move": "Kf7",
+      "best_move_uci": "e8f7",
+      "is_forced": false,
+      "evaluation_before": -790,
+      "evaluation_after": -794,
+      "raw_centipawn_loss": 4,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "Q3k2r/p3p2p/4p1p1/4n3/5q2/1P1PN3/P3PP1P/5K1R b k - 0 19",
+      "fen_after": "Q6r/p3pk1p/4p1p1/4n3/5q2/1P1PN3/P3PP1P/5K1R w - - 1 20",
+      "clock_seconds": 168.4,
+      "principal_variation": [
+        "Kf7",
+        "Qxh8",
+        "h5",
+        "h4",
+        "Ng4",
+        "Nxg4",
+        "hxg4",
+        "Kg2"
+      ],
+      "candidates": [
+        {
+          "move": "Kf7",
+          "evaluation": -790,
+          "principal_variation": [
+            "Kf7",
+            "Qxh8",
+            "h5",
+            "h4",
+            "Ng4",
+            "Nxg4",
+            "hxg4",
+            "Kg2"
+          ]
+        },
+        {
+          "move": "Kd7",
+          "evaluation": -791,
+          "principal_variation": [
+            "Kd7",
+            "Qxh8",
+            "Nc6",
+            "h4",
+            "Nb4",
+            "Qc3",
+            "Nd5",
+            "Nxd5"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "Q3k2r/p3p2p/4p1p1/4n3/5q2/1P1PN3/P3PP1P/5K1R b k - 0 19",
+        "side_to_move": "Black",
+        "material": {
+          "white": 23,
+          "black": 22,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [],
+        "captures_available": [],
+        "in_check": true,
+        "is_checkmate": false,
+        "legal_moves": 2
+      }
+    },
+    {
+      "ply": 39,
+      "move_number": 20,
+      "color": "White",
+      "played_move": "Qxh8",
+      "played_move_uci": "a8h8",
+      "best_move": "Qxh8",
+      "best_move_uci": "a8h8",
+      "is_forced": false,
+      "evaluation_before": 794,
+      "evaluation_after": 801,
+      "raw_centipawn_loss": 0,
+      "centipawn_loss": 0,
+      "classification": "good",
+      "is_critical": false,
+      "episode_index": null,
+      "fen_before": "Q6r/p3pk1p/4p1p1/4n3/5q2/1P1PN3/P3PP1P/5K1R w - - 1 20",
+      "fen_after": "7Q/p3pk1p/4p1p1/4n3/5q2/1P1PN3/P3PP1P/5K1R b - - 0 20",
+      "clock_seconds": 82.3,
+      "principal_variation": [
+        "Qxh8",
+        "h5",
+        "h4",
+        "Qf6",
+        "Qxf6+",
+        "exf6",
+        "Kg2",
+        "Nc6"
+      ],
+      "candidates": [
+        {
+          "move": "Qxh8",
+          "evaluation": 794,
+          "principal_variation": [
+            "Qxh8",
+            "h5",
+            "h4",
+            "Qf6",
+            "Qxf6+",
+            "exf6",
+            "Kg2",
+            "Nc6"
+          ]
+        },
+        {
+          "move": "Qg2",
+          "evaluation": 155,
+          "principal_variation": [
+            "Qg2",
+            "h5",
+            "Qg3",
+            "Qf6",
+            "Rg1",
+            "Rc8",
+            "Nc4",
+            "Nxc4"
+          ]
+        },
+        {
+          "move": "Qb7",
+          "evaluation": 94,
+          "principal_variation": [
+            "Qb7",
+            "h5",
+            "h4",
+            "Rf8",
+            "Qxa7",
+            "Nc6"
+          ]
+        }
+      ],
+      "position_features": {
+        "fen": "Q6r/p3pk1p/4p1p1/4n3/5q2/1P1PN3/P3PP1P/5K1R w - - 1 20",
+        "side_to_move": "White",
+        "material": {
+          "white": 23,
+          "black": 22,
+          "difference": 1
+        },
+        "piece_counts": {
+          "white": {
+            "pawn": 6,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          },
+          "black": {
+            "pawn": 5,
+            "knight": 1,
+            "bishop": 0,
+            "rook": 1,
+            "queen": 1,
+            "king": 1
+          }
+        },
+        "checks_available": [
+          "Qg8+",
+          "Qf8+",
+          "Qe8+"
+        ],
+        "captures_available": [
+          "Qxh8",
+          "Qxa7"
+        ],
+        "in_check": false,
+        "is_checkmate": false,
+        "legal_moves": 32
+      }
+    }
+  ],
+  "episodes": [
+    {
+      "episode_index": 1,
+      "move_count": 1,
+      "moves": [
+        {
+          "move_number": 1,
+          "color": "White",
+          "played_move": "g4",
+          "centipawn_loss": 161,
+          "classification": "serious_mistake"
+        }
+      ]
+    },
+    {
+      "episode_index": 2,
+      "move_count": 1,
+      "moves": [
+        {
+          "move_number": 4,
+          "color": "Black",
+          "played_move": "Bc8",
+          "centipawn_loss": 111,
+          "classification": "mistake"
+        }
+      ]
+    },
+    {
+      "episode_index": 3,
+      "move_count": 1,
+      "moves": [
+        {
+          "move_number": 6,
+          "color": "Black",
+          "played_move": "Be6",
+          "centipawn_loss": 248,
+          "classification": "serious_mistake"
+        }
+      ]
+    },
+    {
+      "episode_index": 4,
+      "move_count": 2,
+      "moves": [
+        {
+          "move_number": 9,
+          "color": "Black",
+          "played_move": "Qb8",
+          "centipawn_loss": 100,
+          "classification": "mistake"
+        },
+        {
+          "move_number": 10,
+          "color": "White",
+          "played_move": "Qg2",
+          "centipawn_loss": 98,
+          "classification": "mistake"
+        }
+      ]
+    },
+    {
+      "episode_index": 5,
+      "move_count": 2,
+      "moves": [
+        {
+          "move_number": 12,
+          "color": "Black",
+          "played_move": "Bg7",
+          "centipawn_loss": 145,
+          "classification": "mistake"
+        },
+        {
+          "move_number": 13,
+          "color": "White",
+          "played_move": "b3",
+          "centipawn_loss": 294,
+          "classification": "blunder"
+        }
+      ]
+    },
+    {
+      "episode_index": 6,
+      "move_count": 6,
+      "moves": [
+        {
+          "move_number": 15,
+          "color": "Black",
+          "played_move": "Be5",
+          "centipawn_loss": 128,
+          "classification": "mistake"
+        },
+        {
+          "move_number": 16,
+          "color": "Black",
+          "played_move": "Nxe5",
+          "centipawn_loss": 241,
+          "classification": "serious_mistake"
+        },
+        {
+          "move_number": 17,
+          "color": "White",
+          "played_move": "Ne3",
+          "centipawn_loss": 575,
+          "classification": "blunder"
+        },
+        {
+          "move_number": 17,
+          "color": "Black",
+          "played_move": "Qb4+",
+          "centipawn_loss": 619,
+          "classification": "blunder"
+        },
+        {
+          "move_number": 18,
+          "color": "White",
+          "played_move": "Kf1",
+          "centipawn_loss": 612,
+          "classification": "blunder"
+        },
+        {
+          "move_number": 18,
+          "color": "Black",
+          "played_move": "Qxf4",
+          "centipawn_loss": 810,
+          "classification": "blunder"
+        }
+      ]
+    }
+  ]
+}

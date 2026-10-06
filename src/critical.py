@@ -1,4 +1,7 @@
-from models import MoveAnalysis
+try:
+    from models import MoveAnalysis
+except ImportError:
+    from src.models import MoveAnalysis
 
 
 def classify_move(centipawn_loss):

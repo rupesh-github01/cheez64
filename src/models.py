@@ -39,3 +39,10 @@ class MoveAnalysis:
 
     clock_seconds: Optional[float] = None
     position_features: Optional[Dict[str, Any]] = None
+
+    # Extended fields
+    played_move_uci: Optional[str] = None
+    best_move_uci: Optional[str] = None
+    raw_centipawn_loss: Optional[int] = None
+    classification: Optional[str] = None
+    is_forced: bool = False
