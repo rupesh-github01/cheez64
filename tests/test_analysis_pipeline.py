@@ -511,7 +511,7 @@ class TestJsonSerializationAndRoundTrip(unittest.TestCase):
             with open(out_file, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
 
-            self.assertEqual(loaded["schema_version"], "1.0.0")
+            self.assertEqual(loaded["schema_version"], "1.1.0")
             self.assertEqual(loaded["summary"]["total_plies"], 2)
             self.assertEqual(loaded["moves"][0]["played_move"], "e4")
             self.assertEqual(loaded["moves"][1]["centipawn_loss"], 150)

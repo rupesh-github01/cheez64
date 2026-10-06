@@ -12,7 +12,9 @@ except ImportError:
     from src.episodes import group_critical_positions
 
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
+# Migration note: Schema 1.1.0 adds an optional 'tactical_finding' object to critical moves
+# and 'tactical_motifs_count' to the summary. All 1.0.0 fields remain unchanged.
 
 
 def serialize_analysis(
@@ -84,6 +86,7 @@ def serialize_analysis(
             "raw_centipawn_loss": analysis.raw_centipawn_loss,
             "centipawn_loss": analysis.centipawn_loss,
             "classification": classification,
+            "tactical_finding": getattr(analysis, "tactical_finding", None),
             "is_critical": id(analysis) in critical_ids,
             "episode_index": move_to_episode.get(id(analysis)),
             "fen_before": analysis.fen_before,
@@ -105,7 +108,8 @@ def serialize_analysis(
                 "color": m.color,
                 "played_move": m.played_move,
                 "centipawn_loss": m.centipawn_loss,
-                "classification": m.classification or classify_move(m.centipawn_loss)
+                "classification": m.classification or classify_move(m.centipawn_loss),
+                "tactical_finding": getattr(m, "tactical_finding", None)
             })
         serialized_episodes.append({
             "episode_index": ep_idx,
@@ -113,11 +117,18 @@ def serialize_analysis(
             "moves": ep_moves
         })
 
+    tactical_summary: Dict[str, int] = {}
+    for a in critical:
+        tf = getattr(a, "tactical_finding", None)
+        cat = tf.get("category", "unclassified") if isinstance(tf, dict) else "unclassified"
+        tactical_summary[cat] = tactical_summary.get(cat, 0) + 1
+
     summary = {
         "total_plies": len(analyses),
         "total_full_moves": analyses[-1].move_number if analyses else 0,
         "critical_positions_count": len(critical),
-        "critical_episodes_count": len(episodes)
+        "critical_episodes_count": len(episodes),
+        "tactical_motifs_count": tactical_summary
     }
 
     return {

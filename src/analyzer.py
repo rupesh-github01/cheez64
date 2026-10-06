@@ -19,6 +19,9 @@ try:
     from export import (
         export_to_json_file
     )
+    from tactical_analysis import (
+        detect_tactical_consequence
+    )
 except ImportError:
     from src.models import MoveAnalysis, CandidateMove
     from src.pgn_utils import extract_clock
@@ -34,6 +37,9 @@ except ImportError:
     )
     from src.export import (
         export_to_json_file
+    )
+    from src.tactical_analysis import (
+        detect_tactical_consequence
     )
 
 
@@ -276,6 +282,7 @@ def analyze_game(
             )
 
             info_after = next_infos[0] if next_infos else {}
+            pv_after = extract_pv(board, info_after.get("pv", []))
 
             # Evaluate position after move from the mover's POV
             evaluation_after = score_to_cp(
@@ -356,8 +363,15 @@ def analyze_game(
 
                 classification=classification,
 
-                is_forced=is_forced
+                is_forced=is_forced,
+
+                pv_after=pv_after
             )
+
+            # Detect concrete tactical consequence for critical positions
+            tactical_finding = detect_tactical_consequence(analysis)
+            if tactical_finding:
+                analysis.tactical_finding = tactical_finding.to_dict()
 
             analyses.append(analysis)
 
@@ -479,6 +493,18 @@ if __name__ == "__main__":
             f"PV: "
             f"{' '.join(analysis.principal_variation)}"
         )
+
+        if getattr(analysis, "tactical_finding", None):
+            tf = analysis.tactical_finding
+            print(
+                f"Tactical Consequence: "
+                f"{tf['category']} (confidence: {tf['confidence']})"
+            )
+            if tf.get("better_move"):
+                print(f"Better Move: {tf['better_move']}")
+            print(f"Tactical Evidence: {tf['evidence']}")
+            if tf.get("limitations"):
+                print(f"Limitations: {tf['limitations']}")
 
         print(
             f"Position Features:"

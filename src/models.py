@@ -46,3 +46,5 @@ class MoveAnalysis:
     raw_centipawn_loss: Optional[int] = None
     classification: Optional[str] = None
     is_forced: bool = False
+    pv_after: List[str] = field(default_factory=list)
+    tactical_finding: Optional[Dict[str, Any]] = None
