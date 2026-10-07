@@ -895,3 +895,21 @@ def export_profile_to_json(profile: PlayerProfile, output_path: str) -> None:
     """
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(profile.to_dict(), f, indent=2)
+
+
+def build_player_profile_from_library(
+    library: Any,
+    target_player: Optional[str] = None
+) -> PlayerProfile:
+    """
+    Build a PlayerProfile directly from games and analyses stored in a GameLibrary.
+    """
+    analyzed_games = library.list_games(analysis_status="ANALYZED")
+    analyses: List[Dict[str, Any]] = []
+    for g in analyzed_games:
+        a = library.get_analysis(g.game_id)
+        if a:
+            analyses.append(a)
+
+    return build_player_profile(analyses, target_player=target_player)
+
