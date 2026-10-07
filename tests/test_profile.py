@@ -209,21 +209,102 @@ class TestPlayerProfile(unittest.TestCase):
 
     def test_positive_strengths(self):
         """
-        Verify that verified low-CPL tactical captures and clean games generate evidence-grounded strengths.
+        Verify that defensible strengths (low-error games, opening stability, endgame conversion)
+        are properly generated with concrete evidence.
         """
+        # Create a clean game with 25 moves, low CPL, and 0 blunders
         moves = [
-            self._create_mock_move(i, "White", f"Nxe{i}", f"Nxe{i}", cpl=0, is_critical=False)
-            for i in range(1, 8)
+            self._create_mock_move(i, "White", f"Nf{i % 4 + 1}", f"Nf{i % 4 + 1}", cpl=5, is_critical=False)
+            for i in range(1, 26)
         ]
         game = {
-            "metadata": {"white": "Hero", "black": "Opponent"},
+            "metadata": {"white": "Hero", "black": "Opponent", "result": "1-0"},
             "moves": moves
         }
         profile = build_player_profile([game], target_player="Hero")
         self.assertTrue(len(profile.strengths) >= 1)
-        capture_str = next((s for s in profile.strengths if "Material Captures" in s.area), None)
-        self.assertIsNotNone(capture_str)
-        self.assertEqual(capture_str.evidence_count, 7)
+        clean_str = next((s for s in profile.strengths if "Low-Error Performance" in s.area), None)
+        self.assertIsNotNone(clean_str)
+        self.assertIn("average CPL", clean_str.description)
+        self.assertNotIn("master-level", clean_str.description.lower())
+
+    def test_material_accounting_distinction(self):
+        """
+        Regression test: Verify that gross material lost, gross recaptured,
+        actual net material lost, and opportunity cost are strictly distinguished.
+        """
+        # A move where player trades rooks (gross lost: 5, gross won: 5, net: 0, opp cost: 3)
+        ev_even_trade = {
+            "net_material_loss": 3,
+            "played_line_net": 0,
+            "played_captures": [
+                {"move": "Rxe1+", "captured_piece": "rook", "captured_value": 5, "by_color": "White"},
+                {"move": "Rxe1", "captured_piece": "rook", "captured_value": 5, "by_color": "Black"}
+            ]
+        }
+        # A move where player loses a knight unreciprocated (gross lost: 3, gross won: 0, net: 3, opp cost: 3)
+        ev_knight_loss = {
+            "net_material_loss": 3,
+            "played_line_net": -3,
+            "played_captures": [
+                {"move": "bxc4", "captured_piece": "knight", "captured_value": 3, "by_color": "Black"}
+            ]
+        }
+        game = {
+            "metadata": {"white": "Hero", "black": "Opponent"},
+            "moves": [
+                self._create_mock_move(10, "White", "Rad1", "Re1", 150, True, "material_loss", episode_index=1, evidence=ev_even_trade),
+                self._create_mock_move(20, "White", "Kg8", "Bc5", 250, True, "material_loss", episode_index=2, evidence=ev_knight_loss),
+            ]
+        }
+        profile = build_player_profile([game], target_player="Hero")
+        mat = profile.material_summary
+
+        self.assertEqual(mat.gross_material_lost, 8, "5 (rook) + 3 (knight) = 8 gross points lost.")
+        self.assertEqual(mat.gross_material_captured, 5, "5 (rook recaptured) = 5 gross points captured.")
+        self.assertEqual(mat.actual_net_material_loss, 3, "Only the knight (3 pts) was a net loss in played lines.")
+        self.assertEqual(mat.opportunity_cost_loss, 6, "3 (even trade deficit) + 3 (knight deficit) = 6.")
+        self.assertEqual(mat.unreciprocated_pieces_lost.get("knight"), 1)
+        self.assertNotIn("rook", mat.unreciprocated_pieces_lost, "Even trade rook must not appear in unreciprocated losses.")
+
+    def test_episodes_count_across_distinct_games(self):
+        """
+        Regression test: Verify that episode indices from different games are not collapsed together.
+        Game 1 episode 1 and Game 2 episode 1 must count as 2 distinct episodes.
+        """
+        game1 = {
+            "metadata": {"white": "Hero", "black": "Opp1"},
+            "moves": [
+                self._create_mock_move(10, "White", "d5", "Nf3", 150, True, "material_loss", episode_index=1)
+            ]
+        }
+        game2 = {
+            "metadata": {"white": "Hero", "black": "Opp2"},
+            "moves": [
+                self._create_mock_move(10, "White", "d5", "Nf3", 150, True, "material_loss", episode_index=1)
+            ]
+        }
+        profile = build_player_profile([game1, game2], target_player="Hero")
+        self.assertEqual(profile.episodes_count, 2, "Episode 1 in Game 1 and Episode 1 in Game 2 must be 2 distinct episodes.")
+
+    def test_language_discipline_no_rating_claims(self):
+        """
+        Regression test: Verify that generated text summaries contain no rating or master-level claims.
+        """
+        moves = [
+            self._create_mock_move(i, "White", f"Nf{i % 4 + 1}", f"Nf{i % 4 + 1}", cpl=5, is_critical=False)
+            for i in range(1, 26)
+        ]
+        game = {
+            "metadata": {"white": "Hero", "black": "Opponent", "result": "1-0"},
+            "moves": moves
+        }
+        profile = build_player_profile([game], target_player="Hero")
+        summary_text = generate_human_readable_profile(profile)
+
+        forbidden_phrases = ["master-level", "grandmaster", "expert-level", "elo rating", "mastery"]
+        for phrase in forbidden_phrases:
+            self.assertNotIn(phrase, summary_text.lower(), f"Forbidden phrase '{phrase}' found in summary text.")
 
     def test_empty_and_small_dataset(self):
         """

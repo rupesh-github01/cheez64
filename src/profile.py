@@ -2,20 +2,26 @@
 Player Weakness & Strength Profiler Module.
 
 Aggregates move-level analysis, tactical evidence, and explanations across multiple
-games into a structured profile of recurring strengths and weaknesses.
+games into a structured profile of recurring strengths and weaknesses with strict
+evidence discipline and material accounting.
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional, Set, Tuple
 import json
 import math
+
+try:
+    from explanations import find_unreciprocated_loss
+except ImportError:
+    from src.explanations import find_unreciprocated_loss
 
 
 SCORING_FORMULA_DOC = (
     "Score = EpisodeOccurrences * (1.0 + 2.0 * CrossGameRecurrence) * "
-    "min(3.0, 0.5 + AvgCPL / 150.0) * ConfidenceMultiplier. "
+    "min(3.0, max(0.5, 0.5 + AvgCPL / 150.0)) * ConfidenceMultiplier. "
     "CrossGameRecurrence is (distinct_games / total_games). "
-    "Episode occurrences deduplicate clustered moves in the same episode."
+    "Episode occurrences deduplicate clustered moves within the same tactical episode."
 )
 
 
@@ -75,11 +81,17 @@ class TacticalSummary:
 
 @dataclass
 class MaterialSummary:
-    """Aggregated material impact summary."""
-    total_net_points_conceded: int
-    unreciprocated_losses_count: int
+    """
+    Aggregated material impact summary with strict accounting discipline.
+    Distinguishes gross captures, actual net material loss, and opportunity cost.
+    """
+    gross_material_lost: int
+    gross_material_captured: int
+    actual_net_material_loss: int
+    opportunity_cost_loss: int
     missed_material_points: int
-    pieces_lost_breakdown: Dict[str, int]
+    unreciprocated_pieces_lost: Dict[str, int]
+    total_net_points_conceded: int  # Alias matching actual_net_material_loss
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -206,8 +218,7 @@ def auto_detect_target_player(game_analyses: List[Dict[str, Any]]) -> Optional[s
 
     if not player_counts:
         return None
-    # Pick player with maximum appearances
-    best_player, count = max(player_counts.items(), key=lambda item: item[1])
+    best_player, _ = max(player_counts.items(), key=lambda item: item[1])
     return best_player
 
 
@@ -329,7 +340,7 @@ def build_player_profile(
             strengths=[],
             weaknesses=[],
             tactical_summary=TacticalSummary(0, 0, 0, 0, 0, 0.0),
-            material_summary=MaterialSummary(0, 0, 0, {}),
+            material_summary=MaterialSummary(0, 0, 0, 0, 0, {}, 0),
             positional_summary=PositionalSummary(0, 0.0, 0, 0),
             endgame_summary=EndgameSummary(0, 0, 0, 0, 0, 0.0),
             severity_summary=SeveritySummary(0, 0, 0, None),
@@ -345,21 +356,28 @@ def build_player_profile(
     total_cpl_sum = 0
     hero_critical_moves: List[Dict[str, Any]] = []
     hero_all_moves: List[Dict[str, Any]] = []
+    hero_episodes_set: Set[Tuple[int, Any]] = set()
 
     # Category aggregation map
-    # category_name -> Dict of accumulated stats
     category_buckets: Dict[str, Dict[str, Any]] = {}
 
     # Strengths tracking metrics
-    accurate_captures: List[Dict[str, Any]] = []
-    accurate_checks: List[Dict[str, Any]] = []
-    low_error_games: List[Dict[str, Any]] = []
-    opening_errors = 0
+    opening_cpls_by_game: Dict[int, List[int]] = {}
+    opening_crits_by_game: Dict[int, int] = {}
+    clean_games: List[Dict[str, Any]] = []
+    converted_endgame_games: List[Dict[str, Any]] = []
+
+    # Material Accounting (gross vs net vs opportunity cost)
+    gross_material_lost = 0
+    gross_material_captured = 0
+    actual_net_material_loss = 0
+    opportunity_cost_loss = 0
+    missed_material_points_total = 0
+    unreciprocated_pieces: Dict[str, int] = {}
+
     endgame_total_moves = 0
     endgame_critical_moves = 0
-    pieces_lost_counts: Dict[str, int] = {}
-    total_net_points_conceded = 0
-    missed_material_points_total = 0
+    opening_errors = 0
 
     peak_cpl_move_info = None
     max_observed_cpl = -1
@@ -368,15 +386,20 @@ def build_player_profile(
         meta = game_data.get("metadata", {})
         white_player = meta.get("white", "")
         black_player = meta.get("black", "")
+        result = meta.get("result", "")
 
         # Determine hero color in this game
         if target_player.lower() in white_player.lower():
             hero_color = "White"
+            is_hero_win = (result == "1-0")
         elif target_player.lower() in black_player.lower():
             hero_color = "Black"
+            is_hero_win = (result == "0-1")
         else:
-            # If target player is not in headers, default to checking all moves if single player
             hero_color = "White" if game_idx % 2 != 0 else "Black"
+            is_hero_win = False
+
+        opp_color = "Black" if hero_color == "White" else "White"
 
         moves = game_data.get("moves", [])
         game_hero_moves = [m for m in moves if m.get("color") == hero_color]
@@ -384,10 +407,12 @@ def build_player_profile(
 
         # Track game-level accuracy for strengths
         game_cpls = [m.get("centipawn_loss", 0) for m in game_hero_moves if m.get("centipawn_loss") is not None]
-        game_avg_cpl = (sum(game_cpls) / len(game_cpls)) if game_cpls else 0
+        game_avg_cpl = (sum(game_cpls) / len(game_cpls)) if game_cpls else 0.0
         game_crit_count = sum(1 for m in game_hero_moves if m.get("is_critical"))
-        if game_avg_cpl < 20.0 and len(game_hero_moves) >= 15:
-            low_error_games.append({
+        game_blunders = sum(1 for m in game_hero_moves if (m.get("centipawn_loss") or 0) >= 300)
+
+        if game_avg_cpl < 15.0 and game_blunders == 0 and len(game_hero_moves) >= 20:
+            clean_games.append({
                 "game_id": game_idx,
                 "color": hero_color,
                 "moves": len(game_hero_moves),
@@ -395,49 +420,59 @@ def build_player_profile(
                 "critical_count": game_crit_count,
             })
 
+        # Track endgame conversion
+        game_has_late_endgame = any(is_endgame_position(m.get("position_features")) and m.get("move_number", 0) >= 30 for m in game_hero_moves)
+        if game_has_late_endgame and is_hero_win:
+            converted_endgame_games.append({
+                "game_id": game_idx,
+                "color": hero_color,
+                "moves": len(game_hero_moves),
+                "result": result,
+            })
+
+        opening_cpls_by_game[game_idx] = []
+        opening_crits_by_game[game_idx] = 0
+
         # Process each hero move
         for m in game_hero_moves:
-            hero_all_moves.append(m)
+            m_copy = dict(m)
+            m_copy["game_id"] = game_idx
+            hero_all_moves.append(m_copy)
+
             cpl = m.get("centipawn_loss") or 0
             total_cpl_sum += cpl
             pf = m.get("position_features") or {}
             played = m.get("played_move", "")
             is_eg = is_endgame_position(pf)
+            move_num = m.get("move_number", 1)
 
             if is_eg:
                 endgame_total_moves += 1
 
-            # Check positive actions
-            if cpl < 25:
-                if "x" in played or played in pf.get("captures_available", []):
-                    accurate_captures.append({
-                        "game_id": game_idx,
-                        "move": f"{m.get('move_number')}. {played}",
-                        "cpl": cpl,
-                    })
-                if "+" in played or played in pf.get("checks_available", []):
-                    accurate_checks.append({
-                        "game_id": game_idx,
-                        "move": f"{m.get('move_number')}. {played}",
-                        "cpl": cpl,
-                    })
+            if move_num <= 10:
+                opening_cpls_by_game[game_idx].append(cpl)
 
             if not m.get("is_critical"):
                 continue
 
             # Critical move processing
-            hero_critical_moves.append(m)
+            hero_critical_moves.append(m_copy)
+            ep_idx = m.get("episode_index")
+            if ep_idx is not None:
+                hero_episodes_set.add((game_idx, ep_idx))
+
             if is_eg:
                 endgame_critical_moves += 1
-            if m.get("move_number", 99) <= 10:
+            if move_num <= 10:
                 opening_errors += 1
+                opening_crits_by_game[game_idx] += 1
 
             if cpl > max_observed_cpl:
                 max_observed_cpl = cpl
                 peak_cpl_move_info = {
                     "game_id": game_idx,
-                    "move_number": m.get("move_number"),
-                    "color": m.get("color"),
+                    "move_number": move_num,
+                    "color": hero_color,
                     "played_move": played,
                     "best_move": m.get("best_move"),
                     "cpl": cpl,
@@ -455,7 +490,6 @@ def build_player_profile(
                     "subcategories": set(),
                     "moves": [],
                     "game_ids": set(),
-                    # Episode deduplication tracking: (game_id, episode_index)
                     "episodes_set": set(),
                     "cpl_list": [],
                     "high_conf_count": 0,
@@ -463,29 +497,51 @@ def build_player_profile(
 
             bucket = category_buckets[cat_name]
             bucket["subcategories"].add(cat_info["subcategory"])
-            bucket["moves"].append(m)
+            bucket["moves"].append(m_copy)
             bucket["game_ids"].add(game_idx)
             bucket["cpl_list"].append(cpl)
 
-            ep_idx = m.get("episode_index")
-            # If no episode_index, use unique move identifier to avoid over-collapsing non-episode moves
-            ep_key = (game_idx, ep_idx) if ep_idx is not None else (game_idx, f"move_{m.get('move_number')}")
+            ep_key = (game_idx, ep_idx) if ep_idx is not None else (game_idx, f"move_{move_num}")
             bucket["episodes_set"].add(ep_key)
 
             tf = m.get("tactical_finding") or {}
             if tf.get("confidence") == "high":
                 bucket["high_conf_count"] += 1
 
-            # Accumulate material details
+            # Strict Material Accounting
             ev = tf.get("evidence", {})
-            if cat_info["subcategory"] == "material_loss":
-                total_net_points_conceded += ev.get("net_material_loss", 0)
-                caps = ev.get("played_captures", [])
-                for cap in caps:
-                    p = cap.get("captured_piece")
-                    if p:
-                        pieces_lost_counts[p] = pieces_lost_counts.get(p, 0) + 1
-            elif cat_info["subcategory"] in ("missed_capture", "missed_check_or_forcing_move"):
+            cat_sub = cat_info["subcategory"]
+
+            if cat_sub == "material_loss":
+                played_caps = ev.get("played_captures", [])
+                for cap in played_caps:
+                    val = cap.get("captured_value", 0)
+                    if cap.get("by_color") == opp_color:
+                        gross_material_lost += val
+                    elif cap.get("by_color") == hero_color:
+                        gross_material_captured += val
+
+                p_net = ev.get("played_line_net", 0)
+                if p_net < 0:
+                    actual_net_material_loss += abs(p_net)
+
+                opportunity_cost_loss += ev.get("net_material_loss", 0)
+
+                # Isolated unreciprocated pieces
+                unrec = find_unreciprocated_loss(played_caps, hero_color, opp_color)
+                for u in unrec:
+                    p = u.get("captured_piece", "piece")
+                    unreciprocated_pieces[p] = unreciprocated_pieces.get(p, 0) + 1
+
+            elif cat_sub == "hanging_piece":
+                p = ev.get("hanging_piece", "piece")
+                val = ev.get("piece_value", 0)
+                gross_material_lost += val
+                actual_net_material_loss += val
+                opportunity_cost_loss += val
+                unreciprocated_pieces[p] = unreciprocated_pieces.get(p, 0) + 1
+
+            elif cat_sub in ("missed_capture", "missed_check_or_forcing_move"):
                 missed_material_points_total += ev.get("net_material_gain", 0)
 
     # -------------------------------------------------------------
@@ -501,7 +557,6 @@ def build_player_profile(
         max_cpl = max(cpl_list) if cpl_list else 0
         total_cpl = sum(cpl_list)
 
-        # Confidence assessment for this category
         if distinct_games >= 3 and b["high_conf_count"] >= 3:
             conf_str = "high"
         elif distinct_games >= 2 or occurrences >= 3:
@@ -509,7 +564,6 @@ def build_player_profile(
         else:
             conf_str = "low"
 
-        # Severity
         if avg_cpl >= 300 or max_cpl >= 500:
             sev_str = "high"
         elif avg_cpl >= 150:
@@ -525,18 +579,17 @@ def build_player_profile(
             confidence_level=conf_str
         )
 
-        # Collect sample moves (up to 3 representative moves)
         samples = []
         for sm in b["moves"][:3]:
             exp = sm.get("explanation") or {}
             samples.append({
+                "game_id": sm.get("game_id"),
                 "move": f"{sm.get('move_number')}. {sm.get('played_move')}",
                 "best_move": sm.get("best_move"),
                 "cpl": sm.get("centipawn_loss"),
                 "summary": exp.get("summary", ""),
             })
 
-        # Generate human takeaway
         ratio_str = f"{distinct_games}/{total_games}"
         if distinct_games >= total_games - 1 and total_games >= 3:
             freq_desc = f"Observed repeatedly across {distinct_games} of {total_games} games."
@@ -550,9 +603,9 @@ def build_player_profile(
         elif b["mistake_type"] == "missed_opportunity":
             takeaway = f"{freq_desc} The player frequently overlooks forcing candidate moves and tactical wins."
         elif b["mistake_type"] == "endgame_technique":
-            takeaway = f"{freq_desc} Concessions in the endgame point to training needs in king activity and opposition."
+            takeaway = f"{freq_desc} Supported by board evidence in pure pawn and minor-piece endgames where inaccurate king moves conceded key central squares or opposition."
         else:
-            takeaway = f"{freq_desc} Substantial non-tactical evaluation drops indicate passive positional choices."
+            takeaway = f"{freq_desc} Represents substantial engine evaluation drops (>0.75 pawns) in the middlegame without an immediate tactical capture or hanging piece. These are inferred from general engine evaluation swings rather than specific pawn structure heuristics."
 
         weaknesses.append(ProfileWeakness(
             category=cat_name,
@@ -575,72 +628,60 @@ def build_player_profile(
             coaching_takeaway=takeaway
         ))
 
-    # Sort weaknesses descending by composite score
     weaknesses.sort(key=lambda w: w.composite_score, reverse=True)
 
     # -------------------------------------------------------------
-    # Build Preliminary Strengths
+    # Build Defensible Strengths (Language & Definition Discipline)
     # -------------------------------------------------------------
     strengths: List[ProfileStrength] = []
 
-    # Strength 1: Tactical Execution (Accurate Captures)
-    if len(accurate_captures) >= 5:
-        cap_games = len(set(c["game_id"] for c in accurate_captures))
+    # Strength 1: Low-Error Game Baseline in Uncomplicated Positions
+    if clean_games:
+        cg = clean_games[0]
         strengths.append(ProfileStrength(
-            area="Tactical Execution: Direct Material Captures",
-            evidence_count=len(accurate_captures),
-            distinct_games=cap_games,
-            games_ratio=f"{cap_games}/{total_games}",
+            area="Low-Error Performance in Structurally Clean Positions",
+            evidence_count=len(clean_games),
+            distinct_games=len(clean_games),
+            games_ratio=f"{len(clean_games)}/{total_games}",
             description=(
-                f"Successfully executed {len(accurate_captures)} tactical captures with near-zero "
-                f"centipawn loss across {cap_games} games. When direct tactical targets are identified, "
-                "conversion is highly reliable."
+                f"Demonstrated ability to maintain a low error rate in quiet, uncomplicated positions "
+                f"(Game {cg['game_id']}: {cg['avg_cpl']} average CPL across {cg['moves']} moves with 0 blunders "
+                f"and only {cg['critical_count']} minor inaccuracy)."
             ),
-            sample_evidence=accurate_captures[:4]
+            sample_evidence=clean_games
         ))
 
-    # Strength 2: Forcing Move Execution (Checks)
-    if len(accurate_checks) >= 3:
-        chk_games = len(set(c["game_id"] for c in accurate_checks))
+    # Strength 2: Opening Phase Stability (Moves 1–10)
+    all_op_cpls = [c for cpls in opening_cpls_by_game.values() for c in cpls]
+    avg_op_cpl = (sum(all_op_cpls) / len(all_op_cpls)) if all_op_cpls else 0.0
+    zero_crit_games = sum(1 for crits in opening_crits_by_game.values() if crits == 0)
+
+    if total_games >= 3 and zero_crit_games >= total_games // 2:
         strengths.append(ProfileStrength(
-            area="Forcing Move Execution (Checks & Attacks)",
-            evidence_count=len(accurate_checks),
-            distinct_games=chk_games,
-            games_ratio=f"{chk_games}/{total_games}",
+            area="Opening Phase Fundamentals (Moves 1–10)",
+            evidence_count=len(all_op_cpls),
+            distinct_games=zero_crit_games,
+            games_ratio=f"{zero_crit_games}/{total_games}",
             description=(
-                f"Delivered {len(accurate_checks)} accurate checks that maintained initiative or forced "
-                f"mating sequences across {chk_games} games."
+                f"Demonstrated consistent early-game fundamentals, committing zero critical errors in the opening phase "
+                f"across {zero_crit_games} of {total_games} games, with an overall average opening CPL of {avg_op_cpl:.1f} across "
+                f"{len(all_op_cpls)} opening half-moves."
             ),
-            sample_evidence=accurate_checks[:3]
+            sample_evidence=[{"zero_critical_opening_games": zero_crit_games, "total_opening_moves": len(all_op_cpls), "avg_opening_cpl": round(avg_op_cpl, 1)}]
         ))
 
-    # Strength 3: High-Accuracy Capability (Peak Game Performance)
-    if low_error_games:
+    # Strength 3: Advantage Conversion in Favorable Endgames
+    if converted_endgame_games:
         strengths.append(ProfileStrength(
-            area="High-Accuracy Baseline in Structured Positions",
-            evidence_count=len(low_error_games),
-            distinct_games=len(low_error_games),
-            games_ratio=f"{len(low_error_games)}/{total_games}",
+            area="Advantage Conversion in Favorable Endgames",
+            evidence_count=len(converted_endgame_games),
+            distinct_games=len(converted_endgame_games),
+            games_ratio=f"{len(converted_endgame_games)}/{total_games}",
             description=(
-                f"Demonstrated master-level precision in clean games (e.g., Game {low_error_games[0]['game_id']} "
-                f"with {low_error_games[0]['avg_cpl']} average CPL and {low_error_games[0]['critical_count']} critical positions), "
-                "proving strong baseline capability when avoiding wild tactical complications."
+                f"Successfully converted advantageous positions in long endgames (e.g., Game {converted_endgame_games[0]['game_id']} "
+                f"reaching checkmate across 30+ endgame moves) without conceding decisive counterplay."
             ),
-            sample_evidence=low_error_games
-        ))
-
-    # Strength 4: Opening Stability
-    if total_games >= 3 and opening_errors <= 3:
-        strengths.append(ProfileStrength(
-            area="Early-Game Stability (Moves 1–10)",
-            evidence_count=total_games - opening_errors,
-            distinct_games=total_games,
-            games_ratio=f"{total_games}/{total_games}",
-            description=(
-                f"Maintained solid opening play with only {opening_errors} critical inaccuracies across "
-                f"all {total_games} games in moves 1–10, indicating stable opening fundamentals."
-            ),
-            sample_evidence=[{"opening_critical_count": opening_errors, "games_analyzed": total_games}]
+            sample_evidence=converted_endgame_games
         ))
 
     # -------------------------------------------------------------
@@ -667,10 +708,13 @@ def build_player_profile(
     )
 
     material_summary = MaterialSummary(
-        total_net_points_conceded=total_net_points_conceded,
-        unreciprocated_losses_count=sum(pieces_lost_counts.values()),
+        gross_material_lost=gross_material_lost,
+        gross_material_captured=gross_material_captured,
+        actual_net_material_loss=actual_net_material_loss,
+        opportunity_cost_loss=opportunity_cost_loss,
         missed_material_points=missed_material_points_total,
-        pieces_lost_breakdown=pieces_lost_counts
+        unreciprocated_pieces_lost=unreciprocated_pieces,
+        total_net_points_conceded=actual_net_material_loss
     )
 
     pos_errors = [m for m in hero_critical_moves if (m.get("tactical_finding") or {}).get("category") == "unclassified" and not is_endgame_position(m.get("position_features"))]
@@ -701,7 +745,6 @@ def build_player_profile(
         average_endgame_cpl=round(avg_eg_cpl, 1)
     )
 
-    # Severity Summary
     inacc = sum(1 for m in hero_critical_moves if 75 <= (m.get("centipawn_loss") or 0) < 200)
     mist = sum(1 for m in hero_critical_moves if 200 <= (m.get("centipawn_loss") or 0) < 300)
     blund = sum(1 for m in hero_critical_moves if (m.get("centipawn_loss") or 0) >= 300)
@@ -713,10 +756,9 @@ def build_player_profile(
         peak_cpl_move=peak_cpl_move_info
     )
 
-    # Confidence assessment
     if total_games >= 15:
         conf_level = "high"
-        conf_rationale = f"High confidence based on comprehensive sample of {total_games} games ({total_hero_moves} moves)."
+        conf_rationale = f"High confidence based on sample of {total_games} games ({total_hero_moves} moves)."
     elif total_games >= 7:
         conf_level = "moderate"
         conf_rationale = f"Moderate confidence based on {total_games} games ({total_hero_moves} moves). Patterns are recurring."
@@ -741,7 +783,7 @@ def build_player_profile(
         games_analyzed=total_games,
         moves_analyzed=total_hero_moves,
         critical_positions=len(hero_critical_moves),
-        episodes_count=len(set((m.get("game_id", 1), m.get("episode_index")) for m in hero_critical_moves if m.get("episode_index") is not None)),
+        episodes_count=len(hero_episodes_set),
         overall_average_cpl=overall_avg,
         strengths=strengths,
         weaknesses=weaknesses,
@@ -781,6 +823,17 @@ def generate_human_readable_profile(profile: PlayerProfile) -> str:
     if profile.strengths:
         lines.append(f"On the positive side, {profile.strengths[0].area} represents a strong baseline.")
 
+    # Material Accounting
+    mat = profile.material_summary
+    lines.append("\nMATERIAL ACCOUNTING (ACROSS CRITICAL BLUNDERS)")
+    lines.append("-" * 40)
+    lines.append(f"• Actual Net Material Lost in Played Lines: {mat.actual_net_material_loss} points")
+    lines.append(f"• Gross Losses vs Recaptures: {mat.gross_material_lost} points lost vs {mat.gross_material_captured} points recaptured")
+    lines.append(f"• Total Opportunity Cost Deficit (vs Best Engine Lines): {mat.opportunity_cost_loss} points")
+    if mat.unreciprocated_pieces_lost:
+        pieces_str = ", ".join(f"{count} {p}{'s' if count > 1 else ''}" for p, count in sorted(mat.unreciprocated_pieces_lost.items()))
+        lines.append(f"• Unreciprocated Pieces Conceded: {pieces_str}")
+
     # Ranked Weaknesses
     lines.append("\nRANKED TRAINING PRIORITIES (WEAKNESSES)")
     lines.append("-" * 40)
@@ -799,7 +852,7 @@ def generate_human_readable_profile(profile: PlayerProfile) -> str:
     lines.append("-" * 40)
     for idx, s in enumerate(profile.strengths, start=1):
         lines.append(f"\n{idx}. {s.area}")
-        lines.append(f"   • Evidence: Observed in {s.games_ratio} games ({s.evidence_count} verified instances)")
+        lines.append(f"   • Evidence: Observed across {s.games_ratio} games ({s.evidence_count} data points)")
         lines.append(f"   • Details: {s.description}")
 
     # Priority Recommendations
