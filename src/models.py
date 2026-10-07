@@ -48,3 +48,4 @@ class MoveAnalysis:
     is_forced: bool = False
     pv_after: List[str] = field(default_factory=list)
     tactical_finding: Optional[Dict[str, Any]] = None
+    explanation: Optional[Dict[str, Any]] = None

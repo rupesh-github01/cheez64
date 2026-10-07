@@ -87,6 +87,7 @@ def serialize_analysis(
             "centipawn_loss": analysis.centipawn_loss,
             "classification": classification,
             "tactical_finding": getattr(analysis, "tactical_finding", None),
+            "explanation": getattr(analysis, "explanation", None),
             "is_critical": id(analysis) in critical_ids,
             "episode_index": move_to_episode.get(id(analysis)),
             "fen_before": analysis.fen_before,
@@ -109,7 +110,8 @@ def serialize_analysis(
                 "played_move": m.played_move,
                 "centipawn_loss": m.centipawn_loss,
                 "classification": m.classification or classify_move(m.centipawn_loss),
-                "tactical_finding": getattr(m, "tactical_finding", None)
+                "tactical_finding": getattr(m, "tactical_finding", None),
+                "explanation": getattr(m, "explanation", None),
             })
         serialized_episodes.append({
             "episode_index": ep_idx,

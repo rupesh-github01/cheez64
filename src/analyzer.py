@@ -22,6 +22,9 @@ try:
     from tactical_analysis import (
         detect_tactical_consequence
     )
+    from explanations import (
+        generate_move_explanation
+    )
 except ImportError:
     from src.models import MoveAnalysis, CandidateMove
     from src.pgn_utils import extract_clock
@@ -40,6 +43,9 @@ except ImportError:
     )
     from src.tactical_analysis import (
         detect_tactical_consequence
+    )
+    from src.explanations import (
+        generate_move_explanation
     )
 
 
@@ -373,6 +379,11 @@ def analyze_game(
             if tactical_finding:
                 analysis.tactical_finding = tactical_finding.to_dict()
 
+            # Generate structured human-readable explanation
+            explanation = generate_move_explanation(analysis, board_after=board)
+            if explanation:
+                analysis.explanation = explanation.to_dict()
+
             analyses.append(analysis)
 
             # Advance current position search and node for next move
@@ -505,6 +516,10 @@ if __name__ == "__main__":
             print(f"Tactical Evidence: {tf['evidence']}")
             if tf.get("limitations"):
                 print(f"Limitations: {tf['limitations']}")
+
+        if getattr(analysis, "explanation", None):
+            exp = analysis.explanation
+            print(f"Explanation: {exp['summary']}")
 
         print(
             f"Position Features:"
