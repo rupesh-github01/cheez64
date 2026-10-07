@@ -149,6 +149,27 @@ def explain_missed_capture(
     )
 
 
+def find_unreciprocated_loss(
+    played_caps: List[Dict[str, Any]],
+    mover_color: str,
+    opp_color: str
+) -> List[Dict[str, Any]]:
+    """
+    Find captures by the opponent that were not matched by an equal piece trade from the mover.
+    """
+    opp_caps = [c for c in played_caps if c.get("by_color") == opp_color]
+    mover_caps = [c for c in played_caps if c.get("by_color") == mover_color]
+    mover_pool = [c.get("captured_piece") for c in mover_caps]
+    unreciprocated = []
+    for c in opp_caps:
+        p = c.get("captured_piece")
+        if p in mover_pool:
+            mover_pool.remove(p)
+        else:
+            unreciprocated.append(c)
+    return unreciprocated
+
+
 def explain_material_loss(
     analysis: MoveAnalysis,
     evidence: Dict[str, Any],
@@ -159,36 +180,49 @@ def explain_material_loss(
     played_move = analysis.played_move
     better_move = analysis.best_move or ""
     net_loss = evidence.get("net_material_loss", 0)
+    played_line_net = evidence.get("played_line_net", -net_loss)
+    candidate_line_net = evidence.get("candidate_line_net", 0)
     played_caps = evidence.get("played_captures", [])
     played_seq = evidence.get("played_sequence", [])
     better_seq = evidence.get("better_sequence", [])
     variation_str = format_variation(better_seq) if better_seq else format_variation(played_seq)
     opp_color = get_opponent_color(analysis.color)
 
-    # Check if a specific piece lost by mover can be identified
-    lost_piece_desc = None
-    target_sq = None
-    if played_caps:
-        for cap in played_caps:
-            if cap.get("by_color") == opp_color:
-                lost_piece_desc = cap.get("captured_piece")
-                cap_move = cap.get("move", "")
-                if cap_move and len(cap_move) >= 2:
-                    # Clean target square from SAN move (e.g. Bxe5+ -> e5)
-                    clean = cap_move.rstrip("+#!?")
-                    if len(clean) >= 2 and clean[-2] in "abcdefgh" and clean[-1] in "12345678":
-                        target_sq = clean[-2:]
-                break
-
-    if lost_piece_desc:
-        at_sq = f" on {target_sq}" if target_sq else ""
-        summary = f"After {played_move}, your {lost_piece_desc}{at_sq} is lost, costing {format_material_points(net_loss)} of material."
-        what_happened = f"Playing {played_move} allows {opp_color} to capture your {lost_piece_desc} in the continuation."
+    if played_line_net > 0:
+        # Player gained material in played line, but candidate line gained more
+        summary = f"After {played_move}, you gain {format_material_points(played_line_net)} of material, but {better_move} wins {format_material_points(candidate_line_net)}."
+        what_happened = f"Playing {played_move} nets {format_material_points(played_line_net)}, missing the stronger continuation with {better_move}."
+        why_it_matters = f"You achieve a material gain, but {better_move} wins {format_material_points(candidate_line_net)}, leaving a {format_material_points(net_loss)} difference."
+    elif played_line_net == 0:
+        # Equal trades occurred in played line, but candidate line won material
+        summary = f"After {played_move}, you miss out on winning {format_material_points(candidate_line_net)} of material compared to {better_move}."
+        what_happened = f"Playing {played_move} results in an equal trade, whereas {better_move} wins {format_material_points(candidate_line_net)} of material."
+        why_it_matters = f"This concedes a {format_material_points(net_loss)} material difference compared to playing {better_move}."
     else:
-        summary = f"After {played_move}, you lose {format_material_points(net_loss)} of material compared to {better_move}."
-        what_happened = f"In the played line, {opp_color} wins material through a concrete tactical sequence."
+        # Net material loss in played line (played_line_net < 0)
+        actual_loss = abs(played_line_net)
+        unrec = find_unreciprocated_loss(played_caps, analysis.color, opp_color)
+        lost_piece_desc = None
+        target_sq = None
+        if unrec:
+            lost_piece_desc = unrec[0].get("captured_piece")
+            cap_move = unrec[0].get("move", "")
+            clean = cap_move.rstrip("+#!?")
+            if len(clean) >= 2 and clean[-2] in "abcdefgh" and clean[-1] in "12345678":
+                target_sq = clean[-2:]
 
-    why_it_matters = f"This leaves you at a net material deficit of {format_material_points(net_loss)} compared to playing {better_move}."
+        at_sq = f" on {target_sq}" if target_sq else ""
+        if lost_piece_desc and candidate_line_net <= 0:
+            summary = f"After {played_move}, your {lost_piece_desc}{at_sq} is lost, costing {format_material_points(actual_loss)} of material."
+            what_happened = f"Playing {played_move} allows {opp_color} to capture your {lost_piece_desc}{at_sq} in the continuation."
+        elif lost_piece_desc and candidate_line_net > 0:
+            summary = f"After {played_move}, your {lost_piece_desc}{at_sq} is lost, costing {format_material_points(actual_loss)} of material compared to winning {format_material_points(candidate_line_net)} with {better_move}."
+            what_happened = f"Playing {played_move} loses your {lost_piece_desc}{at_sq}, while {better_move} would have won material."
+        else:
+            summary = f"After {played_move}, you lose {format_material_points(net_loss)} of material compared to {better_move}."
+            what_happened = f"In the played line, {opp_color} wins material through a concrete tactical sequence."
+
+        why_it_matters = f"This leaves you at a net material deficit of {format_material_points(net_loss)} compared to playing {better_move}."
 
     return MoveExplanation(
         summary=summary,

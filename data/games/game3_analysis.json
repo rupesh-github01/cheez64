@@ -22,11 +22,11 @@
     "critical_positions_count": 16,
     "critical_episodes_count": 4,
     "tactical_motifs_count": {
-      "missed_capture": 5,
-      "material_loss": 3,
-      "unclassified": 4,
+      "unclassified": 7,
+      "material_loss": 4,
       "missed_check_or_forcing_move": 2,
-      "hanging_piece": 2
+      "missed_capture": 2,
+      "hanging_piece": 1
     }
   },
   "moves": [
@@ -45,6 +45,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "d4 was the engine's recommended move.",
+        "what_happened": "You played the best move d4.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "d4",
+        "variation": "d4 d5 c4 e6 Nf3 Nf6",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
@@ -152,6 +162,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "d5 was the engine's recommended move.",
+        "what_happened": "You played the best move d5.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "d5",
+        "variation": "d5 c4 e6 Nf3 dxc4 e3",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1",
@@ -259,6 +279,16 @@
       "centipawn_loss": 4,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nf3 was solid, conceding only 0.04 pawns.",
+        "what_happened": "You played Nf3 (engine recommendation: c4).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "c4",
+        "variation": "c4 e6 Nc3 Nf6 Bg5 dxc4",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 0 2",
@@ -366,6 +396,16 @@
       "centipawn_loss": 2,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nf6 was solid, conceding only 0.02 pawns.",
+        "what_happened": "You played Nf6 (engine recommendation: e6).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "e6",
+        "variation": "e6 c4 dxc4 e3 c5 Bxc4",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R b KQkq - 1 2",
@@ -473,6 +513,16 @@
       "centipawn_loss": 37,
       "classification": "inaccuracy",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nc3 was solid, conceding only 0.37 pawns.",
+        "what_happened": "You played Nc3 (engine recommendation: c4).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "c4",
+        "variation": "c4 dxc4 e3 c5 Bxc4 e6",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rnbqkb1r/ppp1pppp/5n2/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R w KQkq - 2 3",
@@ -580,6 +630,16 @@
       "centipawn_loss": 41,
       "classification": "inaccuracy",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "h6 was solid, conceding only 0.41 pawns.",
+        "what_happened": "You played h6 (engine recommendation: e6).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "e6",
+        "variation": "e6 Bg5 Bb4 e3 c5 Be2",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rnbqkb1r/ppp1pppp/5n2/3p4/3P4/2N2N2/PPP1PPPP/R1BQKB1R b KQkq - 3 3",
@@ -687,6 +747,16 @@
       "centipawn_loss": 9,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Bf4 was solid, conceding only 0.09 pawns.",
+        "what_happened": "You played Bf4 (engine recommendation: Qd3).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Qd3",
+        "variation": "Qd3 Nc6 e4 dxe4 Nxe4 Bg4",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rnbqkb1r/ppp1ppp1/5n1p/3p4/3P4/2N2N2/PPP1PPPP/R1BQKB1R w KQkq - 0 4",
@@ -797,6 +867,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Bf5 was the engine's recommended move.",
+        "what_happened": "You played the best move Bf5.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Bf5",
+        "variation": "Bf5 e3 c6 Bd3 Bxd3 cxd3",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rnbqkb1r/ppp1ppp1/5n1p/3p4/3P1B2/2N2N2/PPP1PPPP/R2QKB1R b KQkq - 1 4",
@@ -904,6 +984,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "e3 was the engine's recommended move.",
+        "what_happened": "You played the best move e3.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "e3",
+        "variation": "e3 c6 Bd3 e6 Bxf5 exf5",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rn1qkb1r/ppp1ppp1/5n1p/3p1b2/3P1B2/2N2N2/PPP1PPPP/R2QKB1R w KQkq - 2 5",
@@ -1015,6 +1105,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "e6 was the engine's recommended move.",
+        "what_happened": "You played the best move e6.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "e6",
+        "variation": "c6 Bd3 Bxd3 cxd3 Nh5 Be5",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rn1qkb1r/ppp1ppp1/5n1p/3p1b2/3P1B2/2N1PN2/PPP2PPP/R2QKB1R b KQkq - 0 5",
@@ -1124,6 +1224,16 @@
       "centipawn_loss": 18,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Bb5+ was solid, conceding only 0.18 pawns.",
+        "what_happened": "You played Bb5+ (engine recommendation: Bd3).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Bd3",
+        "variation": "Bd3 Bxd3 cxd3 Nh5 Be5 c6",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rn1qkb1r/ppp2pp1/4pn1p/3p1b2/3P1B2/2N1PN2/PPP2PPP/R2QKB1R w KQkq - 0 6",
@@ -1237,6 +1347,16 @@
       "centipawn_loss": 5,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "c6 was solid, conceding only 0.05 pawns.",
+        "what_happened": "You played c6 (engine recommendation: Nbd7).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Nbd7",
+        "variation": "Nbd7 Bd3 Bb4 O-O Ne4 Ne2",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rn1qkb1r/ppp2pp1/4pn1p/1B1p1b2/3P1B2/2N1PN2/PPP2PPP/R2QK2R b KQkq - 1 6",
@@ -1344,6 +1464,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Bd3 was the engine's recommended move.",
+        "what_happened": "You played the best move Bd3.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Bd3",
+        "variation": "Bd3 Bxd3 cxd3 Nh5 Be5 Nd7",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rn1qkb1r/pp3pp1/2p1pn1p/1B1p1b2/3P1B2/2N1PN2/PPP2PPP/R2QK2R w KQkq - 0 7",
@@ -1458,6 +1588,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Bxd3 was the engine's recommended move.",
+        "what_happened": "You played the best move Bxd3.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Bxd3",
+        "variation": "Bxd3 cxd3 Nh5 Be5 Nd7 h3",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rn1qkb1r/pp3pp1/2p1pn1p/3p1b2/3P1B2/2NBPN2/PPP2PPP/R2QK2R b KQkq - 1 7",
@@ -1567,6 +1707,16 @@
       "centipawn_loss": 9,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Qxd3 was solid, conceding only 0.09 pawns.",
+        "what_happened": "You played Qxd3 (engine recommendation: cxd3).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "cxd3",
+        "variation": "cxd3 Qb6 Qc2 Nh5 Be5 Nd7",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rn1qkb1r/pp3pp1/2p1pn1p/3p4/3P1B2/2NbPN2/PPP2PPP/R2QK2R w KQkq - 0 8",
@@ -1680,6 +1830,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nbd7 was the engine's recommended move.",
+        "what_happened": "You played the best move Nbd7.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Nbd7",
+        "variation": "Nh5 Be5 Nd7 O-O Be7 Ne2",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "rn1qkb1r/pp3pp1/2p1pn1p/3p4/3P1B2/2NQPN2/PPP2PPP/R3K2R b KQkq - 0 8",
@@ -1787,6 +1947,16 @@
       "centipawn_loss": 11,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "a3 was solid, conceding only 0.11 pawns.",
+        "what_happened": "You played a3 (engine recommendation: O-O).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "O-O",
+        "variation": "O-O Nh5 Be5 Be7 Ne2 O-O",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qkb1r/pp1n1pp1/2p1pn1p/3p4/3P1B2/2NQPN2/PPP2PPP/R3K2R w KQkq - 1 9",
@@ -1897,6 +2067,16 @@
       "centipawn_loss": 28,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nb6 was solid, conceding only 0.28 pawns.",
+        "what_happened": "You played Nb6 (engine recommendation: Nh5).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Nh5",
+        "variation": "Nh5 Be5 Be7 O-O O-O Ne2",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qkb1r/pp1n1pp1/2p1pn1p/3p4/3P1B2/P1NQPN2/1PP2PPP/R3K2R b KQkq - 0 9",
@@ -2006,6 +2186,16 @@
       "centipawn_loss": 33,
       "classification": "inaccuracy",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "h3 was solid, conceding only 0.33 pawns.",
+        "what_happened": "You played h3 (engine recommendation: e4).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "e4",
+        "variation": "e4 Nxe4 Nxe4 dxe4 Qxe4 Qd5",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qkb1r/pp3pp1/1np1pn1p/3p4/3P1B2/P1NQPN2/1PP2PPP/R3K2R w KQkq - 1 10",
@@ -2116,6 +2306,16 @@
       "centipawn_loss": 26,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Bd6 was solid, conceding only 0.26 pawns.",
+        "what_happened": "You played Bd6 (engine recommendation: Nc4).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Nc4",
+        "variation": "Nc4 b3 Nxa3 O-O Bb4 Ne2",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qkb1r/pp3pp1/1np1pn1p/3p4/3P1B2/P1NQPN1P/1PP2PP1/R3K2R b KQkq - 0 10",
@@ -2225,6 +2425,16 @@
       "centipawn_loss": 33,
       "classification": "inaccuracy",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Ne5 was solid, conceding only 0.33 pawns.",
+        "what_happened": "You played Ne5 (engine recommendation: Bxd6).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Bxd6",
+        "variation": "Bxd6 Qxd6 e4 dxe4 Nxe4 Nxe4",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp3pp1/1npbpn1p/3p4/3P1B2/P1NQPN1P/1PP2PP1/R3K2R w KQkq - 1 11",
@@ -2336,6 +2546,16 @@
       "centipawn_loss": 23,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nfd7 was solid, conceding only 0.23 pawns.",
+        "what_happened": "You played Nfd7 (engine recommendation: Bxe5).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Bxe5",
+        "variation": "Bxe5 Bxe5 Nc4 Bxf6 Qxf6 b3",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp3pp1/1npbpn1p/3pN3/3P1B2/P1NQP2P/1PP2PP1/R3K2R b KQkq - 2 11",
@@ -2446,24 +2666,26 @@
       "centipawn_loss": 137,
       "classification": "mistake",
       "tactical_finding": {
-        "category": "missed_capture",
-        "confidence": "high",
+        "category": "unclassified",
+        "confidence": "low",
         "played_move": "O-O-O",
         "better_move": "Nxd7",
         "evidence": {
-          "missed_capture_move": "Nxd7",
-          "target_square": "d7",
-          "captured_piece": "knight",
-          "captured_value": 3,
-          "net_material_gain": 0,
-          "candidate_sequence": [
-            "Nxd7",
-            "Qxd7",
-            "Bxd6",
-            "Qxd6"
-          ]
+          "centipawn_loss": 137,
+          "raw_centipawn_loss": 137,
+          "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
         },
-        "limitations": null
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+      },
+      "explanation": {
+        "summary": "O-O-O was inaccurate, conceding an evaluation drop of 1.37 pawns compared to Nxd7.",
+        "what_happened": "You played O-O-O. The engine preferred Nxd7.",
+        "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+        "better_move": "Nxd7",
+        "variation": "Nxd7 Qxd7 Bxd6 Qxd6 a4 Qc7",
+        "motif": "unclassified",
+        "confidence": "low",
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
       },
       "is_critical": true,
       "episode_index": 1,
@@ -2578,6 +2800,16 @@
       "centipawn_loss": 45,
       "classification": "inaccuracy",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nxe5 was solid, conceding only 0.45 pawns.",
+        "what_happened": "You played Nxe5 (engine recommendation: Bxe5).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Bxe5",
+        "variation": "Bxe5 Bxe5 Nxe5 dxe5 Nc4 Qd4",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp1n1pp1/1npbp2p/3pN3/3P1B2/P1NQP2P/1PP2PP1/2KR3R b kq - 4 12",
@@ -2689,6 +2921,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "dxe5 was the engine's recommended move.",
+        "what_happened": "You played the best move dxe5.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "dxe5",
+        "variation": "dxe5 Be7 Nb1 c5 Qb5+ Qd7",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp3pp1/1npbp2p/3pn3/3P1B2/P1NQP2P/1PP2PP1/2KR3R w kq - 0 13",
@@ -2801,6 +3043,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Be7 was the engine's recommended move.",
+        "what_happened": "You played the best move Be7.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Be7",
+        "variation": "Be7 Nb1 Na4 Nc3 Nc5 Qe2",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp3pp1/1npbp2p/3pP3/5B2/P1NQP2P/1PP2PP1/2KR3R b kq - 0 13",
@@ -2911,6 +3163,16 @@
       "centipawn_loss": 65,
       "classification": "inaccuracy",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "e4 was solid, conceding only 0.65 pawns.",
+        "what_happened": "You played e4 (engine recommendation: Nb1).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Nb1",
+        "variation": "Nb1 Na4 Nc3 Nc5 Qe2 b5",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp2bpp1/1np1p2p/3pP3/5B2/P1NQP2P/1PP2PP1/2KR3R w kq - 1 14",
@@ -3022,6 +3284,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nc4 was the engine's recommended move.",
+        "what_happened": "You played the best move Nc4.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Nc4",
+        "variation": "Nc4 Ne2 a5 Kb1 Qb6 Qb3",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp2bpp1/1np1p2p/3pP3/4PB2/P1NQ3P/1PP2PP1/2KR3R b kq - 0 14",
@@ -3132,6 +3404,16 @@
       "centipawn_loss": 17,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "exd5 was solid, conceding only 0.17 pawns.",
+        "what_happened": "You played exd5 (engine recommendation: Ne2).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "Ne2",
+        "variation": "Ne2 a5 Bd2 Qb6 Bc3 Qxf2",
+        "motif": "good_move",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp2bpp1/2p1p2p/3pP3/2n1PB2/P1NQ3P/1PP2PP1/2KR3R w kq - 1 15",
@@ -3245,6 +3527,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "cxd5 was the engine's recommended move.",
+        "what_happened": "You played the best move cxd5.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "cxd5",
+        "variation": "cxd5 Nb5 O-O Qb3 Bc5 Nd4",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp2bpp1/2p1p2p/3PP3/2n2B2/P1NQ3P/1PP2PP1/2KR3R b kq - 0 15",
@@ -3397,6 +3689,16 @@
         },
         "limitations": null
       },
+      "explanation": {
+        "summary": "After g4, your pawn on a3 is lost, costing 1 point of material.",
+        "what_happened": "Playing g4 allows Black to capture your pawn on a3 in the continuation.",
+        "why_it_matters": "This leaves you at a net material deficit of 1 point compared to playing Ne4.",
+        "better_move": "Ne4",
+        "variation": "Ne4 O-O Nd2 b5 Qg3 Kh8",
+        "motif": "material_loss",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": true,
       "episode_index": 2,
       "fen_before": "r2qk2r/pp2bpp1/4p2p/3pP3/2n2B2/P1NQ3P/1PP2PP1/2KR3R w kq - 0 16",
@@ -3509,6 +3811,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Qb6 was the engine's recommended move.",
+        "what_happened": "You played the best move Qb6.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Qb6",
+        "variation": "Qb6 b3 Bxa3+ Kb1 Rc8 Be3",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r2qk2r/pp2bpp1/4p2p/3pP3/2n2BP1/P1NQ3P/1PP2P2/2KR3R b kq - 0 16",
@@ -3632,6 +3944,16 @@
         },
         "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
       },
+      "explanation": {
+        "summary": "Na4 was inaccurate, conceding an evaluation drop of 1.49 pawns compared to b3.",
+        "what_happened": "You played Na4. The engine preferred b3.",
+        "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+        "better_move": "b3",
+        "variation": "b3 Bxa3+ Kb1 Rc8 Na4 Qc6",
+        "motif": "unclassified",
+        "confidence": "low",
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+      },
       "is_critical": true,
       "episode_index": 2,
       "fen_before": "r3k2r/pp2bpp1/1q2p2p/3pP3/2n2BP1/P1NQ3P/1PP2P2/2KR3R w kq - 1 17",
@@ -3744,6 +4066,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Qa5 was the engine's recommended move.",
+        "what_happened": "You played the best move Qa5.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Qa5",
+        "variation": "Qa5 b3 Rc8 Rdg1 b5 Kd1",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r3k2r/pp2bpp1/1q2p2p/3pP3/N1n2BP1/P2Q3P/1PP2P2/2KR3R b kq - 2 17",
@@ -3861,6 +4193,16 @@
       "centipawn_loss": 28,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Qb3 was solid, conceding only 0.28 pawns.",
+        "what_happened": "You played Qb3 (engine recommendation: b3).",
+        "why_it_matters": "The move preserves position stability without significant concession.",
+        "better_move": "b3",
+        "variation": "b3 Rc8 Rdg1 b5 Kd1 bxa4",
+        "motif": "inaccuracy",
+        "confidence": "medium",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r3k2r/pp2bpp1/4p2p/q2pP3/N1n2BP1/P2Q3P/1PP2P2/2KR3R w kq - 3 18",
@@ -3972,6 +4314,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "b5 was the engine's recommended move.",
+        "what_happened": "You played the best move b5.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "b5",
+        "variation": "b5 Nc3 b4 Qa4+ Qxa4 Nxa4",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r3k2r/pp2bpp1/4p2p/q2pP3/N1n2BP1/PQ5P/1PP2P2/2KR3R b kq - 4 18",
@@ -4087,6 +4439,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Nc3 was the engine's recommended move.",
+        "what_happened": "You played the best move Nc3.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Nc3",
+        "variation": "Nc3 b4 Nxd5 exd5 a4 Nb6",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r3k2r/p3bpp1/4p2p/qp1pP3/N1n2BP1/PQ5P/1PP2P2/2KR3R w kq - 0 19",
@@ -4201,6 +4563,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "b4 was the engine's recommended move.",
+        "what_happened": "You played the best move b4.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "b4",
+        "variation": "b4 Nxd5 exd5 a4 Rc8 Kb1",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r3k2r/p3bpp1/4p2p/qp1pP3/2n2BP1/PQN4P/1PP2P2/2KR3R b kq - 1 19",
@@ -4324,6 +4696,16 @@
           "raw_centipawn_loss": 100,
           "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
         },
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+      },
+      "explanation": {
+        "summary": "axb4 was inaccurate, conceding an evaluation drop of 1.00 pawns compared to Nxd5.",
+        "what_happened": "You played axb4. The engine preferred Nxd5.",
+        "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+        "better_move": "Nxd5",
+        "variation": "Nxd5 exd5 a4 Rc8 Kb1 O-O",
+        "motif": "unclassified",
+        "confidence": "low",
         "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
       },
       "is_critical": true,
@@ -4460,6 +4842,16 @@
         },
         "limitations": null
       },
+      "explanation": {
+        "summary": "Qa1+ was stronger because it gives check while creating a fork.",
+        "what_happened": "You played Bxb4, missing Qa1+ which checks the king and forks another piece.",
+        "why_it_matters": "The check severely restricts White's choices, yielding a verified advantage of 5.73 pawns.",
+        "better_move": "Qa1+",
+        "variation": "Qa1+ Nb1 a5 Rd4",
+        "motif": "missed_check_or_forcing_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": true,
       "episode_index": 3,
       "fen_before": "r3k2r/p3bpp1/4p2p/q2pP3/1Pn2BP1/1QN4P/1PP2P2/2KR3R b kq - 0 20",
@@ -4592,6 +4984,16 @@
         },
         "limitations": null
       },
+      "explanation": {
+        "summary": "Qa4+ was stronger because it gives check while creating a fork.",
+        "what_happened": "You played Na2, missing Qa4+ which checks the king and forks another piece.",
+        "why_it_matters": "The check severely restricts Black's choices, yielding a verified advantage of 5.83 pawns.",
+        "better_move": "Qa4+",
+        "variation": "Qa4+ Ke7 Qxa5 Bxa5",
+        "motif": "missed_check_or_forcing_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": true,
       "episode_index": 3,
       "fen_before": "r3k2r/p4pp1/4p2p/q2pP3/1bn2BP1/1QN4P/1PP2P2/2KR3R w kq - 0 21",
@@ -4718,6 +5120,16 @@
         },
         "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
       },
+      "explanation": {
+        "summary": "Be7 was inaccurate, conceding an evaluation drop of 1.15 pawns compared to O-O.",
+        "what_happened": "You played Be7. The engine preferred O-O.",
+        "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+        "better_move": "O-O",
+        "variation": "O-O g5 Rfb8 gxh6 Ba3 Rdg1",
+        "motif": "unclassified",
+        "confidence": "low",
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+      },
       "is_critical": true,
       "episode_index": 3,
       "fen_before": "r3k2r/p4pp1/4p2p/q2pP3/1bn2BP1/1Q5P/NPP2P2/2KR3R b kq - 1 21",
@@ -4831,6 +5243,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Bd2 was the engine's recommended move.",
+        "what_happened": "You played the best move Bd2.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Bd2",
+        "variation": "Bd2 Nxd2 Rxd2 Bg5 Qc3 Qb6",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r3k2r/p3bpp1/4p2p/q2pP3/2n2BP1/1Q5P/NPP2P2/2KR3R w kq - 2 22",
@@ -4946,24 +5368,26 @@
       "centipawn_loss": 411,
       "classification": "blunder",
       "tactical_finding": {
-        "category": "missed_capture",
-        "confidence": "high",
+        "category": "unclassified",
+        "confidence": "low",
         "played_move": "Qb6",
         "better_move": "Nxd2",
         "evidence": {
-          "missed_capture_move": "Nxd2",
-          "target_square": "d2",
-          "captured_piece": "bishop",
-          "captured_value": 3,
-          "net_material_gain": 0,
-          "candidate_sequence": [
-            "Nxd2",
-            "Rxd2",
-            "Bg5",
-            "Qc3"
-          ]
+          "centipawn_loss": 411,
+          "raw_centipawn_loss": 411,
+          "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
         },
-        "limitations": null
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+      },
+      "explanation": {
+        "summary": "Qb6 was inaccurate, conceding an evaluation drop of 4.11 pawns compared to Nxd2.",
+        "what_happened": "You played Qb6. The engine preferred Nxd2.",
+        "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+        "better_move": "Nxd2",
+        "variation": "Nxd2 Rxd2 Bg5 Qc3 Bxd2+ Kxd2",
+        "motif": "unclassified",
+        "confidence": "low",
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
       },
       "is_critical": true,
       "episode_index": 3,
@@ -5080,6 +5504,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Qa4+ was the engine's recommended move.",
+        "what_happened": "You played the best move Qa4+.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Qa4+",
+        "variation": "Qa4+ Kf8 Bc3 Rc8 b3 Na3",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r3k2r/p3bpp1/1q2p2p/3pP3/2n3P1/1Q5P/NPPB1P2/2KR3R w kq - 4 23",
@@ -5194,6 +5628,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Kf8 was the engine's recommended move.",
+        "what_happened": "You played the best move Kf8.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Kf8",
+        "variation": "Kf8 Bc3 Qxf2 Rhf1 Qe3+ Kb1",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r3k2r/p3bpp1/1q2p2p/3pP3/Q1n3P1/7P/NPPB1P2/2KR3R b kq - 5 23",
@@ -5301,6 +5745,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Bc3 was the engine's recommended move.",
+        "what_happened": "You played the best move Bc3.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Bc3",
+        "variation": "Bc3 Qxf2 Rhf1 Qe3+ Kb1 Rb8",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r4k1r/p3bpp1/1q2p2p/3pP3/Q1n3P1/7P/NPPB1P2/2KR3R w - - 6 24",
@@ -5414,6 +5868,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Rb8 was the engine's recommended move.",
+        "what_happened": "You played the best move Rb8.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Rb8",
+        "variation": "Rb8 b3 Qxf2 Rhf1 Qe3+ Kb1",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "r4k1r/p3bpp1/1q2p2p/3pP3/Q1n3P1/2B4P/NPP2P2/2KR3R b - - 7 24",
@@ -5530,6 +5994,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "b3 was the engine's recommended move.",
+        "what_happened": "You played the best move b3.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "b3",
+        "variation": "b3 Qxf2 Rhf1 Qe3+ Kb1 Qb6",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "1r3k1r/p3bpp1/1q2p2p/3pP3/Q1n3P1/2B4P/NPP2P2/2KR3R w - - 8 25",
@@ -5662,6 +6136,16 @@
         },
         "limitations": null
       },
+      "explanation": {
+        "summary": "You missed Qxf2, which wins a pawn.",
+        "what_happened": "You played Ba3+ instead of capturing the pawn on f2 with Qxf2.",
+        "why_it_matters": "The capture sequence secures a net advantage of 1 point of material.",
+        "better_move": "Qxf2",
+        "variation": "Qxf2 Rhf1 Qe3+ Kb1",
+        "motif": "missed_capture",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": true,
       "episode_index": 4,
       "fen_before": "1r3k1r/p3bpp1/1q2p2p/3pP3/Q1n3P1/1PB4P/N1P2P2/2KR3R b - - 0 25",
@@ -5777,6 +6261,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Kb1 was the engine's recommended move.",
+        "what_happened": "You played the best move Kb1.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Kb1",
+        "variation": "Kb1 Be7 Ka1 Na3 Rd2 Qb7",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "1r3k1r/p4pp1/1q2p2p/3pP3/Q1n3P1/bPB4P/N1P2P2/2KR3R w - - 1 26",
@@ -5899,6 +6393,16 @@
         },
         "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
       },
+      "explanation": {
+        "summary": "Qb5 was inaccurate, conceding an evaluation drop of 1.56 pawns compared to Be7.",
+        "what_happened": "You played Qb5. The engine preferred Be7.",
+        "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+        "better_move": "Be7",
+        "variation": "Be7 Ka1 Na3 Rc1 Nb5 Bb4",
+        "motif": "unclassified",
+        "confidence": "low",
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+      },
       "is_critical": true,
       "episode_index": 4,
       "fen_before": "1r3k1r/p4pp1/1q2p2p/3pP3/Q1n3P1/bPB4P/N1P2P2/1K1R3R b - - 2 26",
@@ -6013,23 +6517,64 @@
       "centipawn_loss": 451,
       "classification": "blunder",
       "tactical_finding": {
-        "category": "missed_capture",
+        "category": "material_loss",
         "confidence": "high",
         "played_move": "Qxa7",
         "better_move": "Qxb5",
         "evidence": {
-          "missed_capture_move": "Qxb5",
-          "target_square": "b5",
-          "captured_piece": "queen",
-          "captured_value": 9,
-          "net_material_gain": 0,
-          "candidate_sequence": [
+          "net_material_loss": 2,
+          "played_line_net": -2,
+          "candidate_line_net": 0,
+          "played_captures": [
+            {
+              "move": "Nxb2",
+              "captured_piece": "bishop",
+              "captured_value": 3,
+              "by_color": "Black"
+            }
+          ],
+          "candidate_captures": [
+            {
+              "move": "Qxb5",
+              "captured_piece": "queen",
+              "captured_value": 9,
+              "by_color": "White"
+            },
+            {
+              "move": "Rxb5",
+              "captured_piece": "queen",
+              "captured_value": 9,
+              "by_color": "Black"
+            }
+          ],
+          "played_sequence": [
+            "Qxa7",
+            "Bc5",
+            "Qc7",
+            "Kg8",
+            "Bb2",
+            "Nxb2",
+            "Nc3"
+          ],
+          "better_sequence": [
             "Qxb5",
             "Rxb5",
             "Nc1",
-            "Be7"
+            "Be7",
+            "Ne2",
+            "Kg8"
           ]
         },
+        "limitations": null
+      },
+      "explanation": {
+        "summary": "After Qxa7, your bishop on b2 is lost, costing 2 points of material.",
+        "what_happened": "Playing Qxa7 allows Black to capture your bishop on b2 in the continuation.",
+        "why_it_matters": "This leaves you at a net material deficit of 2 points compared to playing Qxb5.",
+        "better_move": "Qxb5",
+        "variation": "Qxb5 Rxb5 Nc1 Be7 Ne2 Kg8",
+        "motif": "material_loss",
+        "confidence": "high",
         "limitations": null
       },
       "is_critical": true,
@@ -6193,6 +6738,16 @@
         },
         "limitations": null
       },
+      "explanation": {
+        "summary": "After Kg8, your knight on c4 is lost, costing 3 points of material compared to winning 3 points with Bc5.",
+        "what_happened": "Playing Kg8 loses your knight on c4, while Bc5 would have won material.",
+        "why_it_matters": "This leaves you at a net material deficit of 6 points compared to playing Bc5.",
+        "better_move": "Bc5",
+        "variation": "Bc5 Qc7 Kg8 Bb2 Nxb2 Nc3",
+        "motif": "material_loss",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": true,
       "episode_index": 4,
       "fen_before": "1r3k1r/Q4pp1/4p2p/1q1pP3/2n3P1/bPB4P/N1P2P2/1K1R3R b - - 0 27",
@@ -6350,6 +6905,16 @@
         },
         "limitations": null
       },
+      "explanation": {
+        "summary": "After g5, your pawn on c2 is lost, costing 1 point of material compared to winning 3 points with Ka1.",
+        "what_happened": "Playing g5 loses your pawn on c2, while Ka1 would have won material.",
+        "why_it_matters": "This leaves you at a net material deficit of 4 points compared to playing Ka1.",
+        "better_move": "Ka1",
+        "variation": "Ka1 Rb7 Qd4 Qa6 bxc4 Ra7",
+        "motif": "material_loss",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": true,
       "episode_index": 4,
       "fen_before": "1r4kr/Q4pp1/4p2p/1q1pP3/2n3P1/bPB4P/N1P2P2/1K1R3R w - - 1 28",
@@ -6478,6 +7043,16 @@
           "opponent_capture_move": "Qxf7",
           "reason": "completely_undefended"
         },
+        "limitations": null
+      },
+      "explanation": {
+        "summary": "Your pawn on f7 was left vulnerable and could be captured.",
+        "what_happened": "Playing Kh7 left your pawn on f7 completely undefended.",
+        "why_it_matters": "White can respond with Qxf7, winning your pawn (1 point).",
+        "better_move": "Bc5",
+        "variation": "Qxf7",
+        "motif": "hanging_piece",
+        "confidence": "high",
         "limitations": null
       },
       "is_critical": true,
@@ -6613,6 +7188,16 @@
         },
         "limitations": null
       },
+      "explanation": {
+        "summary": "You missed Qxf7, which wins a pawn for a net gain of 2 points.",
+        "what_happened": "You played gxh6 instead of capturing the pawn on f7 with Qxf7.",
+        "why_it_matters": "The capture sequence secures a net advantage of 2 points of material.",
+        "better_move": "Qxf7",
+        "variation": "Qxf7 Rhe8 gxh6 Rb7",
+        "motif": "missed_capture",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": true,
       "episode_index": 4,
       "fen_before": "1r5r/Q4ppk/4p2p/1q1pP1P1/2n5/bPB4P/N1P2P2/1K1R3R w - - 1 29",
@@ -6728,20 +7313,26 @@
       "centipawn_loss": 1000,
       "classification": "blunder",
       "tactical_finding": {
-        "category": "hanging_piece",
-        "confidence": "high",
+        "category": "unclassified",
+        "confidence": "low",
         "played_move": "gxh6",
         "better_move": "Rb7",
         "evidence": {
-          "hanging_piece": "pawn",
-          "square": "f7",
-          "piece_value": 1,
-          "defenders_count": 0,
-          "attackers_count": 1,
-          "opponent_capture_move": "Qxf7#",
-          "reason": "completely_undefended"
+          "centipawn_loss": 1000,
+          "raw_centipawn_loss": 1000,
+          "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
         },
-        "limitations": null
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+      },
+      "explanation": {
+        "summary": "gxh6 blundered into a forced checkmate against you.",
+        "what_happened": "You played gxh6. The engine found a forced checkmate continuation for White.",
+        "why_it_matters": "The position becomes lost; Rb7 was required to prevent immediate forced mate.",
+        "better_move": "Rb7",
+        "variation": "Rb7 Qd4 g6 h4 Ra8 h5",
+        "motif": "unclassified",
+        "confidence": "low",
+        "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
       },
       "is_critical": true,
       "episode_index": 4,
@@ -6858,6 +7449,16 @@
       "centipawn_loss": 0,
       "classification": "good",
       "tactical_finding": null,
+      "explanation": {
+        "summary": "Qxf7# was the engine's recommended move.",
+        "what_happened": "You played the best move Qxf7#.",
+        "why_it_matters": "This maintains the optimal evaluation and strategic balance.",
+        "better_move": "Qxf7#",
+        "variation": "Qxf7#",
+        "motif": "best_move",
+        "confidence": "high",
+        "limitations": null
+      },
       "is_critical": false,
       "episode_index": null,
       "fen_before": "1r5r/Q4p1k/4p2p/1q1pP3/2n5/bPB4P/N1P2P2/1K1R3R w - - 0 30",
@@ -6956,24 +7557,26 @@
           "centipawn_loss": 137,
           "classification": "mistake",
           "tactical_finding": {
-            "category": "missed_capture",
-            "confidence": "high",
+            "category": "unclassified",
+            "confidence": "low",
             "played_move": "O-O-O",
             "better_move": "Nxd7",
             "evidence": {
-              "missed_capture_move": "Nxd7",
-              "target_square": "d7",
-              "captured_piece": "knight",
-              "captured_value": 3,
-              "net_material_gain": 0,
-              "candidate_sequence": [
-                "Nxd7",
-                "Qxd7",
-                "Bxd6",
-                "Qxd6"
-              ]
+              "centipawn_loss": 137,
+              "raw_centipawn_loss": 137,
+              "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
             },
-            "limitations": null
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+          },
+          "explanation": {
+            "summary": "O-O-O was inaccurate, conceding an evaluation drop of 1.37 pawns compared to Nxd7.",
+            "what_happened": "You played O-O-O. The engine preferred Nxd7.",
+            "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+            "better_move": "Nxd7",
+            "variation": "Nxd7 Qxd7 Bxd6 Qxd6 a4 Qc7",
+            "motif": "unclassified",
+            "confidence": "low",
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
           }
         }
       ]
@@ -7025,6 +7628,16 @@
               ]
             },
             "limitations": null
+          },
+          "explanation": {
+            "summary": "After g4, your pawn on a3 is lost, costing 1 point of material.",
+            "what_happened": "Playing g4 allows Black to capture your pawn on a3 in the continuation.",
+            "why_it_matters": "This leaves you at a net material deficit of 1 point compared to playing Ne4.",
+            "better_move": "Ne4",
+            "variation": "Ne4 O-O Nd2 b5 Qg3 Kh8",
+            "motif": "material_loss",
+            "confidence": "high",
+            "limitations": null
           }
         },
         {
@@ -7043,6 +7656,16 @@
               "raw_centipawn_loss": 149,
               "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
             },
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+          },
+          "explanation": {
+            "summary": "Na4 was inaccurate, conceding an evaluation drop of 1.49 pawns compared to b3.",
+            "what_happened": "You played Na4. The engine preferred b3.",
+            "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+            "better_move": "b3",
+            "variation": "b3 Bxa3+ Kb1 Rc8 Na4 Qc6",
+            "motif": "unclassified",
+            "confidence": "low",
             "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
           }
         }
@@ -7068,6 +7691,16 @@
               "raw_centipawn_loss": 100,
               "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
             },
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+          },
+          "explanation": {
+            "summary": "axb4 was inaccurate, conceding an evaluation drop of 1.00 pawns compared to Nxd5.",
+            "what_happened": "You played axb4. The engine preferred Nxd5.",
+            "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+            "better_move": "Nxd5",
+            "variation": "Nxd5 exd5 a4 Rc8 Kb1 O-O",
+            "motif": "unclassified",
+            "confidence": "low",
             "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
           }
         },
@@ -7095,6 +7728,16 @@
               ]
             },
             "limitations": null
+          },
+          "explanation": {
+            "summary": "Qa1+ was stronger because it gives check while creating a fork.",
+            "what_happened": "You played Bxb4, missing Qa1+ which checks the king and forks another piece.",
+            "why_it_matters": "The check severely restricts White's choices, yielding a verified advantage of 5.73 pawns.",
+            "better_move": "Qa1+",
+            "variation": "Qa1+ Nb1 a5 Rd4",
+            "motif": "missed_check_or_forcing_move",
+            "confidence": "high",
+            "limitations": null
           }
         },
         {
@@ -7121,6 +7764,16 @@
               ]
             },
             "limitations": null
+          },
+          "explanation": {
+            "summary": "Qa4+ was stronger because it gives check while creating a fork.",
+            "what_happened": "You played Na2, missing Qa4+ which checks the king and forks another piece.",
+            "why_it_matters": "The check severely restricts Black's choices, yielding a verified advantage of 5.83 pawns.",
+            "better_move": "Qa4+",
+            "variation": "Qa4+ Ke7 Qxa5 Bxa5",
+            "motif": "missed_check_or_forcing_move",
+            "confidence": "high",
+            "limitations": null
           }
         },
         {
@@ -7140,6 +7793,16 @@
               "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
             },
             "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+          },
+          "explanation": {
+            "summary": "Be7 was inaccurate, conceding an evaluation drop of 1.15 pawns compared to O-O.",
+            "what_happened": "You played Be7. The engine preferred O-O.",
+            "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+            "better_move": "O-O",
+            "variation": "O-O g5 Rfb8 gxh6 Ba3 Rdg1",
+            "motif": "unclassified",
+            "confidence": "low",
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
           }
         },
         {
@@ -7149,24 +7812,26 @@
           "centipawn_loss": 411,
           "classification": "blunder",
           "tactical_finding": {
-            "category": "missed_capture",
-            "confidence": "high",
+            "category": "unclassified",
+            "confidence": "low",
             "played_move": "Qb6",
             "better_move": "Nxd2",
             "evidence": {
-              "missed_capture_move": "Nxd2",
-              "target_square": "d2",
-              "captured_piece": "bishop",
-              "captured_value": 3,
-              "net_material_gain": 0,
-              "candidate_sequence": [
-                "Nxd2",
-                "Rxd2",
-                "Bg5",
-                "Qc3"
-              ]
+              "centipawn_loss": 411,
+              "raw_centipawn_loss": 411,
+              "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
             },
-            "limitations": null
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+          },
+          "explanation": {
+            "summary": "Qb6 was inaccurate, conceding an evaluation drop of 4.11 pawns compared to Nxd2.",
+            "what_happened": "You played Qb6. The engine preferred Nxd2.",
+            "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+            "better_move": "Nxd2",
+            "variation": "Nxd2 Rxd2 Bg5 Qc3 Bxd2+ Kxd2",
+            "motif": "unclassified",
+            "confidence": "low",
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
           }
         }
       ]
@@ -7200,6 +7865,16 @@
               ]
             },
             "limitations": null
+          },
+          "explanation": {
+            "summary": "You missed Qxf2, which wins a pawn.",
+            "what_happened": "You played Ba3+ instead of capturing the pawn on f2 with Qxf2.",
+            "why_it_matters": "The capture sequence secures a net advantage of 1 point of material.",
+            "better_move": "Qxf2",
+            "variation": "Qxf2 Rhf1 Qe3+ Kb1",
+            "motif": "missed_capture",
+            "confidence": "high",
+            "limitations": null
           }
         },
         {
@@ -7219,6 +7894,16 @@
               "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
             },
             "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+          },
+          "explanation": {
+            "summary": "Qb5 was inaccurate, conceding an evaluation drop of 1.56 pawns compared to Be7.",
+            "what_happened": "You played Qb5. The engine preferred Be7.",
+            "why_it_matters": "No immediate tactical loss or hanging piece was verified; the evaluation drop reflects positional or endgame factors beyond short tactics.",
+            "better_move": "Be7",
+            "variation": "Be7 Ka1 Na3 Rc1 Nb5 Bb4",
+            "motif": "unclassified",
+            "confidence": "low",
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
           }
         },
         {
@@ -7228,23 +7913,64 @@
           "centipawn_loss": 451,
           "classification": "blunder",
           "tactical_finding": {
-            "category": "missed_capture",
+            "category": "material_loss",
             "confidence": "high",
             "played_move": "Qxa7",
             "better_move": "Qxb5",
             "evidence": {
-              "missed_capture_move": "Qxb5",
-              "target_square": "b5",
-              "captured_piece": "queen",
-              "captured_value": 9,
-              "net_material_gain": 0,
-              "candidate_sequence": [
+              "net_material_loss": 2,
+              "played_line_net": -2,
+              "candidate_line_net": 0,
+              "played_captures": [
+                {
+                  "move": "Nxb2",
+                  "captured_piece": "bishop",
+                  "captured_value": 3,
+                  "by_color": "Black"
+                }
+              ],
+              "candidate_captures": [
+                {
+                  "move": "Qxb5",
+                  "captured_piece": "queen",
+                  "captured_value": 9,
+                  "by_color": "White"
+                },
+                {
+                  "move": "Rxb5",
+                  "captured_piece": "queen",
+                  "captured_value": 9,
+                  "by_color": "Black"
+                }
+              ],
+              "played_sequence": [
+                "Qxa7",
+                "Bc5",
+                "Qc7",
+                "Kg8",
+                "Bb2",
+                "Nxb2",
+                "Nc3"
+              ],
+              "better_sequence": [
                 "Qxb5",
                 "Rxb5",
                 "Nc1",
-                "Be7"
+                "Be7",
+                "Ne2",
+                "Kg8"
               ]
             },
+            "limitations": null
+          },
+          "explanation": {
+            "summary": "After Qxa7, your bishop on b2 is lost, costing 2 points of material.",
+            "what_happened": "Playing Qxa7 allows Black to capture your bishop on b2 in the continuation.",
+            "why_it_matters": "This leaves you at a net material deficit of 2 points compared to playing Qxb5.",
+            "better_move": "Qxb5",
+            "variation": "Qxb5 Rxb5 Nc1 Be7 Ne2 Kg8",
+            "motif": "material_loss",
+            "confidence": "high",
             "limitations": null
           }
         },
@@ -7298,6 +8024,16 @@
               ]
             },
             "limitations": null
+          },
+          "explanation": {
+            "summary": "After Kg8, your knight on c4 is lost, costing 3 points of material compared to winning 3 points with Bc5.",
+            "what_happened": "Playing Kg8 loses your knight on c4, while Bc5 would have won material.",
+            "why_it_matters": "This leaves you at a net material deficit of 6 points compared to playing Bc5.",
+            "better_move": "Bc5",
+            "variation": "Bc5 Qc7 Kg8 Bb2 Nxb2 Nc3",
+            "motif": "material_loss",
+            "confidence": "high",
+            "limitations": null
           }
         },
         {
@@ -7350,6 +8086,16 @@
               ]
             },
             "limitations": null
+          },
+          "explanation": {
+            "summary": "After g5, your pawn on c2 is lost, costing 1 point of material compared to winning 3 points with Ka1.",
+            "what_happened": "Playing g5 loses your pawn on c2, while Ka1 would have won material.",
+            "why_it_matters": "This leaves you at a net material deficit of 4 points compared to playing Ka1.",
+            "better_move": "Ka1",
+            "variation": "Ka1 Rb7 Qd4 Qa6 bxc4 Ra7",
+            "motif": "material_loss",
+            "confidence": "high",
+            "limitations": null
           }
         },
         {
@@ -7372,6 +8118,16 @@
               "opponent_capture_move": "Qxf7",
               "reason": "completely_undefended"
             },
+            "limitations": null
+          },
+          "explanation": {
+            "summary": "Your pawn on f7 was left vulnerable and could be captured.",
+            "what_happened": "Playing Kh7 left your pawn on f7 completely undefended.",
+            "why_it_matters": "White can respond with Qxf7, winning your pawn (1 point).",
+            "better_move": "Bc5",
+            "variation": "Qxf7",
+            "motif": "hanging_piece",
+            "confidence": "high",
             "limitations": null
           }
         },
@@ -7400,6 +8156,16 @@
               ]
             },
             "limitations": null
+          },
+          "explanation": {
+            "summary": "You missed Qxf7, which wins a pawn for a net gain of 2 points.",
+            "what_happened": "You played gxh6 instead of capturing the pawn on f7 with Qxf7.",
+            "why_it_matters": "The capture sequence secures a net advantage of 2 points of material.",
+            "better_move": "Qxf7",
+            "variation": "Qxf7 Rhe8 gxh6 Rb7",
+            "motif": "missed_capture",
+            "confidence": "high",
+            "limitations": null
           }
         },
         {
@@ -7409,20 +8175,26 @@
           "centipawn_loss": 1000,
           "classification": "blunder",
           "tactical_finding": {
-            "category": "hanging_piece",
-            "confidence": "high",
+            "category": "unclassified",
+            "confidence": "low",
             "played_move": "gxh6",
             "better_move": "Rb7",
             "evidence": {
-              "hanging_piece": "pawn",
-              "square": "f7",
-              "piece_value": 1,
-              "defenders_count": 0,
-              "attackers_count": 1,
-              "opponent_capture_move": "Qxf7#",
-              "reason": "completely_undefended"
+              "centipawn_loss": 1000,
+              "raw_centipawn_loss": 1000,
+              "reason": "No concrete material loss, hanging piece, missed capture, or forcing sequence verified in search PV"
             },
-            "limitations": null
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
+          },
+          "explanation": {
+            "summary": "gxh6 blundered into a forced checkmate against you.",
+            "what_happened": "You played gxh6. The engine found a forced checkmate continuation for White.",
+            "why_it_matters": "The position becomes lost; Rb7 was required to prevent immediate forced mate.",
+            "better_move": "Rb7",
+            "variation": "Rb7 Qd4 g6 h4 Ra8 h5",
+            "motif": "unclassified",
+            "confidence": "low",
+            "limitations": "Positional or strategic factor beyond verified short-tactics heuristics"
           }
         }
       ]

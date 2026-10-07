@@ -387,6 +387,138 @@ class TestMoveExplanations(unittest.TestCase):
         self.assertEqual(exp_best.motif, "best_move")
         self.assertIn("recommended", exp_best.summary)
 
+    def test_material_loss_even_trade_with_candidate_win(self):
+        """
+        Regression test: When played line is an equal exchange (played_line_net == 0)
+        and candidate line wins material (candidate_line_net == 3), the explanation
+        must state that the player missed winning material, rather than falsely claiming
+        a piece on the trade square was lost.
+        """
+        analysis = MoveAnalysis(
+            move_number=16,
+            color="Black",
+            played_move="Rad8",
+            best_move="Re2",
+            evaluation_before=135,
+            evaluation_after=-479,
+            centipawn_loss=614,
+            fen_before="r3r1k1/p1pq1ppp/5n2/2P5/8/7P/PPQN1PP1/R4RK1 b - - 0 16",
+            fen_after="3rr1k1/p1pq1ppp/5n2/2P5/8/7P/PPQN1PP1/R4RK1 w - - 1 17",
+            classification="blunder",
+        )
+        evidence = {
+            "net_material_loss": 3,
+            "played_line_net": 0,
+            "candidate_line_net": 3,
+            "played_captures": [
+                {"move": "Rxe1+", "captured_piece": "rook", "captured_value": 5, "by_color": "Black"},
+                {"move": "Rxe1", "captured_piece": "rook", "captured_value": 5, "by_color": "White"}
+            ],
+            "candidate_captures": [
+                {"move": "Rxd2", "captured_piece": "knight", "captured_value": 3, "by_color": "Black"}
+            ],
+            "played_sequence": ["Rad8", "Nf3", "h6", "Rfe1", "Rxe1+", "Rxe1", "a5"],
+            "better_sequence": ["Re2", "Rad1", "Rd8", "c6", "Rxd2", "Qa4"]
+        }
+        analysis.tactical_finding = {
+            "category": CATEGORY_MATERIAL_LOSS,
+            "confidence": CONFIDENCE_HIGH,
+            "played_move": "Rad8",
+            "better_move": "Re2",
+            "evidence": evidence
+        }
+        exp = generate_move_explanation(analysis)
+        self.assertEqual(exp.motif, CATEGORY_MATERIAL_LOSS)
+        self.assertIn("miss out on winning 3 points of material compared to Re2", exp.summary)
+        self.assertNotIn("rook on e1 is lost", exp.summary)
+
+    def test_material_loss_player_gained_material(self):
+        """
+        Regression test: When the player actually gained net material in the played line
+        (e.g. +2 points) but the candidate line gained +3 points, the explanation must NEVER
+        say 'your pawn is lost' or 'you lost material'.
+        """
+        analysis = MoveAnalysis(
+            move_number=37,
+            color="White",
+            played_move="Kb3",
+            best_move="b5",
+            evaluation_before=150,
+            evaluation_after=63,
+            centipawn_loss=87,
+            fen_before="8/1p1k1p1p/p7/1P3p2/1P1K1P2/P5P1/n6P/8 w - - 1 37",
+            fen_after="8/1p1k1p1p/p7/1P3p2/1PK2P2/P5P1/n6P/8 b - - 2 37",
+            classification="inaccuracy",
+        )
+        evidence = {
+            "net_material_loss": 1,
+            "played_line_net": 2,
+            "candidate_line_net": 3,
+            "played_captures": [
+                {"move": "Nxb4", "captured_piece": "pawn", "captured_value": 1, "by_color": "Black"},
+                {"move": "Bxb4", "captured_piece": "knight", "captured_value": 3, "by_color": "White"}
+            ],
+            "candidate_captures": [
+                {"move": "Kxa2", "captured_piece": "knight", "captured_value": 3, "by_color": "White"}
+            ],
+            "played_sequence": ["Kb3", "Nxb4", "Bxb4"],
+            "better_sequence": ["b5", "Kd7", "Kb3", "Kc7", "Kxa2"]
+        }
+        analysis.tactical_finding = {
+            "category": CATEGORY_MATERIAL_LOSS,
+            "confidence": CONFIDENCE_HIGH,
+            "played_move": "Kb3",
+            "better_move": "b5",
+            "evidence": evidence
+        }
+        exp = generate_move_explanation(analysis)
+        self.assertEqual(exp.motif, CATEGORY_MATERIAL_LOSS)
+        self.assertIn("you gain 2 points of material, but b5 wins 3 points", exp.summary)
+        self.assertNotIn("is lost", exp.summary)
+
+    def test_material_loss_queen_trade_with_piece_lost(self):
+        """
+        Regression test: When queens were traded and a minor piece was lost without
+        compensation, the explanation must identify the lost minor piece (knight on b4),
+        NOT the traded queen on d3.
+        """
+        analysis = MoveAnalysis(
+            move_number=26,
+            color="Black",
+            played_move="Qd3",
+            best_move="Qd5",
+            evaluation_before=450,
+            evaluation_after=-25,
+            centipawn_loss=475,
+            fen_before="2r2rk1/pp3pp1/4p2p/3p4/Nn6/3q2P1/PP3PBP/R2QR1K1 b - - 1 26",
+            fen_after="2r2rk1/pp3pp1/4p2p/3p4/Nn6/3q2P1/PP3PBP/R2QR1K1 w - - 2 27",
+            classification="blunder",
+        )
+        evidence = {
+            "net_material_loss": 3,
+            "played_line_net": -3,
+            "candidate_line_net": 0,
+            "played_captures": [
+                {"move": "Nxd3", "captured_piece": "queen", "captured_value": 9, "by_color": "White"},
+                {"move": "Rxf7", "captured_piece": "queen", "captured_value": 9, "by_color": "Black"},
+                {"move": "Nxb4", "captured_piece": "knight", "captured_value": 3, "by_color": "White"}
+            ],
+            "candidate_captures": [],
+            "played_sequence": ["Qd3", "Nxd3", "Rxf7", "Nxb4"],
+            "better_sequence": ["Qd5", "Qf8", "Qd6"]
+        }
+        analysis.tactical_finding = {
+            "category": CATEGORY_MATERIAL_LOSS,
+            "confidence": CONFIDENCE_HIGH,
+            "played_move": "Qd3",
+            "better_move": "Qd5",
+            "evidence": evidence
+        }
+        exp = generate_move_explanation(analysis)
+        self.assertEqual(exp.motif, CATEGORY_MATERIAL_LOSS)
+        self.assertIn("your knight on b4 is lost, costing 3 points of material", exp.summary)
+        self.assertNotIn("queen on d3 is lost", exp.summary)
+
 
 if __name__ == "__main__":
     unittest.main()
