@@ -148,15 +148,16 @@ def extract_game_metadata(pgn_text: str) -> Dict[str, Any]:
     source = "local"
     source_game_id = None
     link = headers.get("Link", "") or ""
+    combined_url = f"{link} {site or ''}".strip()
 
-    if "chess.com" in (site or "").lower() or "chess.com" in link.lower():
+    if "chess.com" in combined_url.lower():
         source = "chess.com"
-        match = re.search(r"/(?:live|daily)/(\d+)", link)
+        match = re.search(r"/(?:live|daily)/(\d+)", combined_url)
         if match:
             source_game_id = match.group(1)
-    elif "lichess" in (site or "").lower() or "lichess" in link.lower():
+    elif "lichess" in combined_url.lower():
         source = "lichess"
-        match = re.search(r"lichess\.org/([a-zA-Z0-9]+)", link)
+        match = re.search(r"lichess\.org/([a-zA-Z0-9]+)", combined_url)
         if match:
             source_game_id = match.group(1)
 
@@ -695,6 +696,15 @@ def main():
     summary_parser = subparsers.add_parser("summary", help="Show library summary statistics")
     summary_parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to SQLite database")
 
+    # Import Remote (Chess.com or Lichess)
+    remote_parser = subparsers.add_parser("import-remote", help="Import games from Chess.com or Lichess")
+    remote_parser.add_argument("platform", choices=["chess.com", "chesscom", "lichess"], help="Target platform")
+    remote_parser.add_argument("username", help="Platform username")
+    remote_parser.add_argument("--from", dest="since", default=None, help="Start date (YYYY-MM or YYYY-MM-DD)")
+    remote_parser.add_argument("--to", dest="until", default=None, help="End date (YYYY-MM or YYYY-MM-DD)")
+    remote_parser.add_argument("--max", dest="max_games", type=int, default=None, help="Max games to import")
+    remote_parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to SQLite database")
+
     args = parser.parse_args()
 
     if args.command == "import":
@@ -708,6 +718,18 @@ def main():
                 print(f"  Errors ({len(result['errors'])}):")
                 for err in result["errors"]:
                     print(f"    - {err}")
+    elif args.command == "import-remote":
+        from src.importers import import_platform_games
+        with GameLibrary(args.db) as lib:
+            result = import_platform_games(
+                source=args.platform,
+                username=args.username,
+                library=lib,
+                since=args.since,
+                until=args.until,
+                max_games=args.max_games,
+            )
+            print(result.summary())
     elif args.command == "list":
         with GameLibrary(args.db) as lib:
             games = lib.list_games(player=args.player, analysis_status=args.status)
