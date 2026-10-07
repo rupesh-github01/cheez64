@@ -1,0 +1,38 @@
+[Event "Live Chess"]
+[Site "Chess.com"]
+[Date "2026.09.27"]
+[Round "?"]
+[White "bigpawn34"]
+[Black "DrCheezFighter"]
+[Result "1-0"]
+[TimeControl "300"]
+[WhiteElo "1449"]
+[BlackElo "1443"]
+[Termination "bigpawn34 won by resignation"]
+[ECO "C45"]
+[EndTime "9:43:46 GMT+0000"]
+[Link "https://www.chess.com/game/live/184444886376?username=drcheezfighter"]
+
+1. e4 {[%clk 0:04:58][%timestamp 20]} 1... e5 {[%clk 0:04:59.3][%timestamp 7]}
+2. Nf3 {[%clk 0:04:57][%timestamp 10]} 2... Nc6 {[%clk 0:04:58.9][%timestamp 4]}
+3. d4 {[%clk 0:04:56.3][%timestamp 7]} 3... exd4 {[%clk 0:04:57.7][%timestamp
+12]} 4. Nxd4 {[%clk 0:04:55.1][%timestamp 12]} 4... Qf6 {[%clk
+0:04:57.2][%timestamp 5]} 5. Nf3 {[%clk 0:04:49.4][%timestamp 57]} 5... d6
+{[%clk 0:04:52][%timestamp 52]} 6. Nc3 {[%clk 0:04:47][%timestamp 24]} 6... Ne5
+{[%clk 0:04:44.1][%timestamp 79]} 7. Be2 {[%clk 0:04:36.6][%timestamp 104]} 7...
+Be6 {[%clk 0:04:12.1][%timestamp 320]} 8. Nxe5 {[%clk 0:04:28.9][%timestamp 77]}
+8... Qxe5 {[%clk 0:03:32.7][%timestamp 394]} 9. f4 {[%clk 0:04:27.3][%timestamp
+16]} 9... Qc5 {[%clk 0:03:31.8][%timestamp 9]} 10. Qd3 {[%clk
+0:04:17.4][%timestamp 99]} 10... O-O-O {[%clk 0:03:23.8][%timestamp 80]} 11. Be3
+{[%clk 0:04:15.5][%timestamp 19]} 11... Qa5 {[%clk 0:03:17.2][%timestamp 66]}
+12. O-O {[%clk 0:04:05.6][%timestamp 99]} 12... d5 {[%clk 0:03:06.9][%timestamp
+103]} 13. exd5 {[%clk 0:03:54][%timestamp 116]} 13... Bxd5 {[%clk
+0:03:02.6][%timestamp 43]} 14. Nxd5 {[%clk 0:03:45.1][%timestamp 89]} 14... Rxd5
+{[%clk 0:02:54][%timestamp 86]} 15. Bg4+ {[%clk 0:03:41.3][%timestamp 38]} 15...
+Kb8 {[%clk 0:02:38.4][%timestamp 156]} 16. Qb3 {[%clk 0:03:31.9][%timestamp 94]}
+16... Nf6 {[%clk 0:02:24][%timestamp 144]} 17. Bf3 {[%clk 0:03:30.2][%timestamp
+17]} 17... Rb5 {[%clk 0:02:13][%timestamp 110]} 18. Qxf7 {[%clk
+0:03:26.4][%timestamp 38]} 18... Bc5 {[%clk 0:02:09][%timestamp 40]} 19. Bxc5
+{[%clk 0:03:18.9][%timestamp 75]} 19... Rxc5 {[%clk 0:02:08][%timestamp 10]} 20.
+Qxg7 {[%clk 0:03:17.4][%timestamp 15]} 20... Rf8 {[%clk 0:01:23.2][%timestamp
+448]} 1-0
