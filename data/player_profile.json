@@ -1,0 +1,401 @@
+{
+  "player_name": "DrCheezFighter",
+  "games_analyzed": 5,
+  "moves_analyzed": 202,
+  "critical_positions": 39,
+  "episodes_count": 10,
+  "overall_average_cpl": 67.33,
+  "strengths": [
+    {
+      "area": "Tactical Execution: Direct Material Captures",
+      "evidence_count": 33,
+      "distinct_games": 5,
+      "games_ratio": "5/5",
+      "description": "Successfully executed 33 tactical captures with near-zero centipawn loss across 5 games. When direct tactical targets are identified, conversion is highly reliable.",
+      "sample_evidence": [
+        {
+          "game_id": 1,
+          "move": "3. exd5",
+          "cpl": 0
+        },
+        {
+          "game_id": 1,
+          "move": "8. Bxc4",
+          "cpl": 0
+        },
+        {
+          "game_id": 1,
+          "move": "9. Qxc4",
+          "cpl": 0
+        },
+        {
+          "game_id": 1,
+          "move": "13. Rxe5",
+          "cpl": 0
+        }
+      ]
+    },
+    {
+      "area": "Forcing Move Execution (Checks & Attacks)",
+      "evidence_count": 11,
+      "distinct_games": 3,
+      "games_ratio": "3/5",
+      "description": "Delivered 11 accurate checks that maintained initiative or forced mating sequences across 3 games.",
+      "sample_evidence": [
+        {
+          "game_id": 1,
+          "move": "7. Qa4+",
+          "cpl": 20
+        },
+        {
+          "game_id": 1,
+          "move": "21. Rxd8+",
+          "cpl": 0
+        },
+        {
+          "game_id": 1,
+          "move": "53. h5+",
+          "cpl": 0
+        }
+      ]
+    },
+    {
+      "area": "High-Accuracy Baseline in Structured Positions",
+      "evidence_count": 1,
+      "distinct_games": 1,
+      "games_ratio": "1/5",
+      "description": "Demonstrated master-level precision in clean games (e.g., Game 2 with 9.6 average CPL and 1 critical positions), proving strong baseline capability when avoiding wild tactical complications.",
+      "sample_evidence": [
+        {
+          "game_id": 2,
+          "color": "White",
+          "moves": 41,
+          "avg_cpl": 9.6,
+          "critical_count": 1
+        }
+      ]
+    }
+  ],
+  "weaknesses": [
+    {
+      "category": "Tactical Awareness: Material Loss",
+      "pillar": "Tactical Awareness",
+      "subcategories": [
+        "material_loss"
+      ],
+      "mistake_type": "tactical_blunder",
+      "occurrences": 9,
+      "episode_occurrences": 8,
+      "distinct_games": 4,
+      "game_ids": [
+        1,
+        3,
+        4,
+        5
+      ],
+      "games_ratio": "4/5",
+      "average_cpl": 326.6,
+      "max_cpl": 614,
+      "total_cpl": 2939,
+      "high_confidence_count": 9,
+      "severity": "high",
+      "confidence": "high",
+      "composite_score": 55.68,
+      "sample_moves": [
+        {
+          "move": "27. Kd3",
+          "best_move": "Bd6",
+          "cpl": 126,
+          "summary": "After Kd3, your pawn on a2 is lost, costing 1 point of material."
+        },
+        {
+          "move": "31. b3",
+          "best_move": "Kc5",
+          "cpl": 212,
+          "summary": "After b3, your pawn on g2 is lost, costing 1 point of material."
+        },
+        {
+          "move": "37. Kb3",
+          "best_move": "b5",
+          "cpl": 87,
+          "summary": "After Kb3, you gain 2 points of material, but b5 wins 3 points."
+        }
+      ],
+      "coaching_takeaway": "Observed repeatedly across 4 of 5 games. The player repeatedly concedes material in complex positions."
+    },
+    {
+      "category": "Strategic & Positional Decisions",
+      "pillar": "Strategic & Positional",
+      "subcategories": [
+        "positional_evaluation_drop"
+      ],
+      "mistake_type": "positional_inaccuracy",
+      "occurrences": 13,
+      "episode_occurrences": 10,
+      "distinct_games": 4,
+      "game_ids": [
+        1,
+        3,
+        4,
+        5
+      ],
+      "games_ratio": "4/5",
+      "average_cpl": 255.2,
+      "max_cpl": 1000,
+      "total_cpl": 3317,
+      "high_confidence_count": 0,
+      "severity": "high",
+      "confidence": "medium",
+      "composite_score": 45.78,
+      "sample_moves": [
+        {
+          "move": "12. Ne5",
+          "best_move": "Na3",
+          "cpl": 89,
+          "summary": "Ne5 was inaccurate, conceding an evaluation drop of 0.89 pawns compared to Na3."
+        },
+        {
+          "move": "14. Bf4",
+          "best_move": "Nd2",
+          "cpl": 301,
+          "summary": "Bf4 was inaccurate, conceding an evaluation drop of 3.01 pawns compared to Nd2."
+        },
+        {
+          "move": "18. Nxd4",
+          "best_move": "Qa4",
+          "cpl": 144,
+          "summary": "Nxd4 was inaccurate, conceding an evaluation drop of 1.44 pawns compared to Qa4."
+        }
+      ],
+      "coaching_takeaway": "Observed repeatedly across 4 of 5 games. Substantial non-tactical evaluation drops indicate passive positional choices."
+    },
+    {
+      "category": "Endgame Technique: King Activity & Opposition",
+      "pillar": "Endgame Technique",
+      "subcategories": [
+        "endgame_king_activity"
+      ],
+      "mistake_type": "endgame_technique",
+      "occurrences": 6,
+      "episode_occurrences": 5,
+      "distinct_games": 2,
+      "game_ids": [
+        1,
+        4
+      ],
+      "games_ratio": "2/5",
+      "average_cpl": 457.2,
+      "max_cpl": 1000,
+      "total_cpl": 2743,
+      "high_confidence_count": 0,
+      "severity": "high",
+      "confidence": "medium",
+      "composite_score": 21.6,
+      "sample_moves": [
+        {
+          "move": "28. Bd6",
+          "best_move": "Ke4",
+          "cpl": 240,
+          "summary": "Bd6 was inaccurate, conceding an evaluation drop of 2.40 pawns compared to Ke4."
+        },
+        {
+          "move": "47. Ke4",
+          "best_move": "Bf2",
+          "cpl": 1000,
+          "summary": "Ke4 was inaccurate, conceding an evaluation drop of 10.00 pawns compared to Bf2."
+        },
+        {
+          "move": "49. Kf5",
+          "best_move": "h4",
+          "cpl": 1000,
+          "summary": "Kf5 allowed Black to escape a forced checkmate."
+        }
+      ],
+      "coaching_takeaway": "Observed in 2 separate games. Concessions in the endgame point to training needs in king activity and opposition."
+    },
+    {
+      "category": "Tactical Awareness: Missed Forcing Moves & Tactics",
+      "pillar": "Tactical Awareness",
+      "subcategories": [
+        "missed_capture",
+        "missed_check_or_forcing_move"
+      ],
+      "mistake_type": "missed_opportunity",
+      "occurrences": 5,
+      "episode_occurrences": 5,
+      "distinct_games": 3,
+      "game_ids": [
+        3,
+        4,
+        5
+      ],
+      "games_ratio": "3/5",
+      "average_cpl": 203.6,
+      "max_cpl": 573,
+      "total_cpl": 1018,
+      "high_confidence_count": 5,
+      "severity": "high",
+      "confidence": "high",
+      "composite_score": 20.43,
+      "sample_moves": [
+        {
+          "move": "20. Bxb4",
+          "best_move": "Qa1+",
+          "cpl": 573,
+          "summary": "Qa1+ was stronger because it gives check while creating a fork."
+        },
+        {
+          "move": "25. Ba3+",
+          "best_move": "Qxf2",
+          "cpl": 79,
+          "summary": "You missed Qxf2, which wins a pawn."
+        },
+        {
+          "move": "7. Bxd2+",
+          "best_move": "Nxe4",
+          "cpl": 126,
+          "summary": "You missed Nxe4, which wins a pawn."
+        }
+      ],
+      "coaching_takeaway": "Observed in 3 separate games. The player frequently overlooks forcing candidate moves and tactical wins."
+    },
+    {
+      "category": "Endgame Technique: Endgame Piece Play",
+      "pillar": "Endgame Technique",
+      "subcategories": [
+        "endgame_piece_play"
+      ],
+      "mistake_type": "endgame_technique",
+      "occurrences": 4,
+      "episode_occurrences": 4,
+      "distinct_games": 3,
+      "game_ids": [
+        1,
+        2,
+        4
+      ],
+      "games_ratio": "3/5",
+      "average_cpl": 125.0,
+      "max_cpl": 147,
+      "total_cpl": 500,
+      "high_confidence_count": 0,
+      "severity": "low",
+      "confidence": "medium",
+      "composite_score": 9.39,
+      "sample_moves": [
+        {
+          "move": "23. Be5",
+          "best_move": "Rxb6",
+          "cpl": 132,
+          "summary": "Be5 was inaccurate, conceding an evaluation drop of 1.32 pawns compared to Rxb6."
+        },
+        {
+          "move": "30. Bf8",
+          "best_move": "Bh2",
+          "cpl": 137,
+          "summary": "Bf8 was inaccurate, conceding an evaluation drop of 1.37 pawns compared to Bh2."
+        },
+        {
+          "move": "32. Re3",
+          "best_move": "Rbc7",
+          "cpl": 147,
+          "summary": "Re3 was inaccurate, conceding an evaluation drop of 1.47 pawns compared to Rbc7."
+        }
+      ],
+      "coaching_takeaway": "Observed in 3 separate games. Concessions in the endgame point to training needs in king activity and opposition."
+    },
+    {
+      "category": "Tactical Awareness: Hanging Pieces",
+      "pillar": "Tactical Awareness",
+      "subcategories": [
+        "hanging_piece"
+      ],
+      "mistake_type": "tactical_blunder",
+      "occurrences": 2,
+      "episode_occurrences": 2,
+      "distinct_games": 2,
+      "game_ids": [
+        3,
+        5
+      ],
+      "games_ratio": "2/5",
+      "average_cpl": 811.5,
+      "max_cpl": 1000,
+      "total_cpl": 1623,
+      "high_confidence_count": 2,
+      "severity": "high",
+      "confidence": "medium",
+      "composite_score": 8.64,
+      "sample_moves": [
+        {
+          "move": "28. Kh7",
+          "best_move": "Bc5",
+          "cpl": 623,
+          "summary": "Your pawn on f7 was left vulnerable and could be captured."
+        },
+        {
+          "move": "20. Rf8",
+          "best_move": "Rc8",
+          "cpl": 1000,
+          "summary": "Your rook on f8 was left vulnerable and could be captured."
+        }
+      ],
+      "coaching_takeaway": "Observed in 2 separate games. The player repeatedly concedes material in complex positions."
+    }
+  ],
+  "tactical_summary": {
+    "total_tactical_errors": 16,
+    "blunders_count": 11,
+    "missed_opportunities_count": 5,
+    "hanging_pieces_count": 2,
+    "material_loss_count": 9,
+    "average_tactical_cpl": 348.8
+  },
+  "material_summary": {
+    "total_net_points_conceded": 21,
+    "unreciprocated_losses_count": 19,
+    "missed_material_points": 5,
+    "pieces_lost_breakdown": {
+      "pawn": 8,
+      "knight": 4,
+      "rook": 4,
+      "queen": 2,
+      "bishop": 1
+    }
+  },
+  "positional_summary": {
+    "positional_errors_count": 13,
+    "average_positional_cpl": 255.2,
+    "opening_errors_count": 4,
+    "middlegame_errors_count": 9
+  },
+  "endgame_summary": {
+    "endgame_moves_count": 79,
+    "endgame_critical_count": 13,
+    "king_activity_errors_count": 9,
+    "pawn_endgame_errors_count": 1,
+    "endgame_piece_errors_count": 3,
+    "average_endgame_cpl": 282.2
+  },
+  "severity_summary": {
+    "inaccuracies_count": 21,
+    "mistakes_count": 5,
+    "blunders_count": 13,
+    "peak_cpl_move": {
+      "game_id": 1,
+      "move_number": 47,
+      "color": "White",
+      "played_move": "Ke4",
+      "best_move": "Bf2",
+      "cpl": 1000,
+      "summary": "Ke4 was inaccurate, conceding an evaluation drop of 10.00 pawns compared to Bf2."
+    }
+  },
+  "confidence": {
+    "level": "preliminary",
+    "games_analyzed": 5,
+    "moves_analyzed": 202,
+    "rationale": "Preliminary \u2014 based on 5 games (202 moves analyzed). Patterns represent initial coaching trends rather than permanent diagnoses."
+  },
+  "scoring_formula": "Score = EpisodeOccurrences * (1.0 + 2.0 * CrossGameRecurrence) * min(3.0, 0.5 + AvgCPL / 150.0) * ConfidenceMultiplier. CrossGameRecurrence is (distinct_games / total_games). Episode occurrences deduplicate clustered moves in the same episode."
+}
