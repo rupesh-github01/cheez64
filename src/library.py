@@ -15,6 +15,12 @@ import hashlib
 import io
 import json
 import re
+import sys
+
+# Ensure repository root is in sys.path
+repo_root = Path(__file__).resolve().parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
 
 import chess
 import chess.pgn
@@ -259,6 +265,24 @@ class GameLibrary:
                     analysis_data TEXT NOT NULL,
                     file_path TEXT
                 );
+
+                CREATE TABLE IF NOT EXISTS game_openings (
+                    game_id TEXT PRIMARY KEY REFERENCES games(game_id) ON DELETE CASCADE,
+                    opening_name TEXT NOT NULL,
+                    variation_name TEXT,
+                    eco TEXT NOT NULL,
+                    full_name TEXT NOT NULL,
+                    matched_ply INTEGER NOT NULL,
+                    theory_exit_ply INTEGER,
+                    theory_exit_move TEXT,
+                    divergence_side TEXT,
+                    is_transposition INTEGER DEFAULT 0,
+                    confidence TEXT NOT NULL,
+                    opening_data TEXT NOT NULL
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_openings_eco ON game_openings(eco);
+                CREATE INDEX IF NOT EXISTS idx_openings_name ON game_openings(opening_name);
             """)
 
     def _row_to_game(self, row: sqlite3.Row) -> Game:
@@ -613,6 +637,78 @@ class GameLibrary:
             """, (ANALYSIS_NOT_ANALYZED, game_id))
             return cursor.rowcount > 0
 
+    def set_game_opening(self, game_id: str, opening_data: Any) -> bool:
+        """
+        Store opening analysis for a game.
+        """
+        if hasattr(opening_data, "to_dict"):
+            d = opening_data.to_dict()
+        elif isinstance(opening_data, dict):
+            d = opening_data
+        else:
+            raise ValueError("opening_data must be OpeningAnalysis or dict")
+
+        with self._get_connection() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO game_openings (
+                    game_id, opening_name, variation_name, eco, full_name,
+                    matched_ply, theory_exit_ply, theory_exit_move, divergence_side,
+                    is_transposition, confidence, opening_data
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                game_id,
+                d["opening_name"],
+                d.get("variation_name"),
+                d["eco"],
+                d.get("full_name", d["opening_name"]),
+                d.get("matched_ply", 0),
+                d.get("theory_exit_ply"),
+                d.get("theory_exit_move"),
+                d.get("divergence_side"),
+                1 if d.get("is_transposition") else 0,
+                d.get("confidence", "moderate"),
+                json.dumps(d),
+            ))
+            return True
+
+    def get_game_opening(self, game_id: str, auto_detect: bool = False) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve opening analysis for a game, optionally computing on demand if missing.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT opening_data FROM game_openings WHERE game_id = ?", (game_id,))
+            row = cursor.fetchone()
+            if row and row["opening_data"]:
+                try:
+                    return json.loads(row["opening_data"])
+                except json.JSONDecodeError:
+                    pass
+
+        if auto_detect:
+            game = self.get_game(game_id)
+            if game:
+                from src.openings import detect_opening
+                analysis = detect_opening(game.pgn)
+                self.set_game_opening(game_id, analysis)
+                return analysis.to_dict()
+
+        return None
+
+    def detect_all_openings(self, overwrite: bool = False) -> int:
+        """
+        Detect and store opening classifications for all games in the library.
+        """
+        from src.openings import detect_opening
+        games = self.list_games()
+        count = 0
+        for g in games:
+            if not overwrite and self.get_game_opening(g.game_id, auto_detect=False):
+                continue
+            analysis = detect_opening(g.pgn)
+            self.set_game_opening(g.game_id, analysis)
+            count += 1
+        return count
+
 
 def import_existing_games(
     library: GameLibrary,
@@ -705,6 +801,16 @@ def main():
     remote_parser.add_argument("--max", dest="max_games", type=int, default=None, help="Max games to import")
     remote_parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to SQLite database")
 
+    # Openings detection
+    openings_parser = subparsers.add_parser("openings-detect", help="Detect and store openings for all games")
+    openings_parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to SQLite database")
+    openings_parser.add_argument("--overwrite", action="store_true", help="Overwrite existing detected openings")
+
+    # Repertoire profile
+    rep_parser = subparsers.add_parser("repertoire", help="Build player opening repertoire profile")
+    rep_parser.add_argument("player", help="Target player name")
+    rep_parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to SQLite database")
+
     args = parser.parse_args()
 
     if args.command == "import":
@@ -730,13 +836,24 @@ def main():
                 max_games=args.max_games,
             )
             print(result.summary())
+    elif args.command == "openings-detect":
+        with GameLibrary(args.db) as lib:
+            count = lib.detect_all_openings(overwrite=args.overwrite)
+            print(f"Opening detection complete: {count} games updated in library ({args.db}).")
+    elif args.command == "repertoire":
+        from src.openings import build_player_repertoire_from_library
+        with GameLibrary(args.db) as lib:
+            profile = build_player_repertoire_from_library(lib, args.player)
+            print(profile.summary())
     elif args.command == "list":
         with GameLibrary(args.db) as lib:
             games = lib.list_games(player=args.player, analysis_status=args.status)
             print(f"Found {len(games)} games:")
             for g in games:
                 analysis_info = f"[{g.analysis_status}]"
-                print(f"  {g.game_id[:8]}.. | {g.date or 'Unknown'} | {g.white} vs {g.black} ({g.result}) | {analysis_info}")
+                op_info = lib.get_game_opening(g.game_id)
+                op_str = f" | {op_info['eco']} {op_info['opening_name']}" if op_info else ""
+                print(f"  {g.game_id[:8]}.. | {g.date or 'Unknown'} | {g.white} vs {g.black} ({g.result}){op_str} | {analysis_info}")
     elif args.command == "summary":
         with GameLibrary(args.db) as lib:
             total = lib.count_games()
