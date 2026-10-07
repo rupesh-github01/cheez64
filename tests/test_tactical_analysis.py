@@ -315,6 +315,200 @@ class TestTacticalAnalysis(unittest.TestCase):
         finding = detect_tactical_consequence(analysis)
         self.assertIsNone(finding)
 
+    def test_piece_captured_and_recaptured_not_hanging(self):
+        """
+        Verify that a piece that captures and is then recaptured is NOT labeled hanging_piece.
+        Example: White plays 8. Nxe5 taking a Knight on e5. Black replies 8... dxe5 recapturing.
+        Material change on e5 is 0 (equal trade).
+        """
+        board_before = chess.Board("r3kbnr/ppp2ppp/3pbq2/4n3/4P3/2N2N2/PPP1BPPP/R1BQK2R w KQkq - 4 8")
+        # White plays Nxe5
+        move = chess.Move.from_uci("f3e5")
+        board_after = board_before.copy()
+        board_after.push(move)
+
+        analysis = MoveAnalysis(
+            move_number=8,
+            color="White",
+            played_move="Nxe5",
+            best_move="Be3",
+            evaluation_before=209,
+            evaluation_after=75,
+            centipawn_loss=134,
+            fen_before=board_before.fen(),
+            fen_after=board_after.fen(),
+            candidates=[CandidateMove("Be3", 209, ["Be3", "O-O-O"])],
+            pv_after=["dxe5", "O-O"],
+            classification="mistake",
+        )
+
+        finding = detect_tactical_consequence(analysis)
+        self.assertIsNotNone(finding)
+        self.assertNotEqual(finding.category, CATEGORY_HANGING_PIECE)
+        self.assertEqual(finding.category, CATEGORY_UNCLASSIFIED)
+
+    def test_capture_that_wins_no_net_material_not_missed_capture(self):
+        """
+        Verify that a candidate capture that results in net material gain of 0
+        (e.g. an even minor piece trade like Nxd2 followed by Rxd2)
+        is NOT classified as a missed capture.
+        """
+        board_before = chess.Board("r3k2r/p3bpp1/4p2p/q2pP3/2n3P1/1Q5P/NPPB1P2/2KR3R b kq - 3 22")
+        board_after = board_before.copy()
+        board_after.push_san("Qb6")
+
+        # Candidate is Nxd2, but White recaptures with Rxd2, net_material_gain is 0
+        analysis = MoveAnalysis(
+            move_number=22,
+            color="Black",
+            played_move="Qb6",
+            best_move="Nxd2",
+            evaluation_before=605,
+            evaluation_after=194,
+            centipawn_loss=411,
+            fen_before=board_before.fen(),
+            fen_after=board_after.fen(),
+            candidates=[CandidateMove("Nxd2", 605, ["Nxd2", "Rxd2", "Bg5", "Qc3"])],
+            pv_after=["Kb1"],
+            classification="blunder",
+        )
+
+        finding = detect_tactical_consequence(analysis)
+        self.assertIsNotNone(finding)
+        self.assertNotEqual(finding.category, CATEGORY_MISSED_CAPTURE)
+        self.assertEqual(finding.category, CATEGORY_UNCLASSIFIED)
+
+    def test_genuinely_profitable_material_winning_sequence(self):
+        """
+        Verify that a candidate capture that achieves genuine net material gain
+        (e.g. dxe5 capturing an undefended knight, net_gain = 3)
+        is classified as missed_capture with high confidence.
+        """
+        board_before = chess.Board("r3kbnr/ppp2ppp/3pbq2/4N3/4P3/2N5/PPP1BPPP/R1BQK2R b KQkq - 0 8")
+        board_after = board_before.copy()
+        board_after.push_san("Qxe5")
+
+        analysis = MoveAnalysis(
+            move_number=8,
+            color="Black",
+            played_move="Qxe5",
+            best_move="dxe5",
+            evaluation_before=-75,
+            evaluation_after=-205,
+            centipawn_loss=130,
+            fen_before=board_before.fen(),
+            fen_after=board_after.fen(),
+            candidates=[CandidateMove("dxe5", -75, ["dxe5", "O-O", "Qd8", "Qe1"])],
+            pv_after=["O-O"],
+            classification="mistake",
+        )
+
+        finding = detect_tactical_consequence(analysis)
+        self.assertIsNotNone(finding)
+        self.assertEqual(finding.category, CATEGORY_MISSED_CAPTURE)
+        self.assertEqual(finding.confidence, CONFIDENCE_HIGH)
+        self.assertEqual(finding.evidence["net_material_gain"], 3)
+        self.assertEqual(finding.evidence["captured_piece"], "knight")
+
+    def test_attacked_piece_that_cannot_be_captured_profitably(self):
+        """
+        Verify that an attacked piece that cannot be captured profitably
+        (e.g. attacked by an enemy Queen while defended by a Pawn)
+        is NOT classified as hanging_piece.
+        """
+        # White Knight on d4 defended by pawn on c3, attacked by Black Queen on f6
+        board = chess.Board("r1b1kbnr/pppp1ppp/5q2/8/3NP3/2P5/PP3PPP/RNBQKB1R b KQkq - 0 5")
+        pv_after = ["Qe5"]  # Queen does not capture on d4 because pawn recaptures
+
+        finding = check_hanging_piece(board, chess.WHITE, pv_after)
+        self.assertIsNone(finding)
+
+    def test_attacked_piece_where_capture_is_illegal_due_to_pin_or_check(self):
+        """
+        Verify that an attacked piece is NOT classified as hanging when the attacker
+        cannot legally capture (e.g. opponent is in check or attacker is pinned).
+        """
+        # Position where Black has just given check with Qb4+, White cannot capture e5 knight
+        board_after = chess.Board("r3k2r/p3p2p/4p1p1/4n3/1q3B2/1P1PN3/P3PPQP/4K2R w Kkq - 2 18")
+        finding = check_hanging_piece(board_after, chess.BLACK, [])
+        self.assertIsNone(finding)
+
+    def test_genuinely_hanging_piece_white_perspective(self):
+        """
+        Verify detection of a genuinely hanging piece from White's perspective.
+        White plays 6. h3 leaving the knight on e4 completely undefended to 6... Bxe4.
+        """
+        board_before = chess.Board("r2qkb1r/pb1p1ppp/4p3/8/4N3/5N2/PPPP1PPP/R1BQKB1R w KQkq - 0 6")
+        board_after = chess.Board("r2qkb1r/pb1p1ppp/4p3/8/4N3/5N1P/PPPP1PP1/R1BQKB1R b KQkq - 0 6")
+
+        analysis = MoveAnalysis(
+            move_number=6,
+            color="White",
+            played_move="h3",
+            best_move="Ng3",
+            evaluation_before=15,
+            evaluation_after=-320,
+            centipawn_loss=335,
+            fen_before=board_before.fen(),
+            fen_after=board_after.fen(),
+            candidates=[CandidateMove("Ng3", 15, ["Ng3", "d5"])],
+            pv_after=["Bxe4", "Qe2", "f5"],
+            classification="blunder",
+        )
+
+        finding = detect_tactical_consequence(analysis)
+        self.assertIsNotNone(finding)
+        self.assertEqual(finding.category, CATEGORY_HANGING_PIECE)
+        self.assertEqual(finding.evidence["hanging_piece"], "knight")
+        self.assertEqual(finding.evidence["square"], "e4")
+        self.assertEqual(finding.evidence["opponent_capture_move"], "Bxe4")
+
+    def test_legal_check_not_best_move_is_not_missed_check(self):
+        """
+        Verify that a legal check is NOT classified as missed_check_or_forcing_move
+        unless the candidate check is the top move and provides a verified advantage (CPL >= 75).
+        """
+        board = chess.Board("rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
+        # Candidate is a non-check move like Nc6
+        finding = check_missed_check_or_forcing_move(
+            board,
+            chess.BLACK,
+            played_move="d6",
+            better_move="Nc6",
+            candidate_pv=["Nc6", "Bb5"],
+            eval_diff=100
+        )
+        self.assertIsNone(finding)
+
+    def test_terminal_checkmate_not_labeled_hanging_piece(self):
+        """
+        Verify that when opponent's PV delivers immediate checkmate (e.g. Qxf7#),
+        the move is NOT misclassified as a 'hanging pawn'. Checkmate ends the game.
+        """
+        board_before = chess.Board("1r5r/Q4ppk/4p2P/1q1pP3/2n5/bPB4P/N1P2P2/1K1R3R b - - 0 29")
+        board_after = chess.Board("1r5r/Q4p1k/4p2p/1q1pP3/2n5/bPB4P/N1P2P2/1K1R3R w - - 0 30")
+
+        analysis = MoveAnalysis(
+            move_number=29,
+            color="Black",
+            played_move="gxh6",
+            best_move="Rb7",
+            evaluation_before=286,
+            evaluation_after=-99999,
+            centipawn_loss=1000,
+            fen_before=board_before.fen(),
+            fen_after=board_after.fen(),
+            candidates=[CandidateMove("Rb7", 286, ["Rb7", "Qd4"])],
+            pv_after=["Qxf7#"],
+            classification="blunder",
+        )
+
+        finding = detect_tactical_consequence(analysis)
+        self.assertIsNotNone(finding)
+        # Must not be classified as hanging piece
+        self.assertNotEqual(finding.category, CATEGORY_HANGING_PIECE)
+        self.assertEqual(finding.category, CATEGORY_UNCLASSIFIED)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -119,7 +119,9 @@ def simulate_sequence(
 def check_hanging_piece(
     board_after: chess.Board,
     mover: chess.Color,
-    pv_after: List[str]
+    pv_after: List[str],
+    board_before: Optional[chess.Board] = None,
+    played_move: Optional[str] = None,
 ) -> Optional[TacticalFinding]:
     """
     Check if a mover's piece was left hanging (undefended or insufficiently defended)
@@ -133,12 +135,46 @@ def check_hanging_piece(
         try:
             first_move = board_after.parse_san(first_san)
             if board_after.is_legal(first_move) and board_after.is_capture(first_move):
+                # If first_move delivers checkmate, the game is over - not a hanging piece!
+                board_next = board_after.copy()
+                board_next.push(first_move)
+                if board_next.is_checkmate():
+                    return None
+
                 captured_square = first_move.to_square
                 captured_piece = board_after.piece_at(captured_square)
 
                 # Did the opponent capture a piece belonging to the mover?
                 if captured_piece and captured_piece.color == mover:
                     piece_val = get_piece_value(captured_piece.piece_type)
+
+                    # Check if played_move was a capture on this same square (recapture / trade)
+                    if board_before and played_move:
+                        try:
+                            played_obj = board_before.parse_san(played_move)
+                            if board_before.is_capture(played_obj) and played_obj.to_square == captured_square:
+                                if board_before.is_en_passant(played_obj):
+                                    mover_cap_val = 1
+                                else:
+                                    mover_cap_target = board_before.piece_at(played_obj.to_square)
+                                    mover_cap_val = get_piece_value(mover_cap_target.piece_type) if mover_cap_target else 0
+                                # If mover captured equal or higher value, mover did NOT lose material on this piece!
+                                if mover_cap_val >= piece_val:
+                                    return None
+                        except (ValueError, chess.IllegalMoveError):
+                            pass
+
+                    # Simulate continuation from board_after to verify net material loss for mover
+                    cont_net, cont_caps, cont_sim, _ = simulate_sequence(
+                        board_after,
+                        pv_after,
+                        mover,
+                        max_plies=4
+                    )
+                    # If mover does NOT lose net material in continuation, piece was not lost
+                    if cont_net >= 0:
+                        return None
+
                     defenders = len(board_after.attackers(mover, captured_square))
                     attackers = len(board_after.attackers(opponent, captured_square))
 
@@ -190,6 +226,26 @@ def check_hanging_piece(
                 attackers = list(board_after.attackers(opponent, sq))
                 defenders = list(board_after.attackers(mover, sq))
                 if len(attackers) > 0 and len(defenders) == 0:
+                    # Verify that opponent has a legal capture on sq
+                    legal_caps = [
+                        m for m in board_after.legal_moves
+                        if m.to_square == sq and m.from_square in attackers
+                    ]
+                    if not legal_caps:
+                        continue
+
+                    # Verify mover didn't just capture equal or greater piece on this square
+                    if board_before and played_move:
+                        try:
+                            played_obj = board_before.parse_san(played_move)
+                            if board_before.is_capture(played_obj) and played_obj.to_square == sq:
+                                mover_cap_target = board_before.piece_at(played_obj.to_square)
+                                mover_cap_val = get_piece_value(mover_cap_target.piece_type) if mover_cap_target else 0
+                                if mover_cap_val >= piece_val:
+                                    continue
+                        except (ValueError, chess.IllegalMoveError):
+                            pass
+
                     evidence = {
                         "hanging_piece": chess.piece_name(piece.piece_type),
                         "square": chess.square_name(sq),
@@ -253,7 +309,7 @@ def check_missed_capture(
         max_plies=4
     )
 
-    if net_gain > 0 or captured_val >= 3:
+    if net_gain > 0:
         evidence = {
             "missed_capture_move": better_move,
             "target_square": chess.square_name(better_move_obj.to_square),
@@ -285,7 +341,7 @@ def check_missed_check_or_forcing_move(
     """
     Check if a candidate check or forcing sequence produces a demonstrably better result.
     """
-    if not better_move:
+    if not better_move or eval_diff < 75:
         return None
 
     try:
@@ -296,6 +352,8 @@ def check_missed_check_or_forcing_move(
 
     try:
         better_obj = board_before.parse_san(better_move)
+        if not board_before.is_legal(better_obj):
+            return None
         better_gives_check = board_before.gives_check(better_obj)
     except (ValueError, chess.IllegalMoveError):
         better_gives_check = False
@@ -303,12 +361,13 @@ def check_missed_check_or_forcing_move(
     # Mover missed an immediate check that is the top candidate
     if better_gives_check and not played_gives_check:
         pv_moves = candidate_pv if candidate_pv else [better_move]
+        _, _, sim_moves, _ = simulate_sequence(board_before, pv_moves, mover, max_plies=4)
         evidence = {
             "forcing_candidate_move": better_move,
             "is_check": True,
             "played_move_is_check": False,
             "eval_difference": eval_diff,
-            "forcing_sequence": pv_moves[:4],
+            "forcing_sequence": sim_moves if sim_moves else pv_moves[:4],
         }
         return TacticalFinding(
             category=CATEGORY_MISSED_CHECK_OR_FORCING,
@@ -437,7 +496,13 @@ def detect_tactical_consequence(analysis: MoveAnalysis) -> Optional[TacticalFind
     pv_after = list(analysis.pv_after) if hasattr(analysis, "pv_after") else []
 
     # 1. Hanging piece check (piece left capturable/undefended)
-    hanging_finding = check_hanging_piece(board_after, mover, pv_after)
+    hanging_finding = check_hanging_piece(
+        board_after,
+        mover,
+        pv_after,
+        board_before=board_before,
+        played_move=played_move,
+    )
     if hanging_finding:
         hanging_finding.played_move = played_move
         hanging_finding.better_move = better_move
