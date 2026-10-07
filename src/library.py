@@ -811,6 +811,11 @@ def main():
     rep_parser.add_argument("player", help="Target player name")
     rep_parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to SQLite database")
 
+    # Coaching recommendations
+    coach_parser = subparsers.add_parser("coaching", help="Generate personalized coaching recommendations")
+    coach_parser.add_argument("player", help="Target player name")
+    coach_parser.add_argument("--db", default=DEFAULT_DB_PATH, help="Path to SQLite database")
+
     args = parser.parse_args()
 
     if args.command == "import":
@@ -844,6 +849,11 @@ def main():
         from src.openings import build_player_repertoire_from_library
         with GameLibrary(args.db) as lib:
             profile = build_player_repertoire_from_library(lib, args.player)
+            print(profile.summary())
+    elif args.command == "coaching":
+        from src.recommendations import build_coaching_profile_from_library
+        with GameLibrary(args.db) as lib:
+            profile = build_coaching_profile_from_library(lib, args.player)
             print(profile.summary())
     elif args.command == "list":
         with GameLibrary(args.db) as lib:
