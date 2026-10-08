@@ -1,0 +1,301 @@
+@import "tailwindcss";
+
+/* ---- Design Tokens ---- */
+:root {
+  --bg-primary: #0f1117;
+  --bg-secondary: #161920;
+  --bg-tertiary: #1c1f2a;
+  --bg-card: #1a1d28;
+  --bg-hover: #22253a;
+  --bg-active: #2a2d45;
+
+  --text-primary: #e8eaf0;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  --border-color: #2a2d3a;
+  --border-hover: #3d4155;
+
+  --accent-blue: #3b82f6;
+  --accent-blue-dim: #2563eb;
+  --accent-green: #22c55e;
+  --accent-yellow: #eab308;
+  --accent-orange: #f97316;
+  --accent-red: #ef4444;
+  --accent-purple: #8b5cf6;
+  --accent-cyan: #06b6d4;
+
+  --eval-white: #f0f0f0;
+  --eval-black: #1a1a1a;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-elevated: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+/* ---- Global Reset ---- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* ---- Classification badges ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.badge-best { background: #166534; color: #bbf7d0; }
+.badge-excellent { background: #166534; color: #bbf7d0; }
+.badge-good { background: #1f2937; color: #9ca3af; }
+.badge-book { background: #312e81; color: #c4b5fd; }
+.badge-inaccuracy { background: #713f12; color: #fde68a; }
+.badge-mistake { background: #7c2d12; color: #fed7aa; }
+.badge-blunder { background: #7f1d1d; color: #fecaca; }
+.badge-forced { background: #4c1d95; color: #ddd6fe; }
+
+.badge-analyzed { background: #064e3b; color: #6ee7b7; }
+.badge-not-analyzed { background: #1f2937; color: #6b7280; }
+.badge-analyzing { background: #1e3a5f; color: #93c5fd; }
+.badge-failed { background: #7f1d1d; color: #fca5a5; }
+
+/* ---- Card ---- */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+/* ---- Eval bar ---- */
+.eval-bar {
+  width: 24px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  background: var(--eval-black);
+  flex-shrink: 0;
+}
+.eval-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--eval-white);
+  transition: height 0.3s ease;
+}
+
+/* ---- Move list item ---- */
+.move-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: "SF Mono", "Fira Code", monospace;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.move-item:hover {
+  background: var(--bg-hover);
+}
+.move-item.active {
+  background: var(--accent-blue-dim);
+  color: white;
+}
+.move-item.critical {
+  font-weight: 700;
+}
+
+/* ---- Filter tabs ---- */
+.filter-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+.filter-tab {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: transparent;
+}
+.filter-tab:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+.filter-tab.active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+/* ---- Critical nav buttons ---- */
+.crit-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.crit-nav-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+.crit-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---- Explanation panel ---- */
+.explanation-section {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+.explanation-section:last-child {
+  border-bottom: none;
+}
+.explanation-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.explanation-value {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ---- Variation line ---- */
+.variation-line {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+  color: var(--accent-cyan);
+  background: var(--bg-secondary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ---- Episode badge ---- */
+.episode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+.episode-badge:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+.episode-badge.active {
+  background: var(--accent-blue-dim);
+  border-color: var(--accent-blue);
+  color: white;
+}
+
+/* ---- Chessboard overrides ---- */
+.board-container {
+  aspect-ratio: 1;
+  max-width: 520px;
+  width: 100%;
+}
+
+/* ---- Game table ---- */
+.game-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px 100px 1.2fr 100px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.game-row:hover {
+  background: var(--bg-hover);
+}
+
+/* ---- Animations ---- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25); }
+}
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}

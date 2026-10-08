@@ -1,2 +1,7 @@
 chess==1.11.2
 python-chess==1.999
+fastapi>=0.115.0
+uvicorn>=0.30.0
+httpx>=0.27.0
+pytest>=8.0.0
+
