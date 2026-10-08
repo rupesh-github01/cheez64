@@ -603,7 +603,15 @@ def build_player_profile(
         elif b["mistake_type"] == "missed_opportunity":
             takeaway = f"{freq_desc} The player frequently overlooks forcing candidate moves and tactical wins."
         elif b["mistake_type"] == "endgame_technique":
-            takeaway = f"{freq_desc} Supported by board evidence in pure pawn and minor-piece endgames where inaccurate king moves conceded key central squares or opposition."
+            subs = b["subcategories"]
+            if "endgame_king_activity" in subs and len(subs) == 1:
+                takeaway = f"{freq_desc} Evaluation drops occurred in endgame positions where king moves were involved in critical inaccuracies."
+            elif "endgame_pawn_play" in subs and len(subs) == 1:
+                takeaway = f"{freq_desc} Evaluation drops occurred in endgame positions involving pawn advancement decisions."
+            elif "endgame_piece_play" in subs and len(subs) == 1:
+                takeaway = f"{freq_desc} Evaluation drops occurred in endgame positions involving piece maneuvering (non-king, non-pawn) decisions."
+            else:
+                takeaway = f"{freq_desc} Evaluation drops were detected in endgame-phase positions. These represent inaccuracies during piece and pawn play in simplified positions."
         else:
             takeaway = f"{freq_desc} Represents substantial engine evaluation drops (>0.75 pawns) in the middlegame without an immediate tactical capture or hanging piece. These are inferred from general engine evaluation swings rather than specific pawn structure heuristics."
 

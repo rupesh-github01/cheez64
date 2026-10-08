@@ -402,6 +402,179 @@ class TestCoachingRecommendations(unittest.TestCase):
         self.assertEqual(len(coach.top_recommendations), 1)
         self.assertIn(coach.top_recommendations[0].category, ("positional_decision_making", "tactical_awareness"))
 
+    def test_positional_evidence_uses_evaluation_drop_label(self):
+        """
+        Regression: positional_decision_making evidence must NOT say 'tactical episodes'.
+        It must use 'evaluation-drop episodes' instead (Finding 1 & 5 from audit).
+        """
+        w_pos = ProfileWeakness(
+            category="Strategic & Positional Decisions",
+            pillar="Strategic & Positional",
+            subcategories=["positional_evaluation_drop"],
+            mistake_type="positional_inaccuracy",
+            occurrences=5,
+            episode_occurrences=4,
+            distinct_games=3,
+            game_ids=[1, 2, 3],
+            games_ratio="3/5",
+            average_cpl=180.0,
+            max_cpl=400,
+            total_cpl=900,
+            high_confidence_count=0,
+            severity="medium",
+            confidence="medium",
+            composite_score=20.0,
+            sample_moves=[],
+            coaching_takeaway="Evaluation drops."
+        )
+
+        profile = make_dummy_profile(weaknesses=[w_pos], total_games=5)
+        coach = generate_coaching_recommendations(profile)
+        rec = coach.top_recommendations[0]
+
+        # Must use "evaluation-drop episodes", NOT "tactical episodes"
+        has_correct_label = any("evaluation-drop episodes" in ev for ev in rec.evidence)
+        has_wrong_label = any("tactical episodes" in ev for ev in rec.evidence)
+        self.assertTrue(has_correct_label, f"Expected 'evaluation-drop episodes' in evidence: {rec.evidence}")
+        self.assertFalse(has_wrong_label, f"'tactical episodes' should not appear for positional category: {rec.evidence}")
+
+    def test_endgame_language_no_unsupported_concepts(self):
+        """
+        Regression: endgame recommendation must NOT reference 'king paths',
+        'opposition rules', or 'key squares' since these are not computed (Finding 2).
+        """
+        w_eg = ProfileWeakness(
+            category="Endgame Technique: King Activity & Opposition",
+            pillar="Endgame Technique",
+            subcategories=["endgame_king_activity"],
+            mistake_type="endgame_technique",
+            occurrences=4,
+            episode_occurrences=3,
+            distinct_games=2,
+            game_ids=[1, 2],
+            games_ratio="2/5",
+            average_cpl=300.0,
+            max_cpl=1000,
+            total_cpl=1200,
+            high_confidence_count=0,
+            severity="high",
+            confidence="medium",
+            composite_score=15.0,
+            sample_moves=[],
+            coaching_takeaway="Endgame drops."
+        )
+
+        profile = make_dummy_profile(weaknesses=[w_eg], total_games=5)
+        coach = generate_coaching_recommendations(profile)
+        rec = coach.top_recommendations[0]
+
+        # Must not contain unsupported chess concepts
+        full_text = f"{rec.title} {rec.summary} {rec.rationale}"
+        self.assertNotIn("king paths", full_text.lower())
+        self.assertNotIn("opposition rules", full_text.lower())
+        self.assertNotIn("conceded key squares", full_text.lower())
+        # Title must reflect the evidence-grounded approach
+        self.assertEqual(rec.title, "Endgame Phase Accuracy")
+
+    def test_duplicate_endgame_weaknesses_merged_into_single_recommendation(self):
+        """
+        Regression: two endgame weakness buckets (king_activity + piece_play) that
+        both map to category='endgame' must produce exactly ONE recommendation,
+        not two duplicates (Finding 3).
+        """
+        w_eg_king = ProfileWeakness(
+            category="Endgame Technique: King Activity & Opposition",
+            pillar="Endgame Technique",
+            subcategories=["endgame_king_activity"],
+            mistake_type="endgame_technique",
+            occurrences=4,
+            episode_occurrences=3,
+            distinct_games=2,
+            game_ids=[1, 3],
+            games_ratio="2/5",
+            average_cpl=400.0,
+            max_cpl=1000,
+            total_cpl=1600,
+            high_confidence_count=0,
+            severity="high",
+            confidence="medium",
+            composite_score=18.0,
+            sample_moves=[{"game_id": 1, "move": "47. Ke4", "best_move": "Bf2", "cpl": 1000, "summary": ""}],
+            coaching_takeaway="King endgame errors."
+        )
+
+        w_eg_piece = ProfileWeakness(
+            category="Endgame Technique: Endgame Piece Play",
+            pillar="Endgame Technique",
+            subcategories=["endgame_piece_play"],
+            mistake_type="endgame_technique",
+            occurrences=3,
+            episode_occurrences=3,
+            distinct_games=2,
+            game_ids=[2, 3],
+            games_ratio="2/5",
+            average_cpl=120.0,
+            max_cpl=147,
+            total_cpl=360,
+            high_confidence_count=0,
+            severity="low",
+            confidence="medium",
+            composite_score=8.0,
+            sample_moves=[{"game_id": 2, "move": "32. Re3", "best_move": "Rbc7", "cpl": 147, "summary": ""}],
+            coaching_takeaway="Piece endgame errors."
+        )
+
+        profile = make_dummy_profile(weaknesses=[w_eg_king, w_eg_piece], total_games=5)
+        coach = generate_coaching_recommendations(profile)
+
+        endgame_recs = [r for r in coach.top_recommendations if r.category == "endgame"]
+        self.assertEqual(len(endgame_recs), 1, f"Expected 1 merged endgame rec, got {len(endgame_recs)}")
+
+        merged_rec = endgame_recs[0]
+        # Must merge game_ids from both weaknesses
+        self.assertIn(1, merged_rec.affected_games)
+        self.assertIn(2, merged_rec.affected_games)
+        self.assertIn(3, merged_rec.affected_games)
+        # Must merge episode counts (3 + 3 = 6)
+        self.assertIn("6 endgame-critical episodes", merged_rec.evidence[0])
+        # Must merge sample moves from both
+        self.assertGreaterEqual(len(merged_rec.affected_moves), 2)
+
+    def test_material_units_say_pawn_equivalent(self):
+        """
+        Regression: material evidence must say 'pawn-equivalent material points'
+        not just 'net material points' (Finding 4).
+        """
+        w = ProfileWeakness(
+            category="Tactical Awareness: Material Loss",
+            pillar="Tactical Awareness",
+            subcategories=["material_loss"],
+            mistake_type="tactical_blunder",
+            occurrences=3,
+            episode_occurrences=3,
+            distinct_games=2,
+            game_ids=[1, 2],
+            games_ratio="2/3",
+            average_cpl=250.0,
+            max_cpl=400,
+            total_cpl=750,
+            high_confidence_count=3,
+            severity="high",
+            confidence="medium",
+            composite_score=18.0,
+            sample_moves=[],
+            coaching_takeaway="Material losses."
+        )
+
+        profile = make_dummy_profile(weaknesses=[w], total_games=3)
+        coach = generate_coaching_recommendations(profile)
+        rec = coach.top_recommendations[0]
+
+        mat_ev = [ev for ev in rec.evidence if "material points" in ev]
+        self.assertTrue(len(mat_ev) > 0, "Expected material evidence bullet")
+        self.assertIn("pawn-equivalent material points", mat_ev[0])
+        self.assertNotIn("net material points", mat_ev[0])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -53,6 +53,17 @@ TRAINING_TYPE_MAP = {
     "opening_transition": "middlegame plans from recurring openings",
 }
 
+EPISODE_LABEL_MAP = {
+    "tactical_awareness": "tactical episodes",
+    "material_management": "material-loss episodes",
+    "forcing_moves": "missed-forcing-move episodes",
+    "piece_safety": "hanging-piece episodes",
+    "positional_decision_making": "evaluation-drop episodes",
+    "endgame": "endgame-critical episodes",
+    "opening_repertoire": "opening episodes",
+    "opening_transition": "opening-transition episodes",
+}
+
 
 @dataclass
 class CoachingRecommendation:
@@ -234,26 +245,63 @@ def generate_coaching_recommendations(
     # -------------------------------------------------------------
     # 1. Process Weaknesses from PlayerProfile
     # -------------------------------------------------------------
+    # Group weaknesses by recommendation category to avoid duplicate
+    # recommendations when multiple profile weaknesses map to the same category
+    # (e.g., two endgame subcategories both mapping to "endgame").
+    category_groups: Dict[str, List[ProfileWeakness]] = {}
     for w in profile.weaknesses:
         category = _categorize_weakness(w)
         if category not in VALID_CATEGORIES:
             continue
+        if category not in category_groups:
+            category_groups[category] = []
+        category_groups[category].append(w)
+
+    for category, weakness_group in category_groups.items():
+        # Merge statistics across weaknesses in the same category
+        merged_episodes = sum(w.episode_occurrences for w in weakness_group)
+        merged_occurrences = sum(w.occurrences for w in weakness_group)
+        merged_game_ids = sorted(set(gid for w in weakness_group for gid in w.game_ids))
+        merged_distinct_games = len(merged_game_ids)
+        merged_total_cpl = sum(w.total_cpl for w in weakness_group)
+        merged_avg_cpl = (merged_total_cpl / merged_occurrences) if merged_occurrences > 0 else 0.0
+        merged_max_cpl = max(w.max_cpl for w in weakness_group)
+        merged_high_conf = sum(w.high_confidence_count for w in weakness_group)
+        games_ratio = f"{merged_distinct_games}/{total_games}"
+
+        # Use strongest confidence from constituent weaknesses
+        conf_levels = [w.confidence for w in weakness_group]
+        if "high" in conf_levels:
+            merged_conf = "high"
+        elif "medium" in conf_levels:
+            merged_conf = "medium"
+        else:
+            merged_conf = "low"
+
+        # Collect sample moves (up to 3) from all constituent weaknesses
+        merged_samples: List[Dict[str, Any]] = []
+        for w in weakness_group:
+            merged_samples.extend(w.sample_moves)
+        merged_samples = merged_samples[:3]
 
         score = _compute_recommendation_score(
-            episodes=w.episode_occurrences,
-            distinct_games=w.distinct_games,
+            episodes=merged_episodes,
+            distinct_games=merged_distinct_games,
             total_games=total_games,
-            avg_cpl=w.average_cpl,
-            peak_cpl=w.max_cpl,
-            confidence_level=w.confidence,
+            avg_cpl=merged_avg_cpl,
+            peak_cpl=merged_max_cpl,
+            confidence_level=merged_conf,
         )
+
+        # Category-aware episode label
+        episode_label = EPISODE_LABEL_MAP.get(category, "episodes")
 
         # Contextual titles, rationales, and summaries
         if category == "tactical_awareness":
             title = "Defensive Tactical Awareness & Material Retention"
             summary = (
-                f"Tactical blunders conceding significant material occurred across {w.games_ratio} games "
-                f"({w.episode_occurrences} distinct episodes). Strengthening tactical defense will immediately improve results."
+                f"Tactical blunders conceding significant material occurred across {games_ratio} games "
+                f"({merged_episodes} distinct episodes). Strengthening tactical defense will immediately improve results."
             )
             rationale = (
                 "Material-loss episodes represent the most severe evaluation drops in the player's games. "
@@ -265,7 +313,7 @@ def generate_coaching_recommendations(
         elif category == "piece_safety":
             title = "Piece Safety & Undefended Blunder Checks"
             summary = (
-                f"Hanging or undefended pieces were conceded across {w.games_ratio} games. "
+                f"Hanging or undefended pieces were conceded across {games_ratio} games. "
                 "Implementing a habitual pre-move safety verification will eliminate avoidable piece giveaways."
             )
             rationale = (
@@ -276,7 +324,7 @@ def generate_coaching_recommendations(
         elif category == "forcing_moves":
             title = "Calculation Discipline for Forcing Candidate Moves"
             summary = (
-                f"Missed forcing tactical opportunities recurred across {w.games_ratio} games. "
+                f"Missed forcing tactical opportunities recurred across {games_ratio} games. "
                 "Calculating checks, captures, and threats first will convert winning chances."
             )
             rationale = (
@@ -285,20 +333,22 @@ def generate_coaching_recommendations(
             )
 
         elif category == "endgame":
-            title = "Technical Endgame Conversion & King Principles"
+            title = "Endgame Phase Accuracy"
             summary = (
-                f"Critical inaccuracies were detected in endgame positions across {w.games_ratio} games. "
-                "Mastering fundamental king paths and opposition rules will prevent conceding draws or losses in simplified positions."
+                f"Evaluation drops were detected in endgame-phase positions across {games_ratio} games "
+                f"({merged_episodes} distinct episodes). Improving accuracy in simplified positions will prevent avoidable losses."
             )
             rationale = (
-                "In simplified endings, inaccurate king placement and passive piece positioning conceded key squares. "
-                "Endgame technique requires exact calculation rather than intuitive middlegame heuristics."
+                "In positions with queens off the board or low total material, the player's moves produced "
+                "significant engine evaluation drops. These represent inaccuracies during piece and pawn "
+                "maneuvering in simplified positions. Note: specific endgame concepts (opposition, key squares) "
+                "are not computed — these findings reflect general CPL-based evaluation swings in the endgame phase."
             )
 
         elif category == "positional_decision_making":
             title = "Middlegame Planning & Strategic Pawn Play"
             summary = (
-                f"Gradual positional evaluation concessions (>75 CPL) were observed across {w.games_ratio} games. "
+                f"Gradual positional evaluation concessions (>75 CPL) were observed across {games_ratio} games. "
                 "Formulating concrete middlegame plans and maintaining active piece coordination will sustain opening advantages."
             )
             rationale = (
@@ -306,23 +356,26 @@ def generate_coaching_recommendations(
                 "and conceding central outposts. Note: positional evaluations are inferred from engine swings rather than human pawn-structure rules."
             )
         else:
-            title = f"Targeted Improvement in {w.category}"
-            summary = f"Observed across {w.games_ratio} games with an average centipawn loss of {w.average_cpl:.1f}."
-            rationale = w.coaching_takeaway
+            title = f"Targeted Improvement in {category}"
+            summary = f"Observed across {games_ratio} games with an average centipawn loss of {merged_avg_cpl:.1f}."
+            rationale = weakness_group[0].coaching_takeaway
 
-        # Build concrete evidence bullet points
+        # Build concrete evidence bullet points with category-aware labels
         evidence_points = [
-            f"{w.episode_occurrences} tactical episodes ({w.occurrences} critical moves) across {w.games_ratio} games.",
-            f"Mean centipawn loss of {w.average_cpl:.1f} cp (peak loss: {w.max_cpl} cp, cumulative: {w.total_cpl} cp).",
+            f"{merged_episodes} {episode_label} ({merged_occurrences} critical moves) across {games_ratio} games.",
+            f"Mean centipawn loss of {merged_avg_cpl:.1f} cp (peak loss: {merged_max_cpl} cp, cumulative: {merged_total_cpl} cp).",
         ]
-        if w.high_confidence_count > 0:
-            evidence_points.append(f"{w.high_confidence_count} moves confirmed with high tactical confidence.")
+        if merged_high_conf > 0:
+            evidence_points.append(f"{merged_high_conf} moves confirmed with high tactical confidence.")
         if category == "tactical_awareness" and profile.material_summary.actual_net_material_loss > 0:
-            evidence_points.append(f"Contributed to {profile.material_summary.actual_net_material_loss} net material points conceded across critical positions.")
+            evidence_points.append(
+                f"Contributed to {profile.material_summary.actual_net_material_loss} pawn-equivalent material points "
+                f"conceded across critical positions."
+            )
 
         # Extract affected moves
         affected_moves = []
-        for sm in w.sample_moves[:3]:
+        for sm in merged_samples[:3]:
             affected_moves.append({
                 "game_id": sm.get("game_id"),
                 "move": sm.get("move"),
@@ -340,10 +393,10 @@ def generate_coaching_recommendations(
             summary=summary,
             rationale=rationale,
             evidence=evidence_points,
-            affected_games=w.game_ids,
+            affected_games=merged_game_ids,
             affected_moves=affected_moves,
             suggested_training_type=TRAINING_TYPE_MAP.get(category, "targeted exercises"),
-            confidence=w.confidence,
+            confidence=merged_conf,
             limitations=conf_limitation,
             score=score,
         )
