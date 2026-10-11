@@ -65,6 +65,26 @@ def health() -> Dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
+# Dashboard & Aggregated Statistics
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/dashboard", tags=["dashboard"])
+def get_dashboard(
+    player: Optional[str] = Query(None, description="Target player username (defaults to primary library player)"),
+) -> Dict[str, Any]:
+    """
+    Return comprehensive aggregated dashboard metrics, chronological performance trends,
+    coaching recommendations with linked game reviews, and opening statistics.
+    """
+    from src.dashboard import build_dashboard_data
+    with get_library() as lib:
+        data = build_dashboard_data(lib, player=player)
+    return data
+
+
+
+# ---------------------------------------------------------------------------
 # Games — list and single record
 # ---------------------------------------------------------------------------
 

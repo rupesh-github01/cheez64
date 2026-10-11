@@ -46,7 +46,19 @@ export default function RootLayout({
               Personal Chess Coach
             </span>
           </a>
-          <nav style={{ display: "flex", gap: "16px" }}>
+          <nav style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+            <a
+              href="/dashboard"
+              style={{
+                color: "var(--text-secondary)",
+                textDecoration: "none",
+                fontSize: "0.85rem",
+                fontWeight: 500,
+                transition: "color 0.15s ease",
+              }}
+            >
+              Dashboard
+            </a>
             <a
               href="/games"
               style={{
@@ -54,6 +66,7 @@ export default function RootLayout({
                 textDecoration: "none",
                 fontSize: "0.85rem",
                 fontWeight: 500,
+                transition: "color 0.15s ease",
               }}
             >
               Game Library

@@ -11,6 +11,7 @@ import type {
   CriticalResponse,
   GameOpening,
   Episode,
+  DashboardData,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -108,3 +109,13 @@ export async function getEpisodes(
 export async function getOpening(gameId: string): Promise<GameOpening> {
   return fetchJSON<GameOpening>(`/api/games/${gameId}/opening`);
 }
+
+// ---- Dashboard ----
+
+export async function getDashboard(player?: string): Promise<DashboardData> {
+  const query = new URLSearchParams();
+  if (player) query.set("player", player);
+  const qs = query.toString();
+  return fetchJSON<DashboardData>(`/api/dashboard${qs ? `?${qs}` : ""}`);
+}
+

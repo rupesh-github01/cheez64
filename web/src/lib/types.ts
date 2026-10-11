@@ -209,3 +209,165 @@ export function classificationColor(cls: string): string {
 export function classificationLabel(cls: string): string {
   return cls.charAt(0).toUpperCase() + cls.slice(1);
 }
+
+// ---- Dashboard Types ----
+
+export interface DashboardOverview {
+  total_library_games: number;
+  library_analyzed_games: number;
+  library_unanalyzed_games: number;
+  player_games_total: number;
+  player_games_analyzed: number;
+  player_games_unanalyzed: number;
+  results: {
+    wins: number;
+    draws: number;
+    losses: number;
+    unknown: number;
+    win_rate: number;
+  };
+  white_stats: {
+    games: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    win_rate: number;
+  };
+  black_stats: {
+    games: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    win_rate: number;
+  };
+  analyzed_metrics: {
+    games_analyzed: number;
+    moves_analyzed: number;
+    average_cpl: number;
+    classifications: {
+      blunder: number;
+      mistake: number;
+      inaccuracy: number;
+      good: number;
+    };
+  } | null;
+}
+
+export interface DashboardTrendItem {
+  game_id: string;
+  date: string;
+  color: "White" | "Black";
+  opponent: string;
+  result: "win" | "loss" | "draw" | "unknown";
+  raw_result: string;
+  player_rating: number | null;
+  opponent_rating: number | null;
+  eco: string;
+  opening_name: string;
+  variation_name: string | null;
+  is_analyzed: boolean;
+  avg_cpl: number | null;
+  blunders: number | null;
+  mistakes: number | null;
+  inaccuracies: number | null;
+  moves_count: number | null;
+}
+
+export interface AffectedMoveDetail {
+  game_id: string;
+  game_date: string | null;
+  opponent: string | null;
+  ply: number;
+  move_number: number;
+  move_text: string;
+  played_move: string;
+  best_move: string;
+  cpl: number;
+  summary: string;
+}
+
+export interface CoachingRecommendationDetail {
+  recommendation_id: string;
+  priority: number;
+  category: string;
+  title: string;
+  summary: string;
+  rationale: string;
+  evidence: string[];
+  affected_games: (number | string)[];
+  affected_moves: AffectedMoveDetail[];
+  affected_games_detail?: {
+    game_id: string;
+    date?: string;
+    white?: string;
+    black?: string;
+    result?: string;
+  }[];
+  suggested_training_type: string;
+  confidence: string;
+  limitations: string;
+  score: number;
+}
+
+export interface DashboardStrength {
+  area: string;
+  evidence_count: number;
+  distinct_games: number;
+  games_ratio: string;
+  description: string;
+  sample_evidence: Array<Record<string, any>>;
+}
+
+export interface DashboardOpeningEntry {
+  color: string;
+  first_move_group: string;
+  opening_name: string;
+  variation_name: string | null;
+  eco: string;
+  full_name: string;
+  total_games: number;
+  distinct_games: number;
+  game_ids: string[];
+  wins: number;
+  draws: number;
+  losses: number;
+  win_rate: number;
+  analyzed_games: number;
+  avg_cpl_overall: number | null;
+  before_theory: {
+    moves_count: number;
+    avg_cpl: number | null;
+    critical_mistakes: number;
+    blunders: number;
+  };
+  after_theory: {
+    moves_count: number;
+    avg_cpl: number | null;
+    critical_mistakes: number;
+    blunders: number;
+  };
+  repertoire_status: string;
+  status_description: string;
+  is_preliminary: boolean;
+  sample_label: string;
+}
+
+export interface DashboardConfidence {
+  level: "none" | "preliminary" | "moderate" | "high";
+  sample_size: number;
+  label: string;
+  warning: string;
+}
+
+export interface DashboardData {
+  player_name: string;
+  overview: DashboardOverview;
+  trends: DashboardTrendItem[];
+  weaknesses: any[];
+  strengths: DashboardStrength[];
+  recommendations: CoachingRecommendationDetail[];
+  openings: DashboardOpeningEntry[];
+  confidence: DashboardConfidence;
+  limitations: string[];
+}
+
