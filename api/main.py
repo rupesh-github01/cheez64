@@ -178,6 +178,33 @@ def get_moves(
     }
 
 
+@app.get("/api/games/{game_id}/moves/{ply}", tags=["analysis"])
+def get_move_by_ply(game_id: str, ply: int) -> Dict[str, Any]:
+    """
+    Return detailed analysis data for a single ply, including candidates,
+    principal variation, position features, and explanation.
+    """
+    with get_library() as lib:
+        _assert_game_exists(lib, game_id)
+        analysis = lib.get_analysis(game_id)
+        if not analysis:
+            raise HTTPException(status_code=404, detail=f"No analysis for '{game_id}'")
+
+    moves = analysis.get("moves", [])
+    matching = [m for m in moves if m.get("ply") == ply]
+    if not matching:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Ply {ply} not found in analysis for '{game_id}'",
+        )
+
+    return {
+        "game_id": game_id,
+        "ply": ply,
+        "move": matching[0],
+    }
+
+
 @app.get("/api/games/{game_id}/critical", tags=["analysis"])
 def get_critical_moves(game_id: str) -> Dict[str, Any]:
     """

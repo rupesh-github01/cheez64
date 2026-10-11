@@ -80,6 +80,17 @@ export async function getMoves(
   );
 }
 
+export async function getMove(
+  gameId: string,
+  ply: number
+): Promise<{ game_id: string; ply: number; move: import("./types").MoveData }> {
+  return fetchJSON<{
+    game_id: string;
+    ply: number;
+    move: import("./types").MoveData;
+  }>(`/api/games/${gameId}/moves/${ply}`);
+}
+
 export async function getCritical(gameId: string): Promise<CriticalResponse> {
   return fetchJSON<CriticalResponse>(`/api/games/${gameId}/critical`);
 }

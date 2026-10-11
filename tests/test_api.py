@@ -410,6 +410,28 @@ class TestGetMoves:
         r = client.get("/api/games/no_game/moves")
         assert r.status_code == 404
 
+    def test_get_move_by_ply_success(self, seeded_client):
+        client, game_id, *_ = seeded_client
+        r = client.get(f"/api/games/{game_id}/moves/1")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["game_id"] == game_id
+        assert body["ply"] == 1
+        assert "move" in body
+        assert body["move"]["ply"] == 1
+        assert "played_move" in body["move"]
+
+    def test_get_move_by_ply_not_found(self, seeded_client):
+        client, game_id, *_ = seeded_client
+        r = client.get(f"/api/games/{game_id}/moves/999")
+        assert r.status_code == 404
+        assert "999" in r.json()["detail"]
+
+    def test_get_move_by_ply_missing_game(self, seeded_client):
+        client, *_ = seeded_client
+        r = client.get("/api/games/no_such_game/moves/1")
+        assert r.status_code == 404
+
 
 # ---------------------------------------------------------------------------
 # Critical moves

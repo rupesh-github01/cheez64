@@ -3,16 +3,36 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback, use } from "react";
+import { Chess } from "chess.js";
 import { getGame, getAnalysis } from "@/lib/api";
 import type { Game, GameAnalysis, MoveData } from "@/lib/types";
 import ChessboardPane from "@/components/GameReview/ChessboardPane";
 import MoveList from "@/components/GameReview/MoveList";
 import ExplanationPanel from "@/components/GameReview/ExplanationPanel";
+import PositionExplorer from "@/components/GameReview/PositionExplorer";
 import CriticalNav from "@/components/GameReview/CriticalNav";
 import EpisodeList from "@/components/GameReview/EpisodeList";
 import EvaluationBar from "@/components/GameReview/EvaluationBar";
 
 type FilterMode = "all" | "critical" | "tactical" | "positional" | "endgame";
+type ReviewTab = "coach" | "explorer";
+
+interface VariationStep {
+  stepIndex: number;
+  fen: string;
+  san: string;
+  from?: string;
+  to?: string;
+}
+
+interface VariationState {
+  active: boolean;
+  candidateLabel: string;
+  pvMoves: string[];
+  eval_cp?: number;
+  steps: VariationStep[];
+  currentStepIndex: number;
+}
 
 const TACTICAL_CATEGORIES = new Set([
   "material_loss",
@@ -34,6 +54,10 @@ export default function GameReviewPage({
 
   const [currentPly, setCurrentPly] = useState(0); // 0 = start position
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
+  const [activeTab, setActiveTab] = useState<ReviewTab>("coach");
+
+  // Interactive variation stepper state
+  const [variationState, setVariationState] = useState<VariationState | null>(null);
 
   // Load data
   useEffect(() => {
@@ -86,19 +110,106 @@ export default function GameReviewPage({
   const currentMove: MoveData | null =
     currentPly > 0 ? allMoves.find((m) => m.ply === currentPly) ?? null : null;
 
-  // Board FEN
-  const currentFen = (() => {
+  // Board FEN (normal game position)
+  const gameFen = (() => {
     if (currentPly === 0) {
-      return "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+      return (
+        allMoves[0]?.fen_before ??
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+      );
     }
     const move = allMoves.find((m) => m.ply === currentPly);
     return move?.fen_after ?? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
   })();
 
+  // Displayed FEN (reflects variation step if previewing)
+  const displayedFen =
+    variationState?.active && variationState.steps[variationState.currentStepIndex]
+      ? variationState.steps[variationState.currentStepIndex].fen
+      : gameFen;
+
+  const variationSquares =
+    variationState?.active && variationState.steps[variationState.currentStepIndex]
+      ? {
+          from: variationState.steps[variationState.currentStepIndex].from,
+          to: variationState.steps[variationState.currentStepIndex].to,
+        }
+      : null;
+
+  const variationBanner = variationState?.active
+    ? {
+        label: variationState.candidateLabel,
+        step: variationState.currentStepIndex,
+        total: variationState.pvMoves.length,
+      }
+    : null;
+
+  // Variation Stepper handlers
+  const handleStartVariation = useCallback(
+    (pvMoves: string[], label: string, eval_cp?: number) => {
+      const rootFen =
+        currentMove?.fen_before ??
+        allMoves[0]?.fen_before ??
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+      try {
+        const chess = new Chess(rootFen);
+        const steps: VariationStep[] = [
+          { stepIndex: 0, fen: rootFen, san: "" },
+        ];
+        for (let i = 0; i < pvMoves.length; i++) {
+          const m = pvMoves[i];
+          let res = null;
+          try {
+            res = chess.move(m);
+          } catch {
+            res = null;
+          }
+          if (!res) break;
+          steps.push({
+            stepIndex: i + 1,
+            fen: chess.fen(),
+            san: res.san,
+            from: res.from,
+            to: res.to,
+          });
+        }
+        setVariationState({
+          active: true,
+          candidateLabel: label,
+          pvMoves,
+          eval_cp,
+          steps,
+          currentStepIndex: Math.min(1, steps.length - 1),
+        });
+        setActiveTab("explorer");
+      } catch (err) {
+        console.error("Failed to parse variation", err);
+      }
+    },
+    [currentMove, allMoves]
+  );
+
+  const handleStepVariation = useCallback((stepIndex: number) => {
+    setVariationState((prev) => {
+      if (!prev) return null;
+      const clamped = Math.max(0, Math.min(stepIndex, prev.steps.length - 1));
+      return { ...prev, currentStepIndex: clamped };
+    });
+  }, []);
+
+  const handleExitVariation = useCallback(() => {
+    setVariationState(null);
+  }, []);
+
   // Navigation
-  const goToMove = useCallback((ply: number) => setCurrentPly(ply), []);
+  const goToMove = useCallback((ply: number) => {
+    setVariationState(null);
+    setCurrentPly(ply);
+  }, []);
 
   const goNext = useCallback(() => {
+    setVariationState(null);
     const maxPly = allMoves.length > 0 ? allMoves[allMoves.length - 1].ply : 0;
     if (currentPly < maxPly) {
       const nextMove = allMoves.find((m) => m.ply > currentPly);
@@ -107,6 +218,7 @@ export default function GameReviewPage({
   }, [currentPly, allMoves]);
 
   const goPrev = useCallback(() => {
+    setVariationState(null);
     if (currentPly <= 0) return;
     const prevMoves = allMoves.filter((m) => m.ply < currentPly);
     if (prevMoves.length > 0) {
@@ -116,14 +228,32 @@ export default function GameReviewPage({
     }
   }, [currentPly, allMoves]);
 
-  const goStart = useCallback(() => setCurrentPly(0), []);
+  const goStart = useCallback(() => {
+    setVariationState(null);
+    setCurrentPly(0);
+  }, []);
+
   const goEnd = useCallback(() => {
+    setVariationState(null);
     if (allMoves.length > 0) setCurrentPly(allMoves[allMoves.length - 1].ply);
   }, [allMoves]);
 
   // Keyboard navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      if (variationState?.active) {
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          handleStepVariation(variationState.currentStepIndex + 1);
+        } else if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          handleStepVariation(variationState.currentStepIndex - 1);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          handleExitVariation();
+        }
+        return;
+      }
       if (e.key === "ArrowRight") goNext();
       else if (e.key === "ArrowLeft") goPrev();
       else if (e.key === "Home") goStart();
@@ -131,10 +261,23 @@ export default function GameReviewPage({
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [goNext, goPrev, goStart, goEnd]);
+  }, [
+    variationState,
+    goNext,
+    goPrev,
+    goStart,
+    goEnd,
+    handleStepVariation,
+    handleExitVariation,
+  ]);
 
   // Current eval normalized to White's perspective (positive = White ahead, negative = Black ahead)
   const currentEval = (() => {
+    if (variationState?.active && variationState.eval_cp !== undefined) {
+      // Evaluation from perspective of side to move at fen_before
+      const side = currentMove?.color ?? "White";
+      return side === "White" ? variationState.eval_cp : -variationState.eval_cp;
+    }
     if (!currentMove) {
       return allMoves[0]?.evaluation_before ?? 0;
     }
@@ -236,12 +379,31 @@ export default function GameReviewPage({
         {/* Left: Board */}
         <div>
           <ChessboardPane
-            fen={currentFen}
+            fen={displayedFen}
             currentMove={currentMove}
-            onPrev={goPrev}
-            onNext={goNext}
-            onStart={goStart}
-            onEnd={goEnd}
+            variationBanner={variationBanner}
+            variationSquares={variationSquares}
+            onExitVariation={handleExitVariation}
+            onPrev={
+              variationState?.active
+                ? () => handleStepVariation(variationState.currentStepIndex - 1)
+                : goPrev
+            }
+            onNext={
+              variationState?.active
+                ? () => handleStepVariation(variationState.currentStepIndex + 1)
+                : goNext
+            }
+            onStart={
+              variationState?.active
+                ? () => handleStepVariation(0)
+                : goStart
+            }
+            onEnd={
+              variationState?.active
+                ? () => handleStepVariation(variationState.pvMoves.length)
+                : goEnd
+            }
           />
         </div>
 
@@ -256,6 +418,37 @@ export default function GameReviewPage({
             currentPly={currentPly}
             onNavigate={goToMove}
           />
+
+          {/* Mode Switcher Tabs */}
+          <div className="mode-toggle-group">
+            <button
+              className={`mode-toggle-btn ${activeTab === "coach" ? "active" : ""}`}
+              onClick={() => setActiveTab("coach")}
+            >
+              🎓 Coach Explanation
+            </button>
+            <button
+              className={`mode-toggle-btn ${activeTab === "explorer" ? "active" : ""}`}
+              onClick={() => setActiveTab("explorer")}
+            >
+              🔍 Position & Move Explorer
+              {currentMove?.candidates && currentMove.candidates.length > 0 && (
+                <span
+                  style={{
+                    fontSize: "0.65rem",
+                    padding: "1px 6px",
+                    borderRadius: 9999,
+                    background:
+                      activeTab === "explorer"
+                        ? "rgba(59, 130, 246, 0.3)"
+                        : "var(--bg-tertiary)",
+                  }}
+                >
+                  {currentMove.candidates.length} candidates
+                </span>
+              )}
+            </button>
+          </div>
 
           {/* Filter tabs */}
           <div className="filter-tabs">
@@ -274,7 +467,7 @@ export default function GameReviewPage({
           </div>
 
           {/* Move list */}
-          <div className="card" style={{ padding: 12, maxHeight: 260, overflowY: "auto" }}>
+          <div className="card" style={{ padding: 12, maxHeight: 240, overflowY: "auto" }}>
             <MoveList
               moves={filterMode === "all" ? allMoves : filteredMoves}
               currentPly={currentPly}
@@ -283,10 +476,39 @@ export default function GameReviewPage({
             />
           </div>
 
-          {/* Explanation panel */}
-          {currentMove && (
-            <div className="card animate-fade-in" style={{ padding: 16 }}>
-              <ExplanationPanel move={currentMove} />
+          {/* Main content pane: Coach vs Explorer */}
+          {activeTab === "coach" ? (
+            currentMove && (
+              <div className="card animate-fade-in" style={{ padding: 16 }}>
+                <ExplanationPanel
+                  move={currentMove}
+                  onExploreMove={() => setActiveTab("explorer")}
+                  onExplorePv={(pv) => {
+                    const pvArr = pv.split(/\s+/).filter(Boolean);
+                    handleStartVariation(pvArr, `Variation: ${currentMove.best_move}`);
+                  }}
+                />
+              </div>
+            )
+          ) : (
+            <div className="animate-fade-in">
+              <PositionExplorer
+                move={currentMove}
+                plyZeroFen={allMoves[0]?.fen_before}
+                variationState={
+                  variationState
+                    ? {
+                        active: variationState.active,
+                        candidateLabel: variationState.candidateLabel,
+                        pvMoves: variationState.pvMoves,
+                        currentStepIndex: variationState.currentStepIndex,
+                      }
+                    : null
+                }
+                onStartVariation={handleStartVariation}
+                onStepVariation={handleStepVariation}
+                onExitVariation={handleExitVariation}
+              />
             </div>
           )}
 
@@ -305,3 +527,4 @@ export default function GameReviewPage({
     </div>
   );
 }
+

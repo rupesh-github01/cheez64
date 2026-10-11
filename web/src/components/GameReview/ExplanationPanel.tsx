@@ -5,6 +5,8 @@ import { classificationColor, classificationLabel } from "@/lib/types";
 
 interface Props {
   move: MoveData;
+  onExploreMove?: () => void;
+  onExplorePv?: (variation: string) => void;
 }
 
 function formatEval(val: number): string {
@@ -16,7 +18,7 @@ function formatEval(val: number): string {
   return pawns >= 0 ? `+${pawns.toFixed(2)}` : pawns.toFixed(2);
 }
 
-export default function ExplanationPanel({ move }: Props) {
+export default function ExplanationPanel({ move, onExploreMove, onExplorePv }: Props) {
   const expl = move.explanation;
   const tf = move.tactical_finding;
   const cls = move.classification;
@@ -132,7 +134,26 @@ export default function ExplanationPanel({ move }: Props) {
 
           {expl.variation && (
             <div className="explanation-section">
-              <div className="explanation-label">Variation</div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 4,
+                }}
+              >
+                <div className="explanation-label">Variation</div>
+                {onExplorePv && (
+                  <button
+                    className="copy-btn"
+                    style={{ fontSize: "0.68rem" }}
+                    onClick={() => onExplorePv(expl.variation!)}
+                    title="Step through this variation line on the board"
+                  >
+                    Step PV on Board ▶
+                  </button>
+                )}
+              </div>
               <div className="variation-line">{expl.variation}</div>
             </div>
           )}
@@ -205,6 +226,24 @@ export default function ExplanationPanel({ move }: Props) {
           </span>
         </span>
       </div>
+
+      {/* Shortcut to Explorer tab */}
+      {onExploreMove && (
+        <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
+          <button
+            className="crit-nav-btn"
+            style={{
+              background: "rgba(59, 130, 246, 0.15)",
+              color: "#93c5fd",
+              borderColor: "rgba(59, 130, 246, 0.3)",
+              fontSize: "0.75rem",
+            }}
+            onClick={onExploreMove}
+          >
+            Inspect Candidates & Move Explorer →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
