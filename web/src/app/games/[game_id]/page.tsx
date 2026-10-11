@@ -13,9 +13,10 @@ import PositionExplorer from "@/components/GameReview/PositionExplorer";
 import CriticalNav from "@/components/GameReview/CriticalNav";
 import EpisodeList from "@/components/GameReview/EpisodeList";
 import EvaluationBar from "@/components/GameReview/EvaluationBar";
+import CoachChatPanel from "@/components/GameReview/CoachChatPanel";
 
 type FilterMode = "all" | "critical" | "tactical" | "positional" | "endgame";
-type ReviewTab = "coach" | "explorer";
+type ReviewTab = "coach" | "chat" | "explorer";
 
 interface VariationStep {
   stepIndex: number;
@@ -428,6 +429,12 @@ export default function GameReviewPage({
               🎓 Coach Explanation
             </button>
             <button
+              className={`mode-toggle-btn ${activeTab === "chat" ? "active" : ""}`}
+              onClick={() => setActiveTab("chat")}
+            >
+              💬 Ask Coach
+            </button>
+            <button
               className={`mode-toggle-btn ${activeTab === "explorer" ? "active" : ""}`}
               onClick={() => setActiveTab("explorer")}
             >
@@ -476,7 +483,7 @@ export default function GameReviewPage({
             />
           </div>
 
-          {/* Main content pane: Coach vs Explorer */}
+          {/* Main content pane: Coach vs Chat vs Explorer */}
           {activeTab === "coach" ? (
             currentMove && (
               <div className="card animate-fade-in" style={{ padding: 16 }}>
@@ -490,6 +497,15 @@ export default function GameReviewPage({
                 />
               </div>
             )
+          ) : activeTab === "chat" ? (
+            <div className="card animate-fade-in" style={{ padding: 16 }}>
+              <CoachChatPanel
+                gameId={game_id}
+                currentPly={currentPly}
+                currentMove={currentMove}
+                playerName={game.white}
+              />
+            </div>
           ) : (
             <div className="animate-fade-in">
               <PositionExplorer

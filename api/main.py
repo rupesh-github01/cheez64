@@ -39,7 +39,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=False,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -361,6 +361,78 @@ def _filter_moves_by_category(
                 result.append(m)
 
     return result
+
+
+# ---------------------------------------------------------------------------
+# Coach — LLM-powered natural language chess coach
+# ---------------------------------------------------------------------------
+
+from src.coach import CoachService, ProviderTimeoutError, ProviderAPIError
+from src.coach.service import SUGGESTED_QUESTIONS
+
+coach_service = CoachService()
+
+
+@app.get("/api/coach/status", tags=["coach"])
+def get_coach_status() -> Dict[str, Any]:
+    """
+    Return the current coach provider configuration and status.
+    Never exposes API keys or secrets.
+    """
+    provider = coach_service.get_provider()
+    return {
+        "provider": provider.provider_name,
+        "is_fallback": provider.is_fallback,
+        "is_external_configured": not provider.is_fallback,
+        "suggested_questions": SUGGESTED_QUESTIONS,
+    }
+
+
+@app.get("/api/coach/chat", tags=["coach"])
+async def coach_chat(
+    question: str = Query(..., max_length=1000, description="The user's chess question"),
+    game_id: Optional[str] = Query(None, description="Current game ID"),
+    ply: Optional[int] = Query(None, description="Current move ply"),
+    hint_level: Optional[int] = Query(None, ge=1, le=3, description="Hint tier (1, 2, or 3)"),
+    messages: Optional[str] = Query(None, description="Optional JSON-encoded previous messages array"),
+    player: Optional[str] = Query(None, description="Player username"),
+) -> Dict[str, Any]:
+    """
+    Conversational chess coach endpoint (read-only query).
+    Answers questions grounded in server-side Stockfish analysis and GameLibrary records.
+    """
+    history_list: Optional[List[Dict[str, str]]] = None
+    if messages:
+        try:
+            parsed = json.loads(messages)
+            if isinstance(parsed, list):
+                history_list = parsed
+        except Exception:
+            history_list = None
+
+    with get_library() as lib:
+        try:
+            return await coach_service.chat(
+                library=lib,
+                question=question,
+                game_id=game_id,
+                ply=ply,
+                hint_level=hint_level,
+                messages=history_list,
+                player=player,
+            )
+        except ValueError as e:
+            msg = str(e)
+            if "not found" in msg.lower():
+                raise HTTPException(status_code=404, detail=msg)
+            elif "exceeds" in msg.lower():
+                raise HTTPException(status_code=422, detail=msg)
+            raise HTTPException(status_code=400, detail=msg)
+        except ProviderTimeoutError as e:
+            raise HTTPException(status_code=504, detail=f"LLM provider timed out: {str(e)}. Please retry.")
+        except ProviderAPIError as e:
+            raise HTTPException(status_code=502, detail=f"LLM provider error: {str(e)}. Please retry.")
+
 
 
 if __name__ == "__main__":

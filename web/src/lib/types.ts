@@ -371,3 +371,37 @@ export interface DashboardData {
   limitations: string[];
 }
 
+// ---- Coach Chat ----
+
+export interface CoachMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface CoachMoveContext {
+  ply: number;
+  move_number: number;
+  color: string;
+  played_move: string;
+  best_move: string;
+  classification: string;
+  centipawn_loss: number;
+}
+
+export interface CoachStatusResponse {
+  provider: string;
+  is_fallback: boolean;
+  is_external_configured: boolean;
+  suggested_questions: string[];
+}
+
+export interface CoachChatResponse {
+  response: string;
+  provider: string;
+  is_fallback: boolean;
+  hint_level: number | null;
+  move_context: CoachMoveContext | null;
+  suggested_questions: string[];
+}
+
+

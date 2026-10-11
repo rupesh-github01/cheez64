@@ -12,6 +12,9 @@ import type {
   GameOpening,
   Episode,
   DashboardData,
+  CoachStatusResponse,
+  CoachChatResponse,
+  CoachMessage,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -118,4 +121,34 @@ export async function getDashboard(player?: string): Promise<DashboardData> {
   const qs = query.toString();
   return fetchJSON<DashboardData>(`/api/dashboard${qs ? `?${qs}` : ""}`);
 }
+
+// ---- Coach ----
+
+export interface AskCoachParams {
+  question: string;
+  game_id?: string;
+  ply?: number;
+  hint_level?: number;
+  messages?: CoachMessage[];
+  player?: string;
+}
+
+export async function getCoachStatus(): Promise<CoachStatusResponse> {
+  return fetchJSON<CoachStatusResponse>("/api/coach/status");
+}
+
+export async function askCoach(params: AskCoachParams): Promise<CoachChatResponse> {
+  const query = new URLSearchParams();
+  query.set("question", params.question);
+  if (params.game_id) query.set("game_id", params.game_id);
+  if (params.ply !== undefined && params.ply !== null) query.set("ply", String(params.ply));
+  if (params.hint_level) query.set("hint_level", String(params.hint_level));
+  if (params.messages && params.messages.length > 0) {
+    query.set("messages", JSON.stringify(params.messages));
+  }
+  if (params.player) query.set("player", params.player);
+
+  return fetchJSON<CoachChatResponse>(`/api/coach/chat?${query.toString()}`);
+}
+
 
