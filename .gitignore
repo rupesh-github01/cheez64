@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment secrets
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node / Next.js
+web/node_modules/
+web/.next/
+web/out/
+
+# Data (keep structure, ignore large binaries)
+*.db-journal
+
+# Pytest
+.pytest_cache/
+htmlcov/
+.coverage

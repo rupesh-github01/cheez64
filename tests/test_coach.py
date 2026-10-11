@@ -498,3 +498,17 @@ class TestCoachAPI:
             assert res.status_code == 504
             assert "timed out" in res.json()["detail"].lower()
             assert "retry" in res.json()["detail"].lower()
+
+    def test_unanalyzed_game_analysis_404_detail(self, api_client):
+        client, _, g2 = api_client
+        res = client.get(f"/api/games/{g2}/analysis")
+        assert res.status_code == 404
+        assert "not_analyzed" in res.json()["detail"].lower()
+
+    def test_stockfish_path_env_resolution(self, monkeypatch):
+        import shutil
+        monkeypatch.setenv("STOCKFISH_PATH", "/custom/bin/stockfish")
+        # Re-evaluate
+        path = os.environ.get("STOCKFISH_PATH", shutil.which("stockfish") or "/opt/homebrew/bin/stockfish")
+        assert path == "/custom/bin/stockfish"
+

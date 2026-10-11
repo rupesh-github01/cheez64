@@ -1,3 +1,5 @@
+import os
+import shutil
 import chess
 import chess.pgn
 import chess.engine
@@ -50,7 +52,10 @@ except ImportError:
 
 
 PGN_PATH = "data/games/test_game.pgn"
-STOCKFISH_PATH = "/opt/homebrew/bin/stockfish"
+STOCKFISH_PATH = os.environ.get(
+    "STOCKFISH_PATH",
+    shutil.which("stockfish") or "/opt/homebrew/bin/stockfish"
+)
 
 DEPTH = 16
 MULTI_PV = 3

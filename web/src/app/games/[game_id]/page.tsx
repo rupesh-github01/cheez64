@@ -2,7 +2,8 @@
 
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useCallback, use } from "react";
+import { useEffect, useState, useCallback, use, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
 import { getGame, getAnalysis } from "@/lib/api";
 import type { Game, GameAnalysis, MoveData } from "@/lib/types";
@@ -48,6 +49,30 @@ export default function GameReviewPage({
   params: Promise<{ game_id: string }>;
 }) {
   const { game_id } = use(params);
+
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "60vh",
+            color: "var(--text-muted)",
+          }}
+        >
+          Loading game review...
+        </div>
+      }
+    >
+      <GameReviewContent game_id={game_id} />
+    </Suspense>
+  );
+}
+
+function GameReviewContent({ game_id }: { game_id: string }) {
+  const searchParams = useSearchParams();
   const [game, setGame] = useState<Game | null>(null);
   const [analysis, setAnalysis] = useState<GameAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,14 +88,30 @@ export default function GameReviewPage({
   // Load data
   useEffect(() => {
     setLoading(true);
-    Promise.all([getGame(game_id), getAnalysis(game_id)])
-      .then(([g, a]) => {
+    setError(null);
+    getGame(game_id)
+      .then((g) => {
         setGame(g);
-        setAnalysis(a);
+        return getAnalysis(game_id)
+          .then((a) => {
+            setAnalysis(a);
+            // Check if ply query parameter was passed from dashboard
+            const plyParam = searchParams.get("ply");
+            if (plyParam) {
+              const p = parseInt(plyParam, 10);
+              if (!isNaN(p) && a.moves.some((m) => m.ply === p)) {
+                setCurrentPly(p);
+              }
+            }
+          })
+          .catch(() => {
+            // Game exists but analysis is missing or not yet analyzed
+            setAnalysis(null);
+          });
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [game_id]);
+  }, [game_id, searchParams]);
 
   // Derive move arrays
   const allMoves = analysis?.moves ?? [];
@@ -303,21 +344,172 @@ export default function GameReviewPage({
   }
 
   if (error) {
+    const isConn =
+      error.toLowerCase().includes("failed to fetch") ||
+      error.toLowerCase().includes("networkerror") ||
+      error.toLowerCase().includes("connect");
+
     return (
       <div style={{ maxWidth: 600, margin: "40px auto", padding: 20 }}>
-        <div className="card" style={{ padding: 24, textAlign: "center" }}>
-          <p style={{ color: "var(--accent-red)", fontWeight: 600 }}>
-            Failed to load game
+        <div className="card" style={{ padding: 28, textAlign: "center" }}>
+          <span style={{ fontSize: "2rem" }}>{isConn ? "🔌" : "⚠️"}</span>
+          <p style={{ color: "var(--accent-red)", fontWeight: 600, marginTop: 8 }}>
+            {isConn ? "Cannot Connect to Backend API" : "Failed to load game"}
           </p>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: 8 }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: 6 }}>
             {error}
           </p>
+          {isConn && (
+            <p
+              style={{
+                fontSize: "0.8rem",
+                color: "var(--text-secondary)",
+                marginTop: 12,
+                lineHeight: 1.5,
+              }}
+            >
+              Make sure the FastAPI server is running:
+              <br />
+              <code
+                style={{
+                  background: "var(--bg-secondary)",
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                  display: "inline-block",
+                  marginTop: 6,
+                }}
+              >
+                ./run.sh api
+              </code>{" "}
+              or{" "}
+              <code
+                style={{
+                  background: "var(--bg-secondary)",
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                  display: "inline-block",
+                  marginTop: 6,
+                }}
+              >
+                python api/main.py
+              </code>
+            </p>
+          )}
+          <div style={{ marginTop: 18 }}>
+            <a
+              href="/games"
+              className="btn-secondary"
+              style={{ textDecoration: "none", fontSize: "0.82rem", padding: "6px 14px" }}
+            >
+              ← Back to Game Library
+            </a>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!game || !analysis) return null;
+  if (!game) return null;
+
+  // Unanalyzed game view
+  if (!analysis) {
+    return (
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 20px" }}>
+        {/* Game header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
+            marginBottom: 24,
+            flexWrap: "wrap",
+          }}
+        >
+          <a
+            href="/games"
+            style={{
+              color: "var(--text-muted)",
+              fontSize: "0.8rem",
+              textDecoration: "none",
+            }}
+          >
+            ← Library
+          </a>
+          <h1 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0 }}>
+            {game.white} vs {game.black}
+          </h1>
+          <span
+            style={{
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: "var(--text-secondary)",
+            }}
+          >
+            {game.result}
+          </span>
+          {game.opening && (
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              <span style={{ color: "var(--accent-cyan)", fontWeight: 600 }}>
+                {game.opening.eco}
+              </span>{" "}
+              {game.opening.opening_name}
+            </span>
+          )}
+        </div>
+
+        <div className="card" style={{ padding: 48, textAlign: "center" }}>
+          <span style={{ fontSize: "2.5rem" }}>⏳</span>
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, margin: "12px 0 8px" }}>
+            Analysis Not Available
+          </h2>
+          <p
+            style={{
+              color: "var(--text-secondary)",
+              fontSize: "0.9rem",
+              maxWidth: 520,
+              margin: "0 auto 16px",
+            }}
+          >
+            This game is saved in your library (Status: <strong>{game.analysis_status}</strong>
+            ), but has not yet been processed with Stockfish.
+          </p>
+          <div
+            style={{
+              background: "var(--bg-secondary)",
+              borderRadius: "var(--radius-sm)",
+              padding: "12px 18px",
+              display: "inline-block",
+              fontSize: "0.82rem",
+              color: "var(--text-muted)",
+              textAlign: "left",
+              border: "1px solid var(--border-color)",
+            }}
+          >
+            <div>Run analysis from your terminal:</div>
+            <code
+              style={{
+                display: "block",
+                marginTop: 6,
+                color: "var(--accent-cyan)",
+                fontFamily: "monospace",
+              }}
+            >
+              python src/analyzer.py --pgn data/games/test_game.pgn
+            </code>
+          </div>
+          <div style={{ marginTop: 24 }}>
+            <a
+              href="/games"
+              className="btn-primary"
+              style={{ textDecoration: "none", padding: "8px 16px" }}
+            >
+              ← Return to Game Library
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto", padding: "16px 20px" }}>
