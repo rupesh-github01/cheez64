@@ -16,6 +16,7 @@ import io
 import json
 import re
 import sys
+import uuid
 
 # Ensure repository root is in sys.path
 repo_root = Path(__file__).resolve().parent.parent
@@ -283,6 +284,28 @@ class GameLibrary:
 
                 CREATE INDEX IF NOT EXISTS idx_openings_eco ON game_openings(eco);
                 CREATE INDEX IF NOT EXISTS idx_openings_name ON game_openings(opening_name);
+
+                CREATE TABLE IF NOT EXISTS import_jobs (
+                    job_id TEXT PRIMARY KEY,
+                    platform TEXT NOT NULL,
+                    username TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'running',
+                    games_fetched INTEGER DEFAULT 0,
+                    games_imported INTEGER DEFAULT 0,
+                    duplicates_skipped INTEGER DEFAULT 0,
+                    games_failed INTEGER DEFAULT 0,
+                    last_checkpoint TEXT,
+                    has_more INTEGER DEFAULT 1,
+                    error_summary TEXT,
+                    date_from TEXT,
+                    date_to TEXT,
+                    started_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    completed_at TEXT
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_import_jobs_user ON import_jobs(platform, username);
+                CREATE INDEX IF NOT EXISTS idx_import_jobs_status ON import_jobs(status);
             """)
 
     def _row_to_game(self, row: sqlite3.Row) -> Game:
@@ -376,6 +399,199 @@ class GameLibrary:
             ))
 
         return game, True
+
+    def add_games_batch(
+        self,
+        games: List[Tuple[str, Optional[str], Optional[str]]],
+        allow_duplicate: bool = False,
+    ) -> List[Tuple[Game, bool]]:
+        """
+        Add a batch of games in a single transaction.
+        Each item in `games` is (pgn_text, source, source_game_id).
+        Returns list of (Game, is_new).
+        """
+        results: List[Tuple[Game, bool]] = []
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        with self._get_connection() as conn:
+            for pgn_text, source, source_game_id in games:
+                fingerprint = compute_game_fingerprint(pgn_text)
+
+                cursor = conn.execute(
+                    "SELECT * FROM games WHERE fingerprint = ?", (fingerprint,)
+                )
+                row = cursor.fetchone()
+                if row and not allow_duplicate:
+                    results.append((self._row_to_game(row), False))
+                    continue
+
+                meta = extract_game_metadata(pgn_text)
+                game_id = f"game_{fingerprint[:16]}"
+                src = source or meta.get("source", "local")
+                src_id = source_game_id or meta.get("source_game_id")
+
+                game = Game(
+                    game_id=game_id,
+                    fingerprint=fingerprint,
+                    source=src,
+                    source_game_id=src_id,
+                    white=meta["white"],
+                    black=meta["black"],
+                    result=meta["result"],
+                    date=meta["date"],
+                    event=meta["event"],
+                    site=meta["site"],
+                    round=meta["round"],
+                    time_control=meta["time_control"],
+                    white_rating=meta["white_rating"],
+                    black_rating=meta["black_rating"],
+                    eco=meta["eco"],
+                    ply_count=meta["ply_count"],
+                    pgn=meta["pgn"],
+                    analysis_status=ANALYSIS_NOT_ANALYZED,
+                    analysis_reference=None,
+                    imported_at=now_iso,
+                    analyzed_at=None,
+                )
+
+                conn.execute("""
+                    INSERT INTO games (
+                        game_id, fingerprint, source, source_game_id,
+                        white, black, result, date, event, site, round,
+                        time_control, white_rating, black_rating, eco,
+                        ply_count, pgn, analysis_status, analysis_reference,
+                        imported_at, analyzed_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    game.game_id, game.fingerprint, game.source, game.source_game_id,
+                    game.white, game.black, game.result, game.date, game.event, game.site, game.round,
+                    game.time_control, game.white_rating, game.black_rating, game.eco,
+                    game.ply_count, game.pgn, game.analysis_status, game.analysis_reference,
+                    game.imported_at, game.analyzed_at
+                ))
+                results.append((game, True))
+
+        return results
+
+    def create_import_job(
+        self,
+        platform: str,
+        username: str,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Create a new import job record in the database."""
+        job_id = f"job_{uuid.uuid4().hex[:12]}"
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        with self._get_connection() as conn:
+            conn.execute("""
+                INSERT INTO import_jobs (
+                    job_id, platform, username, status,
+                    games_fetched, games_imported, duplicates_skipped, games_failed,
+                    last_checkpoint, has_more, error_summary,
+                    date_from, date_to, started_at, updated_at
+                ) VALUES (?, ?, ?, 'running', 0, 0, 0, 0, NULL, 1, NULL, ?, ?, ?, ?)
+            """, (job_id, platform, username, date_from, date_to, now_iso, now_iso))
+
+        job = self.get_import_job(job_id)
+        if job is None:
+            raise RuntimeError(f"Failed to create import job {job_id}")
+        return job
+
+    def get_import_job(self, job_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve an import job by its job_id."""
+        with self._get_connection() as conn:
+            cursor = conn.execute("SELECT * FROM import_jobs WHERE job_id = ?", (job_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def find_resumable_import_job(
+        self,
+        platform: str,
+        username: str,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Find the most recent resumable import job for a given platform and username.
+        A job is resumable if status is 'running' or 'failed' and has_more is true.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT * FROM import_jobs
+                WHERE platform = ? AND username = ? AND status IN ('running', 'failed') AND has_more = 1
+                ORDER BY updated_at DESC
+                LIMIT 1
+            """, (platform, username))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def update_import_job(
+        self,
+        job_id: str,
+        games_fetched: Optional[int] = None,
+        games_imported: Optional[int] = None,
+        duplicates_skipped: Optional[int] = None,
+        games_failed: Optional[int] = None,
+        last_checkpoint: Optional[str] = None,
+        has_more: Optional[int] = None,
+        error_summary: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> None:
+        """Update an import job's progress and checkpoint."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        fields = ["updated_at = ?"]
+        params: List[Any] = [now_iso]
+
+        if games_fetched is not None:
+            fields.append("games_fetched = ?")
+            params.append(games_fetched)
+        if games_imported is not None:
+            fields.append("games_imported = ?")
+            params.append(games_imported)
+        if duplicates_skipped is not None:
+            fields.append("duplicates_skipped = ?")
+            params.append(duplicates_skipped)
+        if games_failed is not None:
+            fields.append("games_failed = ?")
+            params.append(games_failed)
+        if last_checkpoint is not None:
+            fields.append("last_checkpoint = ?")
+            params.append(last_checkpoint)
+        if has_more is not None:
+            fields.append("has_more = ?")
+            params.append(has_more)
+        if error_summary is not None:
+            fields.append("error_summary = ?")
+            params.append(error_summary)
+        if status is not None:
+            fields.append("status = ?")
+            params.append(status)
+
+        params.append(job_id)
+        query = f"UPDATE import_jobs SET {', '.join(fields)} WHERE job_id = ?"
+
+        with self._get_connection() as conn:
+            conn.execute(query, params)
+
+    def complete_import_job(self, job_id: str) -> None:
+        """Mark an import job as successfully completed."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            conn.execute("""
+                UPDATE import_jobs
+                SET status = 'completed', has_more = 0, completed_at = ?, updated_at = ?
+                WHERE job_id = ?
+            """, (now_iso, now_iso, job_id))
+
+    def fail_import_job(self, job_id: str, error_summary: str) -> None:
+        """Mark an import job as failed with an error summary."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            conn.execute("""
+                UPDATE import_jobs
+                SET status = 'failed', error_summary = ?, updated_at = ?
+                WHERE job_id = ?
+            """, (error_summary, now_iso, job_id))
 
     def get_game(self, game_id: str) -> Optional[Game]:
         """Retrieve a game by its game_id."""

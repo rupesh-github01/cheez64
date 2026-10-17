@@ -5,6 +5,7 @@ Platform Game Importers for Chess.com and Lichess.
 from typing import Optional, Any
 from .base import (
     BaseImporter,
+    ImportBatch,
     ImportResult,
     parse_date_bound,
     ImporterError,
@@ -54,10 +55,37 @@ def import_platform_games(
     )
 
 
+def bulk_import_platform_games(
+    source: str,
+    username: str,
+    library: Any,
+    since: Optional[Any] = None,
+    until: Optional[Any] = None,
+    max_games: Optional[int] = None,
+    progress_callback: Optional[Any] = None,
+    dry_run: bool = False,
+    **kwargs,
+) -> ImportResult:
+    """
+    Convenience function to run a resumable bulk import using bounded batches.
+    """
+    importer = get_importer(source, **kwargs)
+    return importer.bulk_import_games(
+        username=username,
+        library=library,
+        since=since,
+        until=until,
+        max_games=max_games,
+        progress_callback=progress_callback,
+        dry_run=dry_run,
+    )
+
+
 __all__ = [
     "BaseImporter",
     "ChessComImporter",
     "LichessImporter",
+    "ImportBatch",
     "ImportResult",
     "parse_date_bound",
     "ImporterError",
@@ -67,4 +95,6 @@ __all__ = [
     "APIError",
     "get_importer",
     "import_platform_games",
+    "bulk_import_platform_games",
 ]
+
