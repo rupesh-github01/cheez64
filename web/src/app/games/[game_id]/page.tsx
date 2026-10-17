@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback, use, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
-import { getGame, getAnalysis } from "@/lib/api";
+import { getGame, getAnalysis, queueAnalysis } from "@/lib/api";
 import type { Game, GameAnalysis, MoveData } from "@/lib/types";
 import ChessboardPane from "@/components/GameReview/ChessboardPane";
 import MoveList from "@/components/GameReview/MoveList";
@@ -84,6 +84,29 @@ function GameReviewContent({ game_id }: { game_id: string }) {
 
   // Interactive variation stepper state
   const [variationState, setVariationState] = useState<VariationState | null>(null);
+
+  // Analysis Queue state for unanalyzed game
+  const [queueing, setQueueing] = useState(false);
+  const [queueSuccess, setQueueSuccess] = useState<string | null>(null);
+  const [queueError, setQueueError] = useState<string | null>(null);
+
+  const handleQueueAnalysis = async () => {
+    setQueueing(true);
+    setQueueError(null);
+    try {
+      const res = await queueAnalysis({
+        game_ids: [game_id],
+        priority: 10,
+        force_reanalyze: true,
+      });
+      setQueueSuccess(res.message || "Game queued for Stockfish analysis!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to queue game";
+      setQueueError(msg);
+    } finally {
+      setQueueing(false);
+    }
+  };
 
   // Load data
   useEffect(() => {
@@ -497,15 +520,76 @@ function GameReviewContent({ game_id }: { game_id: string }) {
               python src/analyzer.py --pgn data/games/test_game.pgn
             </code>
           </div>
-          <div style={{ marginTop: 24 }}>
+          <div
+            style={{
+              marginTop: 24,
+              display: "flex",
+              gap: 12,
+              justifyContent: "center",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              onClick={handleQueueAnalysis}
+              disabled={queueing || !!queueSuccess}
+              className="btn-primary"
+              style={{
+                cursor: queueing || queueSuccess ? "default" : "pointer",
+                padding: "8px 18px",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                opacity: queueing ? 0.7 : 1,
+              }}
+            >
+              {queueing ? "Queueing..." : queueSuccess ? "✓ Queued" : "⚡ Queue for Analysis"}
+            </button>
+            <a
+              href="/library/manage"
+              style={{
+                color: "var(--accent-primary, #6366f1)",
+                textDecoration: "none",
+                fontSize: "0.85rem",
+                fontWeight: 500,
+                padding: "8px 12px",
+              }}
+            >
+              View Analysis Queue →
+            </a>
             <a
               href="/games"
-              className="btn-primary"
-              style={{ textDecoration: "none", padding: "8px 16px" }}
+              style={{
+                color: "var(--text-muted)",
+                textDecoration: "none",
+                fontSize: "0.85rem",
+                padding: "8px 12px",
+              }}
             >
               ← Return to Game Library
             </a>
           </div>
+          {queueSuccess && (
+            <div
+              style={{
+                marginTop: 12,
+                color: "var(--accent-green, #10b981)",
+                fontSize: "0.85rem",
+              }}
+            >
+              {queueSuccess} Ensure the worker is running to begin analysis.
+            </div>
+          )}
+          {queueError && (
+            <div
+              style={{
+                marginTop: 12,
+                color: "var(--accent-red, #ef4444)",
+                fontSize: "0.85rem",
+              }}
+            >
+              {queueError}
+            </div>
+          )}
         </div>
       </div>
     );

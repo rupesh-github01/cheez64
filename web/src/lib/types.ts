@@ -404,4 +404,130 @@ export interface CoachChatResponse {
   suggested_questions: string[];
 }
 
+// ---- Management API Types ----
+
+export interface ImportJob {
+  job_id: string;
+  platform: string;
+  username: string;
+  date_from: string | null;
+  date_to: string | null;
+  status: "running" | "completed" | "failed";
+  games_fetched: number;
+  games_imported: number;
+  duplicates_skipped: number;
+  games_failed: number;
+  last_checkpoint: string | null;
+  has_more: number;
+  error_message: string | null;
+  claimed_by: string | null;
+  lease_expires_at: string | null;
+  started_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export interface ImportsListResponse {
+  jobs: ImportJob[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AnalysisJob {
+  job_id: string;
+  game_id: string;
+  batch_id: string | null;
+  priority: number;
+  status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "CANCELLED";
+  attempt_count: number;
+  max_attempts: number;
+  claimed_by: string | null;
+  claim_token: string | null;
+  lease_expires_at: string | null;
+  config_hash: string;
+  config_json: string | null;
+  error_summary: string | null;
+  created_at: string;
+  updated_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface AnalysisQueueResponse {
+  jobs: AnalysisJob[];
+  summary: {
+    PENDING?: number;
+    RUNNING?: number;
+    COMPLETED?: number;
+    FAILED?: number;
+    CANCELLED?: number;
+  };
+  limit: number;
+  offset: number;
+}
+
+export interface WorkerHeartbeat {
+  worker_id: string;
+  last_seen_at: string;
+  current_job_id: string | null;
+  pid: number | null;
+  hostname: string | null;
+}
+
+export interface WorkerStatusResponse {
+  status: "online/idle" | "online/analyzing" | "stale" | "offline" | "unknown";
+  active_worker_count: number;
+  workers: WorkerHeartbeat[];
+  running_jobs_count: number;
+  instructions: string;
+}
+
+export interface ManagementSummaryResponse {
+  library: {
+    total_games: number;
+    analyzed_games: number;
+    unanalyzed_games: number;
+  };
+  imports: {
+    total: number;
+    running: number;
+    completed: number;
+    failed: number;
+    active_job: ImportJob | null;
+  };
+  analysis_queue: {
+    pending: number;
+    running: number;
+    completed: number;
+    failed: number;
+    cancelled: number;
+    total: number;
+  };
+  worker: {
+    status: "online/idle" | "online/analyzing" | "stale" | "offline" | "unknown";
+    active_worker_count: number;
+    last_heartbeat: string | null;
+    current_job_id: string | null;
+    command: string;
+  };
+}
+
+export interface StartImportParams {
+  platform: string;
+  username: string;
+  since?: string;
+  until?: string;
+  max_games?: number;
+}
+
+export interface QueueAnalysisParams {
+  game_ids?: string[];
+  all_unanalyzed?: boolean;
+  priority?: number;
+  force_reanalyze?: boolean;
+  depth?: number;
+  multipv?: number;
+}
+
 

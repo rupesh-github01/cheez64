@@ -37,20 +37,49 @@ export default function GamesPage() {
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px" }}>
-      <div style={{ marginBottom: 24 }}>
-        <h1
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: 24,
+          flexWrap: "wrap",
+          gap: 12,
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              marginBottom: 4,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Game Library
+          </h1>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+            {total} game{total !== 1 ? "s" : ""} in library
+          </p>
+        </div>
+        <a
+          href="/library/manage"
           style={{
-            fontSize: "1.5rem",
-            fontWeight: 700,
-            marginBottom: 4,
-            letterSpacing: "-0.02em",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "var(--accent-primary, #6366f1)",
+            color: "#ffffff",
+            padding: "8px 16px",
+            borderRadius: "6px",
+            textDecoration: "none",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            transition: "opacity 0.15s ease",
           }}
         >
-          Game Library
-        </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
-          {total} game{total !== 1 ? "s" : ""} in library
-        </p>
+          <span>⚡</span> Import &amp; Queue Analysis
+        </a>
       </div>
 
       {/* Filters */}

@@ -27,12 +27,42 @@ from src.library import (
 
 # ---------------------------------------------------------------------------
 # App setup
-# ---------------------------------------------------------------------------
+# DB path can be overridden via environment variable
+import os
+from contextlib import asynccontextmanager
+DB_PATH = os.environ.get("CHESS_COACH_DB", str(repo_root / DEFAULT_DB_PATH))
+
+from api.import_manager import ImportManager
+from api.management import router as management_router, set_management_deps
+from src.analysis_queue import AnalysisQueue
+
+import_manager = ImportManager(DB_PATH)
+set_management_deps(DB_PATH, import_manager)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup recovery for stale imports and expired analysis queue leases."""
+    try:
+        import_manager.recover_stale_imports()
+    except Exception:
+        pass
+    try:
+        with GameLibrary(DB_PATH) as lib:
+            queue = AnalysisQueue(lib)
+            queue.recover_expired_leases()
+    except Exception:
+        pass
+    yield
+    """Graceful shutdown for background import threads."""
+    import_manager.shutdown()
+
 
 app = FastAPI(
     title="Personal Chess Coach API",
-    description="Read-only API exposing game library, analyses, and opening data.",
+    description="API exposing game library, analyses, opening data, and management endpoints.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -43,9 +73,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# DB path can be overridden via environment variable
-import os
-DB_PATH = os.environ.get("CHESS_COACH_DB", str(repo_root / DEFAULT_DB_PATH))
+app.include_router(management_router)
 
 
 def get_library() -> GameLibrary:
@@ -437,4 +465,4 @@ async def coach_chat(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("api.main:app", host="127.0.0.1", port=8000, reload=True)

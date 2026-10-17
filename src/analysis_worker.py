@@ -16,6 +16,7 @@ import logging
 import os
 import shutil
 import signal
+import socket
 import sys
 import threading
 import time
@@ -55,12 +56,14 @@ class HeartbeatRunner:
         claim_token: str,
         interval_seconds: float = 60.0,
         lease_extension_seconds: int = 300,
+        worker_id: Optional[str] = None,
     ):
         self.db_path = db_path
         self.job_id = job_id
         self.claim_token = claim_token
         self.interval = interval_seconds
         self.lease_extension = lease_extension_seconds
+        self.worker_id = worker_id
 
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -100,6 +103,16 @@ class HeartbeatRunner:
                         extend_seconds=self.lease_extension,
                     )
                     logger.debug(f"Heartbeat extended for job {self.job_id}")
+                    if self.worker_id:
+                        try:
+                            lib.record_worker_heartbeat(
+                                worker_id=self.worker_id,
+                                current_job_id=self.job_id,
+                                pid=os.getpid(),
+                                hostname=socket.gethostname(),
+                            )
+                        except Exception:
+                            pass
                 except StaleLeaseError as e:
                     self.lease_lost = True
                     self.heartbeat_error = e
@@ -182,58 +195,98 @@ class AnalysisWorker:
             consecutive_empty = 0
             processed_this_run = 0
 
-            while not self._shutdown_requested.is_set():
-                if max_jobs is not None and processed_this_run >= max_jobs:
-                    logger.info(f"Reached max_jobs limit ({max_jobs}). Stopping.")
-                    break
+            try:
+                # Initial worker heartbeat
+                try:
+                    lib.record_worker_heartbeat(
+                        self.worker_id,
+                        current_job_id=None,
+                        pid=os.getpid(),
+                        hostname=socket.gethostname(),
+                    )
+                except Exception:
+                    pass
 
-                # Periodic lease recovery (every ~10 empty cycles)
-                if consecutive_empty > 0 and consecutive_empty % 10 == 0:
+                while not self._shutdown_requested.is_set():
+                    if max_jobs is not None and processed_this_run >= max_jobs:
+                        logger.info(f"Reached max_jobs limit ({max_jobs}). Stopping.")
+                        break
+
+                    # Periodic lease recovery (every ~10 empty cycles)
+                    if consecutive_empty > 0 and consecutive_empty % 10 == 0:
+                        try:
+                            queue.recover_expired_leases()
+                        except Exception:
+                            pass
+
+                    # Pulse worker heartbeat while idle
                     try:
-                        queue.recover_expired_leases()
+                        lib.record_worker_heartbeat(
+                            self.worker_id,
+                            current_job_id=None,
+                            pid=os.getpid(),
+                            hostname=socket.gethostname(),
+                        )
                     except Exception:
                         pass
 
-                # Claim next job
-                try:
-                    job = queue.claim_next_job(
-                        self.worker_id,
-                        lease_seconds=self.lease_seconds,
+                    # Claim next job
+                    try:
+                        job = queue.claim_next_job(
+                            self.worker_id,
+                            lease_seconds=self.lease_seconds,
+                        )
+                    except Exception as e:
+                        logger.error(f"Error claiming job from queue: {e}")
+                        time.sleep(self.poll_interval)
+                        continue
+
+                    if not job:
+                        consecutive_empty += 1
+                        if run_once:
+                            logger.info("No pending jobs remaining and run_once=True. Exiting.")
+                            break
+                        # Wait for next poll
+                        self._shutdown_requested.wait(timeout=self.poll_interval)
+                        continue
+
+                    consecutive_empty = 0
+                    self._active_job_id = job["job_id"]
+                    self._active_claim_token = job["claim_token"]
+
+                    # Pulse worker heartbeat with claimed job
+                    try:
+                        lib.record_worker_heartbeat(
+                            self.worker_id,
+                            current_job_id=job["job_id"],
+                            pid=os.getpid(),
+                            hostname=socket.gethostname(),
+                        )
+                    except Exception:
+                        pass
+
+                    logger.info(
+                        f"[CLAIMED] job_id={job['job_id']} game_id={job['game_id']} "
+                        f"attempt={job['attempt_count']}/{job['max_attempts']} priority={job['priority']}"
                     )
-                except Exception as e:
-                    logger.error(f"Error claiming job from queue: {e}")
-                    time.sleep(self.poll_interval)
-                    continue
 
-                if not job:
-                    consecutive_empty += 1
-                    if run_once:
-                        logger.info("No pending jobs remaining and run_once=True. Exiting.")
-                        break
-                    # Wait for next poll
-                    self._shutdown_requested.wait(timeout=self.poll_interval)
-                    continue
+                    # Process the claimed job
+                    success = self._process_claimed_job(job, queue, lib)
+                    self.jobs_processed += 1
+                    processed_this_run += 1
+                    if success:
+                        self.jobs_succeeded += 1
+                    else:
+                        self.jobs_failed += 1
 
-                consecutive_empty = 0
-                self._active_job_id = job["job_id"]
-                self._active_claim_token = job["claim_token"]
-
-                logger.info(
-                    f"[CLAIMED] job_id={job['job_id']} game_id={job['game_id']} "
-                    f"attempt={job['attempt_count']}/{job['max_attempts']} priority={job['priority']}"
-                )
-
-                # Process the claimed job
-                success = self._process_claimed_job(job, queue, lib)
-                self.jobs_processed += 1
-                processed_this_run += 1
-                if success:
-                    self.jobs_succeeded += 1
-                else:
-                    self.jobs_failed += 1
-
-                self._active_job_id = None
-                self._active_claim_token = None
+                    self._active_job_id = None
+                    self._active_claim_token = None
+            finally:
+                # Clear worker heartbeat on shutdown
+                try:
+                    lib.clear_worker_heartbeat(self.worker_id)
+                except Exception:
+                    pass
 
         logger.info(
             f"Worker '{self.worker_id}' finished. Processed: {self.jobs_processed} "
@@ -262,6 +315,7 @@ class AnalysisWorker:
             claim_token=claim_token,
             interval_seconds=self.heartbeat_interval,
             lease_extension_seconds=self.lease_seconds,
+            worker_id=self.worker_id,
         )
         heartbeat_runner.start()
 

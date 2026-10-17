@@ -64,6 +64,7 @@ def bulk_import_platform_games(
     max_games: Optional[int] = None,
     progress_callback: Optional[Any] = None,
     dry_run: bool = False,
+    job_id: Optional[str] = None,
     **kwargs,
 ) -> ImportResult:
     """
@@ -78,6 +79,7 @@ def bulk_import_platform_games(
         max_games=max_games,
         progress_callback=progress_callback,
         dry_run=dry_run,
+        job_id=job_id,
     )
 
 

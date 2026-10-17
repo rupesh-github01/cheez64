@@ -9,7 +9,7 @@ analysis lifecycle management, and a queryable persistent SQLite library.
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import sqlite3
 import hashlib
 import io
@@ -198,9 +198,15 @@ class GameLibrary:
         self.db_path = db_path if db_path is not None else DEFAULT_DB_PATH
         if self.db_path != ":memory:":
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
+        self._conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys = ON;")
+        if self.db_path != ":memory:":
+            try:
+                self._conn.execute("PRAGMA journal_mode = WAL;")
+            except Exception:
+                pass
+        self._conn.execute("PRAGMA busy_timeout = 30000;")
         self._init_db()
 
     def _get_connection(self) -> sqlite3.Connection:
@@ -299,6 +305,8 @@ class GameLibrary:
                     error_summary TEXT,
                     date_from TEXT,
                     date_to TEXT,
+                    claimed_by TEXT,
+                    lease_expires_at TEXT,
                     started_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     completed_at TEXT
@@ -306,6 +314,7 @@ class GameLibrary:
 
                 CREATE INDEX IF NOT EXISTS idx_import_jobs_user ON import_jobs(platform, username);
                 CREATE INDEX IF NOT EXISTS idx_import_jobs_status ON import_jobs(status);
+                CREATE INDEX IF NOT EXISTS idx_import_jobs_lease ON import_jobs(status, lease_expires_at);
 
                 CREATE TABLE IF NOT EXISTS analysis_jobs (
                     job_id TEXT PRIMARY KEY,
@@ -334,7 +343,23 @@ class GameLibrary:
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_analysis_jobs_active_unique
                     ON analysis_jobs(game_id, config_hash)
                     WHERE status IN ('PENDING', 'RUNNING');
+
+                CREATE TABLE IF NOT EXISTS worker_heartbeats (
+                    worker_id TEXT PRIMARY KEY,
+                    last_seen_at TEXT NOT NULL,
+                    current_job_id TEXT,
+                    pid INTEGER,
+                    hostname TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_worker_heartbeats_seen ON worker_heartbeats(last_seen_at);
             """)
+
+            # Migration check for existing databases lacking new columns
+            for col in ("claimed_by", "lease_expires_at"):
+                try:
+                    conn.execute(f"ALTER TABLE import_jobs ADD COLUMN {col} TEXT;")
+                except sqlite3.OperationalError:
+                    pass  # column already exists
 
     def _row_to_game(self, row: sqlite3.Row) -> Game:
         return Game(
@@ -507,10 +532,14 @@ class GameLibrary:
         username: str,
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
+        claimed_by: Optional[str] = None,
+        lease_seconds: int = 60,
     ) -> Dict[str, Any]:
         """Create a new import job record in the database."""
         job_id = f"job_{uuid.uuid4().hex[:12]}"
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+        lease_expires_at = (now + timedelta(seconds=lease_seconds)).isoformat() if claimed_by else None
 
         with self._get_connection() as conn:
             conn.execute("""
@@ -518,9 +547,9 @@ class GameLibrary:
                     job_id, platform, username, status,
                     games_fetched, games_imported, duplicates_skipped, games_failed,
                     last_checkpoint, has_more, error_summary,
-                    date_from, date_to, started_at, updated_at
-                ) VALUES (?, ?, ?, 'running', 0, 0, 0, 0, NULL, 1, NULL, ?, ?, ?, ?)
-            """, (job_id, platform, username, date_from, date_to, now_iso, now_iso))
+                    date_from, date_to, claimed_by, lease_expires_at, started_at, updated_at
+                ) VALUES (?, ?, ?, 'running', 0, 0, 0, 0, NULL, 1, NULL, ?, ?, ?, ?, ?, ?)
+            """, (job_id, platform, username, date_from, date_to, claimed_by, lease_expires_at, now_iso, now_iso))
 
         job = self.get_import_job(job_id)
         if job is None:
@@ -553,6 +582,78 @@ class GameLibrary:
             row = cursor.fetchone()
             return dict(row) if row else None
 
+    def find_active_import_for_account(
+        self,
+        platform: str,
+        username: str,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Find an actively running import job for this platform and username with an unexpired lease.
+        """
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT * FROM import_jobs
+                WHERE platform = ? AND username = ? AND status = 'running'
+                  AND (lease_expires_at IS NOT NULL AND lease_expires_at > ?)
+                ORDER BY updated_at DESC
+                LIMIT 1
+            """, (platform, username, now_iso))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def claim_import_job(
+        self,
+        job_id: str,
+        claimed_by: str,
+        lease_seconds: int = 60,
+    ) -> bool:
+        """
+        Atomically claim an import job for execution with an unexpired lease.
+        Succeeds if unowned, owned by same claimant, or existing lease is expired.
+        """
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+        lease_expires = (now + timedelta(seconds=lease_seconds)).isoformat()
+
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                UPDATE import_jobs
+                SET claimed_by = ?, lease_expires_at = ?, status = 'running', updated_at = ?
+                WHERE job_id = ?
+                  AND (claimed_by IS NULL OR claimed_by = ? OR lease_expires_at IS NULL OR lease_expires_at <= ? OR status != 'running')
+            """, (claimed_by, lease_expires, now_iso, job_id, claimed_by, now_iso))
+            return cursor.rowcount > 0
+
+    def heartbeat_import_job(
+        self,
+        job_id: str,
+        claimed_by: str,
+        lease_seconds: int = 60,
+    ) -> bool:
+        """Extend the lease duration of an actively claimed import job."""
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+        lease_expires = (now + timedelta(seconds=lease_seconds)).isoformat()
+
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                UPDATE import_jobs
+                SET lease_expires_at = ?, updated_at = ?
+                WHERE job_id = ? AND claimed_by = ? AND status = 'running'
+            """, (lease_expires, now_iso, job_id, claimed_by))
+            return cursor.rowcount > 0
+
+    def release_import_job(self, job_id: str, claimed_by: str) -> None:
+        """Release claim lease on an import job without changing status."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            conn.execute("""
+                UPDATE import_jobs
+                SET claimed_by = NULL, lease_expires_at = NULL, updated_at = ?
+                WHERE job_id = ? AND claimed_by = ?
+            """, (now_iso, job_id, claimed_by))
+
     def update_import_job(
         self,
         job_id: str,
@@ -564,6 +665,8 @@ class GameLibrary:
         has_more: Optional[int] = None,
         error_summary: Optional[str] = None,
         status: Optional[str] = None,
+        claimed_by: Optional[str] = None,
+        lease_expires_at: Optional[str] = None,
     ) -> None:
         """Update an import job's progress and checkpoint."""
         now_iso = datetime.now(timezone.utc).isoformat()
@@ -594,6 +697,12 @@ class GameLibrary:
         if status is not None:
             fields.append("status = ?")
             params.append(status)
+        if claimed_by is not None:
+            fields.append("claimed_by = ?")
+            params.append(claimed_by)
+        if lease_expires_at is not None:
+            fields.append("lease_expires_at = ?")
+            params.append(lease_expires_at)
 
         params.append(job_id)
         query = f"UPDATE import_jobs SET {', '.join(fields)} WHERE job_id = ?"
@@ -607,7 +716,7 @@ class GameLibrary:
         with self._get_connection() as conn:
             conn.execute("""
                 UPDATE import_jobs
-                SET status = 'completed', has_more = 0, completed_at = ?, updated_at = ?
+                SET status = 'completed', has_more = 0, claimed_by = NULL, lease_expires_at = NULL, completed_at = ?, updated_at = ?
                 WHERE job_id = ?
             """, (now_iso, now_iso, job_id))
 
@@ -617,9 +726,91 @@ class GameLibrary:
         with self._get_connection() as conn:
             conn.execute("""
                 UPDATE import_jobs
-                SET status = 'failed', error_summary = ?, updated_at = ?
+                SET status = 'failed', error_summary = ?, claimed_by = NULL, lease_expires_at = NULL, updated_at = ?
                 WHERE job_id = ?
             """, (error_summary, now_iso, job_id))
+
+    def recover_stale_import_jobs(self) -> int:
+        """
+        Transition any import jobs left in 'running' status with expired or missing leases
+        to 'failed' so they can be safely resumed manually.
+        """
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                UPDATE import_jobs
+                SET status = 'failed',
+                    error_summary = 'Interrupted by server restart or process termination. Click Resume to continue.',
+                    claimed_by = NULL,
+                    lease_expires_at = NULL,
+                    updated_at = ?
+                WHERE status = 'running'
+                  AND (lease_expires_at IS NULL OR lease_expires_at <= ?)
+            """, (now_iso, now_iso))
+            return cursor.rowcount
+
+    def list_import_jobs(self, status: Optional[str] = None, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+        """List import jobs ordered chronologically newest first, optionally filtered by status."""
+        with self._get_connection() as conn:
+            if status:
+                cursor = conn.execute("""
+                    SELECT * FROM import_jobs
+                    WHERE status = ?
+                    ORDER BY started_at DESC
+                    LIMIT ? OFFSET ?
+                """, (status, limit, offset))
+            else:
+                cursor = conn.execute("""
+                    SELECT * FROM import_jobs
+                    ORDER BY started_at DESC
+                    LIMIT ? OFFSET ?
+                """, (limit, offset))
+            return [dict(r) for r in cursor.fetchall()]
+
+    def count_import_jobs(self, status: Optional[str] = None) -> int:
+        """Total count of import jobs, optionally filtered by status."""
+        with self._get_connection() as conn:
+            if status:
+                cursor = conn.execute("SELECT COUNT(*) FROM import_jobs WHERE status = ?", (status,))
+            else:
+                cursor = conn.execute("SELECT COUNT(*) FROM import_jobs")
+            return cursor.fetchone()[0]
+
+    def record_worker_heartbeat(
+        self,
+        worker_id: str,
+        current_job_id: Optional[str] = None,
+        pid: Optional[int] = None,
+        hostname: Optional[str] = None,
+    ) -> None:
+        """Record or update active worker heartbeat in SQLite."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        with self._get_connection() as conn:
+            conn.execute("""
+                INSERT INTO worker_heartbeats (worker_id, last_seen_at, current_job_id, pid, hostname)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(worker_id) DO UPDATE SET
+                    last_seen_at = excluded.last_seen_at,
+                    current_job_id = excluded.current_job_id,
+                    pid = excluded.pid,
+                    hostname = excluded.hostname
+            """, (worker_id, now_iso, current_job_id, pid, hostname))
+
+    def clear_worker_heartbeat(self, worker_id: str) -> None:
+        """Remove worker heartbeat on clean shutdown."""
+        with self._get_connection() as conn:
+            conn.execute("DELETE FROM worker_heartbeats WHERE worker_id = ?", (worker_id,))
+
+    def get_active_worker_heartbeats(self, max_age_seconds: float = 60.0) -> List[Dict[str, Any]]:
+        """Return active worker heartbeats seen within max_age_seconds."""
+        threshold_iso = (datetime.now(timezone.utc) - timedelta(seconds=max_age_seconds)).isoformat()
+        with self._get_connection() as conn:
+            cursor = conn.execute("""
+                SELECT * FROM worker_heartbeats
+                WHERE last_seen_at >= ?
+                ORDER BY last_seen_at DESC
+            """, (threshold_iso,))
+            return [dict(r) for r in cursor.fetchall()]
 
     def get_game(self, game_id: str) -> Optional[Game]:
         """Retrieve a game by its game_id."""
@@ -702,10 +893,13 @@ class GameLibrary:
             cursor = conn.execute(query, params)
             return [self._row_to_game(row) for row in cursor.fetchall()]
 
-    def count_games(self) -> int:
-        """Return total number of games stored."""
+    def count_games(self, analysis_status: Optional[str] = None) -> int:
+        """Return total number of games stored, optionally filtered by analysis_status."""
         with self._get_connection() as conn:
-            cursor = conn.execute("SELECT COUNT(*) FROM games")
+            if analysis_status:
+                cursor = conn.execute("SELECT COUNT(*) FROM games WHERE analysis_status = ?", (analysis_status,))
+            else:
+                cursor = conn.execute("SELECT COUNT(*) FROM games")
             return cursor.fetchone()[0]
 
     def delete_game(self, game_id: str) -> bool:

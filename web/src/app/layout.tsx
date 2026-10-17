@@ -71,6 +71,18 @@ export default function RootLayout({
             >
               Game Library
             </a>
+            <a
+              href="/library/manage"
+              style={{
+                color: "var(--text-secondary)",
+                textDecoration: "none",
+                fontSize: "0.85rem",
+                fontWeight: 500,
+                transition: "color 0.15s ease",
+              }}
+            >
+              Manage
+            </a>
           </nav>
         </header>
         <main>{children}</main>

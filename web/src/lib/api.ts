@@ -15,6 +15,14 @@ import type {
   CoachStatusResponse,
   CoachChatResponse,
   CoachMessage,
+  ManagementSummaryResponse,
+  ImportJob,
+  ImportsListResponse,
+  StartImportParams,
+  AnalysisQueueResponse,
+  AnalysisJob,
+  WorkerStatusResponse,
+  QueueAnalysisParams,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -24,8 +32,35 @@ async function fetchJSON<T>(path: string): Promise<T> {
     cache: "no-store",
   });
   if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`API ${res.status}: ${detail}`);
+    let detail = "";
+    try {
+      const errJson = await res.json();
+      detail = errJson.detail || JSON.stringify(errJson);
+    } catch {
+      detail = await res.text();
+    }
+    throw new Error(detail || `API ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function fetchMutate<T>(path: string, body?: unknown, method: string = "POST"): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const errJson = await res.json();
+      detail = errJson.detail || JSON.stringify(errJson);
+    } catch {
+      detail = await res.text();
+    }
+    throw new Error(detail || `API ${res.status}`);
   }
   return res.json() as Promise<T>;
 }
@@ -149,6 +184,62 @@ export async function askCoach(params: AskCoachParams): Promise<CoachChatRespons
   if (params.player) query.set("player", params.player);
 
   return fetchJSON<CoachChatResponse>(`/api/coach/chat?${query.toString()}`);
+}
+
+// ---- Management API ----
+
+export async function getManagementSummary(): Promise<ManagementSummaryResponse> {
+  return fetchJSON<ManagementSummaryResponse>("/api/management/summary");
+}
+
+export async function startImport(params: StartImportParams): Promise<{ message: string; job: ImportJob }> {
+  return fetchMutate<{ message: string; job: ImportJob }>("/api/management/imports", params);
+}
+
+export async function listImports(params: { status?: string; limit?: number; offset?: number } = {}): Promise<ImportsListResponse> {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.limit) query.set("limit", String(params.limit));
+  if (params.offset) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return fetchJSON<ImportsListResponse>(`/api/management/imports${qs ? `?${qs}` : ""}`);
+}
+
+export async function getImport(jobId: string): Promise<{ job: ImportJob }> {
+  return fetchJSON<{ job: ImportJob }>(`/api/management/imports/${jobId}`);
+}
+
+export async function resumeImport(jobId: string): Promise<{ message: string; job: ImportJob }> {
+  return fetchMutate<{ message: string; job: ImportJob }>(`/api/management/imports/${jobId}/resume`);
+}
+
+export async function queueAnalysis(params: QueueAnalysisParams): Promise<{ message: string; queued_count: number; job_ids?: string[]; batch_id?: string }> {
+  return fetchMutate<{ message: string; queued_count: number; job_ids?: string[]; batch_id?: string }>("/api/management/analysis/queue", params);
+}
+
+export async function listAnalysisQueue(params: { status?: string; limit?: number; offset?: number } = {}): Promise<AnalysisQueueResponse> {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.limit) query.set("limit", String(params.limit));
+  if (params.offset) query.set("offset", String(params.offset));
+  const qs = query.toString();
+  return fetchJSON<AnalysisQueueResponse>(`/api/management/analysis/queue${qs ? `?${qs}` : ""}`);
+}
+
+export async function retryAnalysisJob(jobId: string): Promise<{ message: string; job: AnalysisJob }> {
+  return fetchMutate<{ message: string; job: AnalysisJob }>(`/api/management/analysis/queue/${jobId}/retry`);
+}
+
+export async function cancelAnalysisJob(jobId: string): Promise<{ message: string; job: AnalysisJob }> {
+  return fetchMutate<{ message: string; job: AnalysisJob }>(`/api/management/analysis/queue/${jobId}/cancel`);
+}
+
+export async function retryAllFailedAnalysisJobs(): Promise<{ message: string; retried_count: number }> {
+  return fetchMutate<{ message: string; retried_count: number }>("/api/management/analysis/queue/retry-all");
+}
+
+export async function getWorkerStatus(): Promise<WorkerStatusResponse> {
+  return fetchJSON<WorkerStatusResponse>("/api/management/workers");
 }
 
 

@@ -453,11 +453,12 @@ class BaseImporter(ABC):
         max_games: Optional[int] = None,
         progress_callback: Optional[Any] = None,
         dry_run: bool = False,
+        job_id: Optional[str] = None,
     ) -> ImportResult:
         """
         Bulk import with checkpointing, bounded retries, and progress reporting.
         Automatically resumes an interrupted import if one exists for this
-        platform + username.
+        platform + username, or uses the specific job_id if provided.
         """
         norm_since = parse_date_bound(since, is_until=False)
         norm_until = parse_date_bound(until, is_until=True)
@@ -482,6 +483,11 @@ class BaseImporter(ABC):
                 "games_failed": 0,
             }
             is_resume = False
+        elif job_id:
+            job = library.get_import_job(job_id)
+            if not job:
+                raise ValueError(f"Import job '{job_id}' not found.")
+            is_resume = job.get("last_checkpoint") is not None
         else:
             job = library.find_resumable_import_job(self.source, username)
             is_resume = job is not None

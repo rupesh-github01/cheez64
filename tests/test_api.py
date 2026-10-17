@@ -525,10 +525,10 @@ class TestGetOpening:
 
 class TestReadOnlyContract:
     def test_no_mutating_methods(self, seeded_client):
-        """Every route must expose only GET (+ HEAD/OPTIONS) methods."""
+        """Every core data route must expose only GET (+ HEAD/OPTIONS) methods."""
         _, _, _, api_module = seeded_client
         for route in api_module.app.routes:
-            if hasattr(route, "methods"):
+            if hasattr(route, "methods") and not route.path.startswith("/api/management"):
                 non_get = route.methods - {"GET", "HEAD", "OPTIONS"}
                 assert non_get == set(), (
                     f"Route {route.path} exposes non-GET method(s): {non_get}"
