@@ -314,7 +314,6 @@ class GameLibrary:
 
                 CREATE INDEX IF NOT EXISTS idx_import_jobs_user ON import_jobs(platform, username);
                 CREATE INDEX IF NOT EXISTS idx_import_jobs_status ON import_jobs(status);
-                CREATE INDEX IF NOT EXISTS idx_import_jobs_lease ON import_jobs(status, lease_expires_at);
 
                 CREATE TABLE IF NOT EXISTS analysis_jobs (
                     job_id TEXT PRIMARY KEY,
@@ -358,8 +357,15 @@ class GameLibrary:
             for col in ("claimed_by", "lease_expires_at"):
                 try:
                     conn.execute(f"ALTER TABLE import_jobs ADD COLUMN {col} TEXT;")
+                    conn.commit()
                 except sqlite3.OperationalError:
                     pass  # column already exists
+
+            try:
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_import_jobs_lease ON import_jobs(status, lease_expires_at);")
+                conn.commit()
+            except sqlite3.OperationalError:
+                pass
 
     def _row_to_game(self, row: sqlite3.Row) -> Game:
         return Game(
@@ -730,12 +736,17 @@ class GameLibrary:
                 WHERE job_id = ?
             """, (error_summary, now_iso, job_id))
 
-    def recover_stale_import_jobs(self) -> int:
+    def recover_stale_import_jobs(self, stale_threshold_seconds: Optional[int] = None) -> int:
         """
         Transition any import jobs left in 'running' status with expired or missing leases
         to 'failed' so they can be safely resumed manually.
         """
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc)
+        if stale_threshold_seconds and stale_threshold_seconds > 0:
+            threshold = (now - timedelta(seconds=stale_threshold_seconds)).isoformat()
+        else:
+            threshold = now.isoformat()
+        now_iso = now.isoformat()
         with self._get_connection() as conn:
             cursor = conn.execute("""
                 UPDATE import_jobs
@@ -746,7 +757,7 @@ class GameLibrary:
                     updated_at = ?
                 WHERE status = 'running'
                   AND (lease_expires_at IS NULL OR lease_expires_at <= ?)
-            """, (now_iso, now_iso))
+            """, (now_iso, threshold))
             return cursor.rowcount
 
     def list_import_jobs(self, status: Optional[str] = None, limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
