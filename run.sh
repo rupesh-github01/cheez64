@@ -189,6 +189,13 @@ run_tests() {
   ok "Next.js build succeeded!"
 }
 
+start_worker() {
+  check_python
+  info "Starting Stockfish Analysis Worker..."
+  export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
+  exec python3 -m src.worker_cli run "$@"
+}
+
 # Subcommand dispatch
 MODE="${1:-all}"
 
@@ -202,6 +209,10 @@ case "$MODE" in
   web|frontend)
     start_web
     ;;
+  worker)
+    shift
+    start_worker "$@"
+    ;;
   check)
     check_env
     ;;
@@ -209,12 +220,13 @@ case "$MODE" in
     run_tests
     ;;
   help|-h|--help)
-    echo "Usage: ./run.sh [all | api | web | check | test]"
+    echo "Usage: ./run.sh [all | api | web | worker | check | test]"
     echo ""
     echo "Commands:"
     echo "  all     Start both FastAPI and Next.js concurrently (default)"
     echo "  api     Start FastAPI backend only (port 8000)"
     echo "  web     Start Next.js frontend only (port 3000)"
+    echo "  worker  Start background Stockfish analysis worker"
     echo "  check   Verify system prerequisites and ports"
     echo "  test    Run pytest suite and Next.js production build"
     ;;

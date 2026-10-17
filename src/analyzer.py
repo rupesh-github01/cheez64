@@ -1,9 +1,10 @@
 import os
 import shutil
+import io
 import chess
 import chess.pgn
 import chess.engine
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 try:
     from models import MoveAnalysis, CandidateMove
@@ -184,6 +185,11 @@ def analyze_game(
     stockfish_path: str = STOCKFISH_PATH,
     depth: int = DEPTH,
     multipv: int = MULTI_PV,
+    pgn_text: Optional[str] = None,
+    threads: int = 1,
+    hash_size: int = 64,
+    time_limit: Optional[float] = None,
+    active_engine_holder: Optional[Dict[str, Any]] = None,
 ):
     """
     Analyze a PGN game move-by-move.
@@ -198,8 +204,11 @@ def analyze_game(
     # Load PGN
     # --------------------------------
 
-    with open(pgn_path, "r") as pgn_file:
-        game = chess.pgn.read_game(pgn_file)
+    if pgn_text is not None:
+        game = chess.pgn.read_game(io.StringIO(pgn_text))
+    else:
+        with open(pgn_path, "r") as pgn_file:
+            game = chess.pgn.read_game(pgn_file)
 
     if game is None:
         return None, []
@@ -207,8 +216,18 @@ def analyze_game(
     engine = chess.engine.SimpleEngine.popen_uci(
         stockfish_path
     )
+    if active_engine_holder is not None:
+        active_engine_holder["engine"] = engine
 
     try:
+        if threads > 1 or hash_size != 16:
+            try:
+                engine.configure({"Threads": threads, "Hash": hash_size})
+            except Exception:
+                pass
+
+        limit = chess.engine.Limit(depth=depth, time=time_limit) if time_limit is not None else chess.engine.Limit(depth=depth)
+
         board = game.board()
 
         analyses = []
@@ -218,7 +237,7 @@ def analyze_game(
         # Search initial pre-game position once with MultiPV
         current_infos = engine.analyse(
             board,
-            chess.engine.Limit(depth=depth),
+            limit,
             multipv=multipv
         )
 
@@ -288,7 +307,7 @@ def analyze_game(
             # Search new position once with MultiPV
             next_infos = engine.analyse(
                 board,
-                chess.engine.Limit(depth=depth),
+                limit,
                 multipv=multipv
             )
 
@@ -398,7 +417,12 @@ def analyze_game(
         return game, analyses
 
     finally:
-        engine.quit()
+        if active_engine_holder is not None:
+            active_engine_holder["engine"] = None
+        try:
+            engine.quit()
+        except Exception:
+            pass
 
 
 def get_candidate_moves(engine, board, depth: int = DEPTH, multipv: int = MULTI_PV):

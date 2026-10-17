@@ -130,30 +130,55 @@ cp .env.example .env
 
 ---
 
-## Game Importing & Stockfish Analysis
+---
 
-### Import Games from Chess.com or Lichess
+## Complete Analysis Workflow
 
-```bash
-# Import games from Chess.com
-python -m src.importers chess.com <username> --max 20
+The application supports a complete, decoupled 4-step pipeline for historical chess analysis:
 
-# Import games from Lichess
-python -m src.importers lichess <username> --max 20
+```
+1. Import Games ──► 2. Enqueue Games ──► 3. Background Worker ──► 4. Interactive Review
+   (Chess.com/Lichess)   (Priority/Config Queue)   (Stockfish Evaluator)   (UI & Coach)
 ```
 
-### Import Local PGN Files
+### Step 1: Import Games from Chess.com or Lichess
 
 ```bash
-# Import all PGNs from data/games/ into SQLite
-python src/library.py import --dir data/games
+# Bulk import games with automatic checkpointing and bounded memory
+python -m src.importers chess.com <username> --from 2026-01
+python -m src.importers lichess <username> --from 2026-01
 ```
 
-### Run Stockfish Analysis on a PGN
+### Step 2: Enqueue Unanalyzed Games into the Queue
 
 ```bash
-python src/analyzer.py --pgn data/games/test_game.pgn --export data/games/test_game_analysis.json
+# Queue all unanalyzed games with custom engine depth and priority
+python -m src.queue_cli enqueue-all --depth 16 --multipv 3
+
+# Or queue specific games
+python -m src.queue_cli enqueue game_abc123 game_def456 --priority 5
+
+# Inspect queue status
+python -m src.queue_cli status
+python -m src.queue_cli list --status PENDING
 ```
+
+### Step 3: Start the Stockfish Analysis Worker
+
+```bash
+# Start background worker via unified script
+./run.sh worker
+
+# Or run worker directly with custom limits
+python -m src.worker_cli run --once
+python -m src.worker_cli run --max-jobs 20 --poll-interval 2.0
+```
+
+### Step 4: Review Completed Games & Chat with Coach
+
+Launch the web app (`./run.sh` or `./run.sh web`) and visit [http://localhost:3000/games](http://localhost:3000/games) to explore move evaluations, critical positions, tactical findings, and talk with the personalized chess coach.
+
+---
 
 ### Detect Openings & Build Repertoire
 
