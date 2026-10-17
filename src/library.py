@@ -306,6 +306,34 @@ class GameLibrary:
 
                 CREATE INDEX IF NOT EXISTS idx_import_jobs_user ON import_jobs(platform, username);
                 CREATE INDEX IF NOT EXISTS idx_import_jobs_status ON import_jobs(status);
+
+                CREATE TABLE IF NOT EXISTS analysis_jobs (
+                    job_id TEXT PRIMARY KEY,
+                    game_id TEXT NOT NULL REFERENCES games(game_id) ON DELETE CASCADE,
+                    batch_id TEXT,
+                    priority INTEGER NOT NULL DEFAULT 0,
+                    status TEXT NOT NULL DEFAULT 'PENDING',
+                    config_hash TEXT NOT NULL,
+                    config_json TEXT NOT NULL,
+                    attempt_count INTEGER NOT NULL DEFAULT 0,
+                    max_attempts INTEGER NOT NULL DEFAULT 3,
+                    error_summary TEXT,
+                    claimed_by TEXT,
+                    claim_token TEXT,
+                    lease_expires_at TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    started_at TEXT,
+                    completed_at TEXT
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_analysis_jobs_claim ON analysis_jobs(status, priority DESC, created_at ASC);
+                CREATE INDEX IF NOT EXISTS idx_analysis_jobs_lease ON analysis_jobs(status, lease_expires_at);
+                CREATE INDEX IF NOT EXISTS idx_analysis_jobs_batch ON analysis_jobs(batch_id);
+                CREATE INDEX IF NOT EXISTS idx_analysis_jobs_game ON analysis_jobs(game_id);
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_analysis_jobs_active_unique
+                    ON analysis_jobs(game_id, config_hash)
+                    WHERE status IN ('PENDING', 'RUNNING');
             """)
 
     def _row_to_game(self, row: sqlite3.Row) -> Game:
