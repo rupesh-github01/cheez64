@@ -73,7 +73,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from api.positions import router as positions_router
+
 app.include_router(management_router)
+app.include_router(positions_router)
 
 
 def get_library() -> GameLibrary:

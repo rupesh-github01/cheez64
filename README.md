@@ -249,3 +249,82 @@ python src/analyzer.py --pgn data/games/<game>.pgn
 ## License
 
 MIT License. Stockfish is licensed under the GNU General Public License v3.
+
+## Position indexing (Segment 14)
+
+Games are stored immediately and scheduled for position indexing in the same
+transaction. A separate CLI replays the mainline without Stockfish. Positions
+include the starting board and the final recorded board; equivalent positions
+across move orders share a versioned identity. Standard chess is supported;
+other variants remain accessible as games but are marked unsupported for indexing.
+
+This segment has **not migrated the existing personal `data/library.db`**. Use a
+separate database for validation. The position CLI requires `--db` and refuses
+the repository's personal database path (including symlink/hardlink aliases).
+Opening another database with GameLibrary installs the additive index schema;
+historical games are discovered by explicit backfill, never by an API read.
+
+```sh
+# Use your own separate test database, already containing imported games.
+python -m src.position_cli status --db /tmp/chess-position-test.db
+python -m src.position_cli backfill --db /tmp/chess-position-test.db --max-games 100 --max-seconds 30
+python -m src.position_cli run --db /tmp/chess-position-test.db --follow --max-games 1000 --max-seconds 60
+python -m src.position_cli reindex --db /tmp/chess-position-test.db --game-id GAME_ID
+python -m src.position_cli retry --db /tmp/chess-position-test.db --game-id GAME_ID
+```
+
+`backfill` reconciles historical/missing scheduling rows and processes pending
+work; repeat it until coverage is complete. `run` processes already scheduled
+work; `--once` handles at most one game. `reindex` and `retry` schedule work for
+a subsequent run. Failed games do not block other work; failed reindexing retains
+the last completed occurrence set. Each game publishes atomically, so restarting
+an interrupted command cannot duplicate occurrences. CLI time limits are checked
+between bounded games; publication/lock acquisition may finish after that limit.
+Replay limits are 2 MiB PGN and 10,000 mainline plies per game, with explicit
+failure rather than truncation. The CLI does not automatically start with the API.
+
+Configure `CHESS_COACH_DB` to a separate database when starting an API for testing.
+New GET endpoints:
+
+- `/api/positions/status`
+- `/api/positions/lookup?fen=FOUR_OR_SIX_FIELD_FEN&variant=standard`
+- `/api/positions/{position_id}`
+- `/api/positions/{position_id}/games?limit=50&after_game=CURSOR`
+- `/api/positions/{position_id}/occurrences?limit=50&after_game=CURSOR&after_ply=PLY`
+- `/api/positions/{position_id}/moves`
+
+All support optional exact case-insensitive `player` and
+`player_color=white|black|either` filters. SQLite NOCASE provides ASCII case
+folding. Games are paged once per distinct game; the occurrence endpoint provides
+all matching plies with bounded pages. Opening labels are stored game-level labels.
+
+Every successful response exposes `coverage`, including `partial_index`, pending/missing/
+failed/unsupported counts, indexed-game count and `absence_is_conclusive`.
+A zero-result lookup with partial coverage does not establish that no library
+game contains the position. All queries for one response share a SQLite read
+snapshot; separate requests may observe newer commits. These new routes open
+read-only connections and never create/migrate an index or run a backfill.
+
+Move frequency counts **occurrences with outgoing moves**. Outcome statistics
+count **distinct games per move** and use White's perspective. Only wins, losses
+and draws enter `completed_games`; unfinished/unknown results are separate.
+Win rate excludes draws from the numerator; score rate awards half a point per
+draw. Rates with no completed games are null. A repeated position can contribute
+multiple move occurrences but only one result per move; distinct-game counts
+across different moves are not additive. A final occurrence with no recorded next
+move does not imply checkmate or a position with no legal moves.
+
+The key omits move counters and legally irrelevant en-passant targets, but retains
+side to move and effective castling rights. It is an exploration identity, not a
+rule-complete game state or a cache of reusable engine evaluations.
+
+To reproduce the independent temporary-database benchmark (no engine/network):
+
+```sh
+python scripts/benchmark_positions.py --include-local --scales 50 1000 5000 --output segment_14_position_benchmarks.json
+```
+
+The supervisor enforces 120 seconds and 512 MiB RSS per scale, with a 600-second
+overall budget. Process RSS inspection requires permission to execute `ps`.
+Synthetic results and the small checked-in real-PGN sample are reported separately.
+See `segment_14_position_index_report.md` for validation, measurements and limits.

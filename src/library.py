@@ -26,6 +26,8 @@ if str(repo_root) not in sys.path:
 import chess
 import chess.pgn
 
+from src.position_schema import initialize as initialize_positions, schedule as schedule_positions
+
 # Analysis status constants
 ANALYSIS_NOT_ANALYZED = "NOT_ANALYZED"
 ANALYSIS_ANALYZING = "ANALYZING"
@@ -208,6 +210,7 @@ class GameLibrary:
                 pass
         self._conn.execute("PRAGMA busy_timeout = 30000;")
         self._init_db()
+        initialize_positions(self._conn)
 
     def _get_connection(self) -> sqlite3.Connection:
         return self._conn
@@ -457,6 +460,8 @@ class GameLibrary:
                 game.imported_at, game.analyzed_at
             ))
 
+            schedule_positions(conn, game.game_id)
+
         return game, True
 
     def add_games_batch(
@@ -528,6 +533,7 @@ class GameLibrary:
                     game.ply_count, game.pgn, game.analysis_status, game.analysis_reference,
                     game.imported_at, game.analyzed_at
                 ))
+                schedule_positions(conn, game.game_id)
                 results.append((game, True))
 
         return results
