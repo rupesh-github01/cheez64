@@ -31,8 +31,14 @@ web/node_modules/
 web/.next/
 web/out/
 
-# Data (keep structure, ignore large binaries)
-*.db-journal
+# Personal SQLite databases, backups and sidecars (never commit)
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+data/backups/
 
 # Pytest
 .pytest_cache/
