@@ -75,10 +75,12 @@ app.add_middleware(
 
 from api.positions import router as positions_router
 from api.players import router as players_router
+from api.evaluations import router as evaluations_router
 
 app.include_router(management_router)
 app.include_router(positions_router)
 app.include_router(players_router)
+app.include_router(evaluations_router)
 
 
 def get_library() -> GameLibrary:

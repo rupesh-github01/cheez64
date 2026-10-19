@@ -406,3 +406,86 @@ It measures the complete initial HTTP report for the selected player's games,
 reports position-index preprocessing separately, enforces time/RSS budgets, and
 checks concurrent imports/reads and queue heartbeats without running an engine.
 See `segment_15_fast_profiling_report.md` for verified results and limitations.
+
+## Evaluation cache (Segment 16)
+
+The evaluation cache is independent of GameLibrary and position indexing. It
+never starts Stockfish, schedules analysis, ingests historical analysis JSON or
+changes coaching/fast-profile results. Cache initialization is explicit:
+
+```sh
+python -m src.evaluation_cli init --cache /path/to/separate/evaluations.sqlite3
+export CHESS_COACH_EVAL_CACHE_DB=/path/to/separate/evaluations.sqlite3
+python -m src.evaluation_cli status --cache /path/to/separate/evaluations.sqlite3
+python -m src.evaluation_cli maintain --cache /path/to/separate/evaluations.sqlite3
+```
+
+Library/backup paths, sidecars and aliases are rejected. Do not point this at
+`data/library.db`. Missing/uninitialized/incompatible cache storage is reported
+as unavailable; reads do not initialize it. The existing application's legacy
+startup recovery still writes its configured GameLibrary; new cache read routes
+are independent and do not make the whole application read-only.
+
+Local routes:
+
+- `GET /api/evaluations/lookup?fen=<six-field-FEN>&allow_advisory=true`
+- `POST /api/evaluations/lookup-batch` with `{"items":[{"context":{"fen":"..."},"allow_advisory":true}]}` (up to 100 items).
+- `GET /api/evaluations/status` for cache counts, policy, cooldown and size.
+
+`POST /api/evaluations/resolve` takes a single lookup object; `/resolve-batch`
+takes at most five items. Cloud access is disabled by default. Enabling it
+requires `CHESS_COACH_EVAL_CLOUD_ENABLED=true`, an operator-controlled
+`CHESS_COACH_EVAL_RESOLVE_KEY` of at least 16 characters, the matching
+`X-Evaluation-Key` request header, and each lookup's explicit `allow_cloud:true`
+and `allow_advisory:true`. Keep this operator key out of frontend bundles. These
+routes use fixed-origin, bounded Lichess HTTP with no redirects or engine fallback.
+All cooperating processes must use one shared cache to coordinate quotas; do not
+enable independent clients behind the same egress without shared coordination.
+
+Scores are typed `cp`, signed `mate` in moves, or proven `terminal_checkmate`,
+always relative to White. Zero centipawns differs from a missing evaluation.
+`TRUSTED_CONTEXT_MATCH` requires complete verified-root history matching the
+stored local context. `ADVISORY_CONTEXT_UNVERIFIED` explicitly excludes draw and
+repetition guarantees, including all Lichess records. A lookup with
+`require_trusted:true` requires `root_fen`, complete legal UCI `moves` and
+`root_history_complete:true` (standard initial root only); cloud evidence cannot
+satisfy it. Standalone local FENs also remain advisory about history.
+
+Different engine/configuration families are not ranked against each other;
+`CONFIG_REQUIRED` asks the caller to supply a returned `config_hash` or
+`family_hash`. Within a compatible family, achieved depth, nodes, observation
+time and digest break ties. Minimum depth/PVs, partial/stale acceptance and
+source constraints are explicit lookup fields. Coverage describes the request,
+never all library games or all chess positions.
+
+`EvaluationCache.ingest(Evaluation(...))` is the future local producer interface,
+not an HTTP ingestion endpoint. It validates engine name/version/build/NNUE,
+explicit complete applied options including Threads/Hash, search limits,
+context and legal UCI PVs. It trusts the producer's metadata attestation; it does
+not run or inspect an engine. The existing analyzer is not connected to it.
+
+Configure validated capacity/retention settings using JSON in
+`CHESS_COACH_EVAL_LIMITS` (unknown/unsafe settings fail closed). Defaults are
+50,000 records, 100,000 contexts, 256 MiB total main/WAL/SHM budget with 4 MiB
+admission headroom, four records/config, 16 configs/context, 32 records/context,
+10,000 negative entries, 90-day retention and 30-day cloud freshness. Scale
+limits can increase up to their documented model bounds without schema changes.
+Admission rejects writes at capacity; explicit bounded maintenance removes old
+records/orphans. Maintenance reports its effective maximum eight-record batch;
+repeat it to drain more work. Existing readers remain available under pressure.
+
+Bodies are limited to 128 KiB, batch output to 2 MiB, histories to 1,000 plies,
+and PVs to five lines of 64 plies. Cloud attempts have an eight-second total
+deadline; batches have 15 seconds and no scheduled continuation. Shared rolling
+limits allow one in-flight request, at least five seconds between starts,
+12/minute and 60/hour; Retry-After/cooldowns can defer work longer.
+
+The independent deterministic benchmark uses temporary databases, synthetic
+scores, mocked HTTP and mocked queue completion only:
+
+```sh
+python scripts/benchmark_evaluations.py --scales 50 1000 5000 --output /tmp/evaluation-benchmarks.json
+```
+
+See `segment_16_evaluation_cache_report.md` for measurements, provenance,
+validation and limitations. No Segment 17 fallback or scoring integration exists.
