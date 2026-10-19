@@ -328,3 +328,81 @@ The supervisor enforces 120 seconds and 512 MiB RSS per scale, with a 600-second
 overall budget. Process RSS inspection requires permission to execute `ps`.
 Synthetic results and the small checked-in real-PGN sample are reported separately.
 See `segment_14_position_index_report.md` for validation, measurements and limits.
+
+## Engine-free player profiles (Segment 15)
+
+The new player endpoints describe imported metadata and played moves without
+Stockfish, coaching generation, LLM calls, indexing writes or a statistical cache.
+They use SQLite read-only connections and one consistent snapshot per response.
+Existing dashboard/coaching endpoints retain their behavior.
+
+Use an explicit recorded source and exact player label:
+
+```text
+GET /api/players/fast-profile?source=lichess&username=Alice
+GET /api/players/overview?source=lichess&username=Alice
+GET /api/players/trends?source=lichess&username=Alice
+GET /api/players/repertoire?source=lichess&username=Alice
+GET /api/players/time-management?source=lichess&username=Alice
+GET /api/players/tendencies?source=lichess&username=Alice
+GET /api/players/coverage?source=lichess&username=Alice
+```
+
+Chess.com/Lichess labels match exactly with ASCII case folding; local/upload
+labels are case-sensitive. Sources are never automatically combined into one
+person. Games matching both sides are reported as ambiguous and excluded from
+color-sensitive statistics. The source means recorded game origin, not verified
+account ownership; cross-source deduplication may retain only the first origin.
+
+Optional filters are `color`, ISO `date_from`/`date_to`, and exact `time_control`.
+`top_k` caps display lists (1–50) without truncating corpus-level aggregates.
+Replay defaults to at most 20,000 games and 30 seconds, checked between bounded
+games. `completeness` and per-category `coverage` disclose failures, unsupported
+variants and budget exhaustion. Metadata denominators remain complete if replay
+is partial. No-result identities return 404; matched games with no completed
+results return null rates. Empty or incompatible databases return 503.
+
+Win/score rates use completed results from the selected player's perspective.
+Move frequencies use observed player moves; position continuation frequencies use
+occurrences and outcomes count distinct games per move. Position views are scoped
+to the same source/player and show index coverage independently of replay coverage.
+The ranked position window is relative plies 1–24; initial ply-zero occurrences
+are omitted while later repetitions remain visible. An absent/incomplete index
+does not stop metadata or move replay and is not evidence a position never occurred.
+
+Metrics identify OBSERVED versus HEURISTIC provenance, availability status, units,
+method, numerator/denominator and sample coverage. Development, phase, weighted
+material, early queen movement, opening diversity and pawn-placement signatures
+are descriptive rules, never verified mistakes or personality diagnoses. Stored
+analysis availability is counted separately; its JSON/conclusions are not used.
+
+Reported `%emt` annotations provide elapsed-time observations. Clocks alone do
+not produce durations by default. `clock_convention=post_increment` explicitly
+asserts that a supported single-stage clock is reported after its increment;
+estimates then use the previous clock for the **same** player plus increment
+minus current clock. These estimates are HEURISTIC. Missing adjacent clocks,
+negative differences, unknown conventions, metadata/header conflicts and stage/
+delay/hourglass/daily controls do not produce inferred durations. Explicit EMT
+can still be used. Supported estimates never imply a fast move was a blunder.
+Exact duration medians are omitted above 4,096 observations to bound storage;
+means, fixed bins and counts retain all observations.
+
+Personal SQLite databases, WAL/SHM sidecars and `data/backups/` are now ignored by
+Git. The current personal database was backed up and verified before Segment 15
+and removed from Git tracking without deleting the working file. Existing history
+was not rewritten. No Segment 15 schema or personal-database migration occurred.
+Continue using an explicit temporary `CHESS_COACH_DB` for validation; starting the
+legacy application against its default database can still run existing startup
+recovery/schema checks.
+
+The standalone profiling benchmark creates all databases in temporary directories:
+
+```sh
+python scripts/benchmark_fast_profiles.py --scales 50 1000 --samples 30 --include-local --output small.json
+python scripts/benchmark_fast_profiles.py --scales 5000 --samples 3 --output large.json
+```
+
+It measures the complete initial HTTP report for the selected player's games,
+reports position-index preprocessing separately, enforces time/RSS budgets, and
+checks concurrent imports/reads and queue heartbeats without running an engine.
+See `segment_15_fast_profiling_report.md` for verified results and limitations.
