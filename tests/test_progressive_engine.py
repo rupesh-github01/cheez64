@@ -39,7 +39,7 @@ def test_guardian_hard_death_blocks_until_owned_child_dies(tmp_path):
     finally:
         # Known live child identity came from our fixture. Never kill a reconstructed stale PID.
         os.killpg(owned['pgid'],signal.SIGKILL)
-        engine.closed=True;engine.selector.close();engine.process.stdin.close();engine.process.stdout.close()
+        engine.closed=True;engine.selector.close();engine.process.stdin.close();engine.process.stdout.close();engine.process.stderr.close()
     deadline=time.monotonic()+2
     while True:
         try: again=UCIProcess([sys.executable,str(FAKE)],lock,probe=True);again.close();break
@@ -90,3 +90,54 @@ def test_proved_adapter_binary_nnue_and_option_attestation(tmp_path):
         with pytest.raises(EngineSafetyError):adapter.search(PositionContext(fen=chess.STARTING_FEN),SearchConfig.model_validate(data))
         assert adapter.search(PositionContext(fen=chess.STARTING_FEN),cfg).pvs[0].cp==23
     finally:adapter.close()
+
+
+def test_startup_diagnostics_distinguish_spawn_exit_timeout_and_lock(tmp_path):
+    import subprocess
+    secret='do-not-expose-startup-secret'
+    with pytest.raises(EngineSafetyError,match='OS_ERROR') as error:
+        UCIProcess([str(tmp_path/secret)],tmp_path/'missing-lock',probe=True)
+    assert secret not in str(error.value)
+    assert any(x.get('errno')==2 for x in error.value.diagnostics)
+    assert any(x['event']=='LOCK_ACQUIRED' for x in error.value.diagnostics)
+    engine=UCIProcess([sys.executable,str(FAKE)],tmp_path/'busy-lock',probe=True)
+    try:
+        with pytest.raises(EngineSafetyError,match='LOCK_BUSY'):
+            UCIProcess([sys.executable,str(FAKE)],tmp_path/'busy-lock',probe=True)
+    finally:engine.close()
+    for command,expected in (([sys.executable,'-c','import sys; sys.exit(42)'],'STARTUP_FAILED'),
+                             ([sys.executable,'-c','import time; time.sleep(30)'],'HANDSHAKE_TIMEOUT')):
+        with pytest.raises(EngineSafetyError,match=expected) as error:
+            UCIProcess(command,tmp_path/'failure-lock',probe=True)
+        assert any(x['event']=='CHILD_REAPED' for x in error.value.diagnostics)
+        if expected=='STARTUP_FAILED':assert any(x.get('returncode')==42 for x in error.value.diagnostics)
+        assert len(str(error.value))<8192
+
+
+def test_guardian_resource_diagnostics_fail_closed(tmp_path):
+    import subprocess
+    for patch,event in (("lambda pid: 600*1024**2",'RSS_REFUSED'),
+                        ("lambda pid: (_ for _ in ()).throw(OSError(1,'private details'))",'RSS_UNAVAILABLE')):
+        code=f'import src.progressive_engine_guard as g; g.resident_bytes={patch}; raise SystemExit(g.main())'
+        run=subprocess.run([sys.executable,'-c',code,str(tmp_path/'rss-lock'),json.dumps([sys.executable,str(FAKE)])],
+                           input=b'uci\n',capture_output=True,timeout=5)
+        events=[json.loads(line) for line in run.stderr.splitlines()]
+        assert any(x['event']==event for x in events)
+        assert any(x['event']=='CHILD_REAPED' for x in events)
+        assert b'private details' not in run.stderr
+        assert run.returncode==78
+
+
+def test_startup_signal_and_diagnostic_sanitization(tmp_path):
+    with pytest.raises(EngineSafetyError) as error:
+        UCIProcess([sys.executable,'-c','import os,signal; os.kill(os.getpid(),signal.SIGTERM)'],tmp_path/'signal-lock',probe=True)
+    assert any(x.get('signal')==signal.SIGTERM for x in error.value.diagnostics)
+    engine=UCIProcess([sys.executable,str(FAKE)],tmp_path/'sanitized-lock',probe=True)
+    try:
+        engine._diagnostic_data(b'{"event":"OS_ERROR","errno":2,"private":"credential-secret"}\n')
+        assert 'credential-secret' not in json.dumps(engine.diagnostics)
+        for _ in range(100):engine._diagnostic_data(b'{"event":"OS_ERROR","errno":2}\n')
+        assert len(engine.diagnostics)<=34
+        engine._diagnostic_data(b'x'*20000)
+        assert len(engine.diagnostic_buffer)<=8192
+    finally:engine.close()

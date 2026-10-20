@@ -16,7 +16,10 @@ import time
 from .evaluation_models import Evaluation, PositionContext, PV
 
 
-class EngineSafetyError(RuntimeError): pass
+class EngineSafetyError(RuntimeError):
+    def __init__(self,message,diagnostics=None):
+        self.diagnostics=diagnostics or []
+        super().__init__(message+(' '+json.dumps(self.diagnostics,separators=(',',':')) if self.diagnostics else ''))
 class EngineExited(RuntimeError): pass
 
 
@@ -41,8 +44,12 @@ class UCIProcess:
         if not probe and (proof is None or not proof.passed or proof.code_hash!=code_hash() or proof.platform!=sys.platform):
             raise EngineSafetyError('No current host-safety proof; dispatch disabled')
         self.process=subprocess.Popen([sys.executable,'-m','src.progressive_engine_guard',str(lock_path),json.dumps(command)],
-            stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True,bufsize=0)
-        self.buffer=b''; self.selector=selectors.DefaultSelector(); self.selector.register(self.process.stdout,selectors.EVENT_READ)
+            stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True,bufsize=0)
+        self.buffer=b'';self.diagnostic_buffer=b'';self.diagnostic_bytes=0
+        self.diagnostics=[{'event':'HANDSHAKE_START','deadline_ms':2000}]
+        self.selector=selectors.DefaultSelector()
+        self.selector.register(self.process.stdout,selectors.EVENT_READ,'stdout')
+        self.selector.register(self.process.stderr,selectors.EVENT_READ,'diagnostics')
         self.name=None; self.closed=False
         try:
             self.send('uci'); lines=self.until('uciok',2)
@@ -55,8 +62,29 @@ class UCIProcess:
                     name=line[12:line.index(' type ')]
                     if name not in ('MultiPV','UCI_Chess960','Ponder'):self.option_names.append(name)
                     else:self.managed_options.add(name)
-        except EngineExited as exc:self.close();raise EngineSafetyError('Engine startup/slot unavailable') from exc
+        except (EngineExited,TimeoutError,OSError,EngineSafetyError) as exc:
+            self.close()
+            events={x['event'] for x in self.diagnostics}
+            reason=next((name for name in ('LOCK_BUSY','LOCK_UNSAFE','RSS_REFUSED','RSS_UNAVAILABLE','OS_ERROR','GUARDIAN_ERROR') if name in events),None)
+            reason=reason or ('HANDSHAKE_TIMEOUT' if isinstance(exc,TimeoutError) else 'STARTUP_FAILED')
+            raise EngineSafetyError(reason,self.diagnostics) from exc
         except BaseException:self.close();raise
+
+    def _diagnostic_data(self,data):
+        self.diagnostic_bytes+=len(data)
+        if self.diagnostic_bytes>8192:return
+        self.diagnostic_buffer+=data
+        while b'\n' in self.diagnostic_buffer:
+            raw,self.diagnostic_buffer=self.diagnostic_buffer.split(b'\n',1)
+            try:
+                event=json.loads(raw)
+                allowed={'GUARDIAN_START','LOCK_OPEN','LOCK_UNSAFE','LOCK_BUSY','LOCK_ACQUIRED','CHILD_SPAWN','CHILD_SPAWNED',
+                         'RSS_UNAVAILABLE','RSS_READY','RSS_REFUSED','PARENT_EOF','CHILD_EOF','RELAY_LIMIT','RELAY_BROKEN_PIPE',
+                         'CHILD_EXIT_OBSERVED','OS_ERROR','GUARDIAN_ERROR','CHILD_STOP','CHILD_KILL','CHILD_REAPED','GUARDIAN_CLOSED'}
+                if isinstance(event,dict) and event.get('event') in allowed and len(self.diagnostics)<34:
+                    self.diagnostics.append({k:v for k,v in event.items() if k=='event' or
+                                             (k in ('pid','errno','rss','returncode','signal') and type(v) is int)})
+            except (ValueError,TypeError):pass
 
     def send(self,line):
         if '\n' in line or '\r' in line:raise ValueError('UCI line injection rejected')
@@ -77,11 +105,15 @@ class UCIProcess:
                 raw,self.buffer=self.buffer.split(b'\n',1); line=raw.decode(errors='strict').strip(); lines.append(line)
                 if line==marker or line.startswith(marker+' '): return lines
                 if len(lines)>4096: raise EngineSafetyError('UCI output flood')
-            if self.selector.select(max(0,min(.05,deadline-time.monotonic()))):
-                part=os.read(self.process.stdout.fileno(),4096)
-                if not part: raise EngineExited('Owned engine exited')
+            for key,_ in self.selector.select(max(0,min(.05,deadline-time.monotonic()))):
+                part=os.read(key.fileobj.fileno(),4096)
+                if key.data=='diagnostics':
+                    if part:self._diagnostic_data(part)
+                    else:self.selector.unregister(key.fileobj)
+                    continue
+                if not part:raise EngineExited('Owned engine exited')
                 self.buffer+=part
-                if len(self.buffer)>65536: raise EngineSafetyError('UCI output too large')
+                if len(self.buffer)>65536:raise EngineSafetyError('UCI output too large')
         raise TimeoutError('UCI deadline exceeded')
 
     def search(self,context,config):
@@ -134,7 +166,16 @@ class UCIProcess:
             # Keep safety closed; child retains lifetime lock if guardian must be killed.
             self.process.kill(); self.process.wait(timeout=2)
             raise EngineSafetyError('Guardian cleanup failed; slot must remain blocked')
-        finally: self.selector.close(); self.process.stdout.close()
+        finally:
+            os.set_blocking(self.process.stderr.fileno(),False)
+            # Drain only after guardian death, under a fixed total byte ceiling.
+            while self.diagnostic_bytes<=8192:
+                try:data=os.read(self.process.stderr.fileno(),4096)
+                except BlockingIOError:break
+                if not data:break
+                self._diagnostic_data(data)
+            self.diagnostics.append({'event':'GUARDIAN_EXIT','returncode':self.process.returncode})
+            self.selector.close();self.process.stdout.close();self.process.stderr.close()
 
 
 def prove_host_safety():
@@ -192,7 +233,7 @@ def prove_host_safety():
                 contender.close();raise EngineSafetyError('Live orphan did not retain slot')
         finally:
             os.killpg(owned['pgid'],signal.SIGKILL)
-            engine.closed=True;engine.selector.close();engine.process.stdin.close();engine.process.stdout.close()
+            engine.closed=True;engine.selector.close();engine.process.stdin.close();engine.process.stdout.close();engine.process.stderr.close()
         deadline=time.monotonic()+2
         while True:
             try: again=UCIProcess([sys.executable,str(fake)],lock,probe=True);again.close();break
