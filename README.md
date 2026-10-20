@@ -489,3 +489,81 @@ python scripts/benchmark_evaluations.py --scales 50 1000 5000 --output /tmp/eval
 
 See `segment_16_evaluation_cache_report.md` for measurements, provenance,
 validation and limitations. No Segment 17 fallback or scoring integration exists.
+
+## Progressive analysis (Segment 17)
+
+Progressive analysis has an independent SQLite store and versioned partial
+artifacts. It never replaces game-analysis JSON, calculates legacy CPL, marks a
+GameLibrary game `ANALYZED`, or changes coaching/fast-profile outputs. Prepare-only
+jobs work without an engine profile and publish structural observations, quiet
+coverage candidates, cache coverage and explicit unsearched-position limitations.
+Games over 1,000 plies are rejected, preserving evaluation-cache history identity.
+
+Initialize explicitly against separate paths:
+
+```sh
+python -m src.progressive_cli init --store /path/to/progressive.sqlite3 --library /path/to/library.sqlite3
+python -m src.progressive_cli enqueue --store /path/to/progressive.sqlite3 --library /path/to/library.sqlite3 --request-file request.json
+python -m src.progressive_cli prepare --store /path/to/progressive.sqlite3 --library /path/to/library.sqlite3 --max-jobs 100
+python -m src.progressive_cli status --store /path/to/progressive.sqlite3 --library /path/to/library.sqlite3
+```
+
+An enqueue request is `{"game_ids":["game_..."],"idempotency_key":"request-1"}`;
+`prepare_only` defaults true. Reusing a key with another payload is rejected.
+Analysis requests set `prepare_only:false` and a registered `profile_id`. Batch
+admission accepts at most 100 games/2 MiB aggregate PGN snapshots per call, up to
+5,000 games sharing one immutable batch budget; appending chunks does not renew
+credits. A job without a registered profile waits with `WAITING_PROFILE`.
+
+Set `CHESS_COACH_PROGRESSIVE_DB`, `CHESS_COACH_DB` and, optionally,
+`CHESS_COACH_EVAL_CACHE_DB` for the API. New routes are under
+`/api/progressive-analysis`: POST `/jobs`, `/jobs/batch`, `/jobs/{id}/cancel`,
+`/jobs/{id}/retry`; GET `/jobs`, `/jobs/{id}`, `/jobs/{id}/result`,
+`/games/{id}/progress`, `/health`. Writes require a server
+`CHESS_COACH_PROGRESSIVE_KEY` of at least 16 characters and matching
+`X-Progressive-Key` header. Reads never initialize stores or launch engines;
+result pages expose live work separately from immutable phase artifacts.
+
+Engine dispatch is disabled by default. Explicit CLI `work --enable-engine`
+requires an operator command file, exclusive-host attestation, no observed active
+legacy worker and successful bundled fake-UCI safety probes. The Unix guardian
+retains the host slot until its owned child exits/reaps; a live orphan keeps the
+slot blocked. Unsupported hosts/accounting fail closed. Runtime proof binds to
+code/platform. One managed engine, Threads=1 and Hash=64 MiB are supported; a
+512 MiB owned-process RSS watchdog includes worker, guardian and child. The
+host lock is shared across CLI stores for the same OS user. Legacy/external
+engines do not honor it, so exclusive operation remains an operator requirement.
+
+Profiles use measured build/NNUE identities, full applied options and reset-policy
+provenance. Real profile provenance starts `pcis-progressive:v1:reset-per-context`;
+build is `sha256:<digest>`, NNUE is either `embedded:sha256:<build digest>` or a
+measured external network digest. `register --profile-file` registers a profile;
+`--simulation` explicitly labels a synthetic profile. `work --mock` is restricted
+to temporary stores/libraries/caches and cannot use a real profile. Mock scores
+and timings are never evidence of Stockfish correctness or throughput.
+
+Screen/medium/deep searches request depths 10/14/18 with 0.10/0.30/1.00 s caps;
+qualifying minima 8/12/16 and actual achieved depth are reported separately.
+Per-game screening/deepening is bounded; remaining budgets can produce partial
+outcomes. Leases, unique interests/shared work, persisted retry backoff and
+transactional reservations survive interruption. Cache publication uses an outbox
+and does not lose accepted evidence if the cache is full. Cloud cache evidence is
+advisory only; progressive code makes no HTTP requests. Explicit cloud population
+remains the separately opted-in Segment 16 API's responsibility.
+
+Configure validated limits with `CHESS_COACH_PROGRESSIVE_LIMITS` JSON. Defaults:
+1 GiB storage with 8 MiB admission headroom, 50,000 jobs, 10,000 active/500,000
+retained work rows, 90-day retention, 30 s game/300 s batch budgets. Cleanup is
+explicit and bounded; aggregate batch cost audit remains after job expiry.
+`maintain` removes one expired source/artifact payload per transaction; repeat as
+needed. Readers can delay WAL reclamation, and capacity rejects new writes.
+
+Validation harness (temporary databases and synthetic adapters only):
+
+```sh
+python scripts/benchmark_progressive_analysis.py --scales 50 1000 5000 --output /private/tmp/progressive-benchmarks.json
+```
+
+See `segment_17_progressive_analysis_report.md` for measured preparation/cache,
+deduplication, mock scheduling, recovery, fairness, safety tests and limitations.
+No Segment 18 or multi-engine research is included.
