@@ -327,7 +327,7 @@ python scripts/benchmark_positions.py --include-local --scales 50 1000 5000 --ou
 The supervisor enforces 120 seconds and 512 MiB RSS per scale, with a 600-second
 overall budget. Process RSS inspection requires permission to execute `ps`.
 Synthetic results and the small checked-in real-PGN sample are reported separately.
-See `segment_14_position_index_report.md` for validation, measurements and limits.
+See `plan_report/segment_14_position_index_report.md` for validation, measurements and limits.
 
 ## Engine-free player profiles (Segment 15)
 
@@ -405,7 +405,7 @@ python scripts/benchmark_fast_profiles.py --scales 5000 --samples 3 --output lar
 It measures the complete initial HTTP report for the selected player's games,
 reports position-index preprocessing separately, enforces time/RSS budgets, and
 checks concurrent imports/reads and queue heartbeats without running an engine.
-See `segment_15_fast_profiling_report.md` for verified results and limitations.
+See `plan_report/segment_15_fast_profiling_report.md` for verified results and limitations.
 
 ## Evaluation cache (Segment 16)
 
@@ -487,7 +487,7 @@ scores, mocked HTTP and mocked queue completion only:
 python scripts/benchmark_evaluations.py --scales 50 1000 5000 --output /tmp/evaluation-benchmarks.json
 ```
 
-See `segment_16_evaluation_cache_report.md` for measurements, provenance,
+See `plan_report/segment_16_evaluation_cache_report.md` for measurements, provenance,
 validation and limitations. No Segment 17 fallback or scoring integration exists.
 
 ## Progressive analysis (Segment 17)
@@ -564,6 +564,6 @@ Validation harness (temporary databases and synthetic adapters only):
 python scripts/benchmark_progressive_analysis.py --scales 50 1000 5000 --output /private/tmp/progressive-benchmarks.json
 ```
 
-See `segment_17_progressive_analysis_report.md` for measured preparation/cache,
+See `plan_report/segment_17_progressive_analysis_report.md` for measured preparation/cache,
 deduplication, mock scheduling, recovery, fairness, safety tests and limitations.
 No Segment 18 or multi-engine research is included.
