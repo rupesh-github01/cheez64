@@ -44,3 +44,6 @@ data/backups/
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Plan and report files
+plan_report/
