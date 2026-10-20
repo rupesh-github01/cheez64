@@ -15,6 +15,7 @@ import CriticalNav from "@/components/GameReview/CriticalNav";
 import EpisodeList from "@/components/GameReview/EpisodeList";
 import EvaluationBar from "@/components/GameReview/EvaluationBar";
 import CoachChatPanel from "@/components/GameReview/CoachChatPanel";
+import GamePositionBrowser from "@/components/PlayerDashboard/GamePositionBrowser";
 
 type FilterMode = "all" | "critical" | "tactical" | "positional" | "endgame";
 type ReviewTab = "coach" | "chat" | "explorer";
@@ -121,8 +122,8 @@ function GameReviewContent({ game_id }: { game_id: string }) {
             // Check if ply query parameter was passed from dashboard
             const plyParam = searchParams.get("ply");
             if (plyParam) {
-              const p = parseInt(plyParam, 10);
-              if (!isNaN(p) && a.moves.some((m) => m.ply === p)) {
+              const p = Number(plyParam);
+              if (Number.isInteger(p) && p >= 0 && (p === 0 || a.moves.some((m) => m.ply === p))) {
                 setCurrentPly(p);
               }
             }
@@ -438,6 +439,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
   if (!analysis) {
     return (
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 20px" }}>
+        <GamePositionBrowser key={game_id} pgn={game.pgn} initialPly={Number(searchParams.get("ply") || 0)} />
         {/* Game header */}
         <div
           style={{
