@@ -5,7 +5,7 @@ export type Metric = { value: number | null; numerator?: number | null; denomina
 export type Outcomes = { total_games: number; completed_games: number; wins: number; draws: number; losses: number; unfinished: number; unknown: number; win_rate: Metric; score_rate: Metric };
 export type Identity = { source: string; username: string; games: number; matching: string };
 export type GameRow = { game_id: string; white: string; black: string; result: string; date: string | null; source: string; time_control: string | null; white_rating: number | null; black_rating: number | null; analysis_status: string; player_color: string; legacy_analysis_available: boolean; eco: string | null; first_ply: number | null };
-export type GamesPage = { items: GameRow[]; selected_total: number; matching_total: number; generated_at: string; next_cursor: string | null; legacy_analysis_counts: { stored_analysis: number; by_status: Record<string, number> } };
+export type GamesPage = { position_coverage?: { total_games: number; complete_games: number; partial_index: boolean; absence_is_conclusive: boolean } | null; items: GameRow[]; selected_total: number; matching_total: number; generated_at: string; next_cursor: string | null; legacy_analysis_counts: { stored_analysis: number; by_status: Record<string, number> } };
 export type Position = { position_id: number; canonical_fen: string; distinct_game_count: number; occurrence_count: number; first_ply: number };
 export type Profile = {
   generated_at: string; selector: { source: string; username: string; matching: string };
@@ -21,13 +21,15 @@ export type Profile = {
 };
 
 const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-const cache = new Map<string, { value: unknown; expires: number; bytes: number }>();
+const cache = new Map<string, { value: unknown; expires: number; bytes: number; timer?: ReturnType<typeof setTimeout> }>();
 const pending = new Map<string, Promise<unknown>>();
 let replayTail: Promise<unknown> = Promise.resolve();
-export function clearDashboardCache() { cache.clear(); }
+function drop(key: string) { const entry = cache.get(key); if (entry?.timer) clearTimeout(entry.timer); cache.delete(key); }
+export function clearDashboardCache() { for (const key of cache.keys()) drop(key); }
 export function readDashboard<T>(path: string, signal?: AbortSignal, heavy = false, serializedBody?: string): Promise<T> {
   const key = path + (serializedBody || "");
-  const found = cache.get(key);
+  const retain = !path.startsWith("/api/progressive-analysis/") && !path.startsWith("/api/games/") && path !== "/api/evaluations/lookup-batch";
+  const found = retain ? cache.get(key) : undefined;
   if (found && found.expires > Date.now()) { cache.delete(key); cache.set(key, found); return Promise.resolve(found.value as T); }
   if (pending.has(key)) return (pending.get(key) as Promise<T>).catch(error => {
     if (error instanceof DOMException && error.name === "AbortError" && !signal?.aborted) return readDashboard<T>(path, signal, heavy, serializedBody);
@@ -40,9 +42,13 @@ export function readDashboard<T>(path: string, signal?: AbortSignal, heavy = fal
     const data = await response.json();
     if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Request failed (${response.status})`);
     const bytes = new TextEncoder().encode(JSON.stringify(data)).length;
-    if (bytes <= 2 * 1024 * 1024) {
-      cache.set(key, { value: data, expires: Date.now() + (heavy ? 60000 : 15000), bytes });
-      while (cache.size > 8 || [...cache.values()].reduce((n, item) => n + item.bytes, 0) > 2 * 1024 * 1024) cache.delete(cache.keys().next().value!);
+    if (retain && bytes <= 2 * 1024 * 1024) {
+      drop(key);
+      const entry: { value: unknown; expires: number; bytes: number; timer?: ReturnType<typeof setTimeout> } = { value: data, expires: Date.now() + (heavy ? 60000 : 15000), bytes };
+      cache.set(key, entry);
+      entry.timer = setTimeout(() => drop(key), 300000);
+      entry.timer.unref?.();
+      while (cache.size > 8 || [...cache.values()].reduce((n, item) => n + item.bytes, 0) > 2 * 1024 * 1024) drop(cache.keys().next().value!);
     }
     return data;
   };

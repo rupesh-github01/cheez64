@@ -567,3 +567,63 @@ python scripts/benchmark_progressive_analysis.py --scales 50 1000 5000 --output 
 See `plan_report/segment_17_progressive_analysis_report.md` for measured preparation/cache,
 deduplication, mock scheduling, recovery, fairness, safety tests and limitations.
 No Segment 18 or multi-engine research is included.
+
+## Unified player dashboard (Segment 18)
+
+`/dashboard` selects one exact imported account and platform. The historical
+analyzed-game dashboard remains at `/dashboard/legacy` with its original broader
+selection rules. The new view shows metadata first; Openings and Tendencies share
+one bounded replay response. Dates, color and **raw** time-control filters are
+restored from the URL. No accounts are linked across platforms.
+
+New read-only collection contracts:
+
+- `GET /api/players/identities?q=Hero&source=lichess&limit=20` returns bounded
+  source/account choices and an opaque `next_cursor` (use `after` to continue).
+- `GET /api/players/games?source=lichess&username=Hero&limit=20` returns exact-scoped
+  rows, `selected_total`, `matching_total`, stored legacy-analysis/status counts,
+  generation time and `next_cursor`. Optional color/date/time-control, result,
+  legacy status, reported ECO, position ID and bounded example IDs intersect that
+  cohort. A cursor belongs to its complete selection. Position-filtered responses
+  expose `position_coverage`; incomplete indexing cannot prove absence.
+- Fast-profile opening groups add `evidence_game_ids` (at most five) and
+  `examples_are_bounded`; all existing statistical calculations are unchanged.
+
+For a non-mutating dashboard API deployment, explicitly start with
+`CHESS_COACH_READ_ONLY=true` and `CHESS_COACH_DB=/absolute/path/to/existing.db`.
+This skips import/queue startup recovery and blocks mutation and management
+routes. The sole allowed POST is the existing **local-only** evaluation
+`lookup-batch`. Ordinary management startup retains recovery behavior. Legacy
+review GET connections now use `GameLibrary(..., read_only=True)` (`mode=ro`,
+`query_only=ON`, no schema or WAL-mode initialization). Missing libraries fail;
+missing evaluation/progressive stores are never created by dashboard reads.
+This is an operational read-only boundary, not authentication for public hosting.
+
+The dashboard never starts engines, calls cloud resolution or schedules jobs.
+A selected game's existing progressive artifacts remain separate from legacy
+analysis. The PGN browser uses a disposable worker (2 MiB / 10,000-ply input,
+five-second watchdog), supports ply zero, and sends an exact legally replayed
+history only on explicit local-cache lookup. The 1,000-ply evaluation-context cap
+remains enforced; setup roots cannot request trusted complete-history evidence.
+Cloud-origin cached evidence requires an explicit advisory opt-in and cannot
+silently satisfy trusted coverage. Native dispatch stays disabled by default;
+the existing 512 MiB resource ceiling is unchanged.
+
+Frontend reuse is in-tab only: eight responses / 2 MiB, metadata freshness
+15 seconds and replay freshness 60 seconds, five-minute hard eviction, manual
+refresh, no polling or persistent statistics cache. Replay requests are globally
+serialized in the tab; an already-running server replay may finish after
+navigation. This is not a hard HTTP latency guarantee or cross-tab scheduler.
+
+Validation commands (no new test dependencies):
+
+```sh
+cd web
+node --test tests/dashboard.mjs
+./node_modules/.bin/tsc --noEmit
+./node_modules/.bin/eslint src/lib/player-dashboard.ts src/components/PlayerDashboard src/app/dashboard/page.tsx tests/dashboard.mjs
+npm run build -- --webpack
+```
+
+Use temporary databases for Python tests. Segment plans and validation reports
+belong in intentionally ignored `plan_report/`; never stage that directory.

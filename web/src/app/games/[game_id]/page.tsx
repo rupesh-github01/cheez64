@@ -439,7 +439,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
   if (!analysis) {
     return (
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 20px" }}>
-        <GamePositionBrowser key={game_id} pgn={game.pgn} initialPly={Number(searchParams.get("ply") || 0)} />
+        <div className="pd-root" style={{ padding: 0 }}><GamePositionBrowser key={game_id} pgn={game.pgn} initialPly={Number(searchParams.get("ply") || 0)} /></div>
         {/* Game header */}
         <div
           style={{

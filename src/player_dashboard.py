@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import sqlite3
-import time
 from .fast_profile import selector_sql, complete_date
 from .position_schema import check_version
 
@@ -57,6 +56,14 @@ def games(conn,source,username,color='either',date_from=None,date_to=None,time_c
           AND p.identity_version=1 AND p.variant='standard' AND ix.indexed_version=1 AND ix.indexed_fingerprint=g.fingerprint)''');extra.append(position_id)
         position='(SELECT min(o.ply) FROM position_occurrences o WHERE o.game_id=g.game_id AND o.position_id=?)'
     selected_total=conn.execute(cte+'SELECT count(*) FROM selected',params).fetchone()[0]
+    position_coverage=None
+    if position_id is not None:
+        states=conn.execute(cte+'''SELECT count(*) AS known,
+            sum(ix.status='COMPLETE' AND ix.indexed_version=1 AND ix.indexed_fingerprint=g.fingerprint) AS complete
+            FROM selected g JOIN game_position_index ix USING(game_id)''',params).fetchone()
+        complete=states['complete'] or 0
+        position_coverage={'total_games':selected_total,'complete_games':complete,
+                           'partial_index':complete!=selected_total,'absence_is_conclusive':complete==selected_total}
     statuses=dict(conn.execute(cte+'SELECT analysis_status,count(*) FROM selected GROUP BY analysis_status',params).fetchall())
     stored=conn.execute(cte+'SELECT count(*) FROM selected g JOIN analyses a USING(game_id)',params).fetchone()[0]
     filtered=cte+', filtered AS (SELECT g.* FROM selected g'+(' WHERE '+' AND '.join(filters) if filters else '')+')'
@@ -75,5 +82,5 @@ def games(conn,source,username,color='either',date_from=None,date_to=None,time_c
     for row in rows[:limit]:
         d=dict(row);d['player_color']='white' if d.pop('w') else 'black';d.pop('sort_date');d['legacy_analysis_available']=bool(d['legacy_analysis_available']);items.append(d)
     return {'selector':selector,'generated_at':datetime.now(timezone.utc).isoformat(),'selected_total':selected_total,
-            'matching_total':matching,'legacy_analysis_counts':{'stored_analysis':stored,'by_status':statuses},'items':items,
+            'matching_total':matching,'position_coverage':position_coverage,'legacy_analysis_counts':{'stored_analysis':stored,'by_status':statuses},'items':items,
             'next_cursor':cursor_encode([rows[limit-1]['sort_date'],rows[limit-1]['game_id']],key) if len(rows)>limit else None}

@@ -1,12 +1,8 @@
 import hashlib
-import json
 import sqlite3
-from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from src.library import GameLibrary
-from src.fast_profile import profile_reader,build_fast_profile
-from src.player_dashboard import games
 
 
 @pytest.fixture
@@ -88,5 +84,44 @@ def test_position_games_are_exact_scoped_and_examples_keep_totals(dashboard):
     data=client.get('/api/players/games',params=query).json()
     assert {x['game_id'] for x in data['items']}==set(ids[:2])
     assert all(x['first_ply']==1 for x in data['items'])
+    assert data['position_coverage']['complete_games']==2
+    assert not data['position_coverage']['partial_index']
+    assert data['position_coverage']['absence_is_conclusive']
     subset=client.get('/api/players/games',params={**query,'game_ids':ids[0]}).json()
     assert subset['selected_total']==2 and subset['matching_total']==1
+
+
+def test_readonly_startup_skips_recovery_and_local_lookup_never_dispatches(tmp_path,monkeypatch):
+    from api import main
+    from src.progressive_engine import UCIProcess
+    path=tmp_path/'library.db'
+    with GameLibrary(str(path)):pass
+    before=hashlib.sha256(path.read_bytes()).hexdigest()
+    monkeypatch.setattr(main,'DB_PATH',str(path));monkeypatch.setenv('CHESS_COACH_READ_ONLY','true')
+    def forbidden(*args,**kwargs):raise AssertionError('Initialization, recovery or engine dispatch forbidden')
+    monkeypatch.setattr(GameLibrary,'_init_db',forbidden)
+    monkeypatch.setattr(main.import_manager,'recover_stale_imports',forbidden)
+    monkeypatch.setattr(UCIProcess,'__init__',forbidden)
+    monkeypatch.setenv('CHESS_COACH_EVAL_CACHE_DB',str(tmp_path/'missing-cache.db'))
+    monkeypatch.setenv('CHESS_COACH_PROGRESSIVE_DB',str(tmp_path/'missing-progressive.db'))
+    import httpx
+    monkeypatch.setattr(httpx,'AsyncClient',forbidden)
+    with TestClient(main.app) as client:
+        assert client.get('/api/players/identities').json()['items']==[]
+        assert client.get('/api/progressive-analysis/games/absent/progress').status_code==503
+        import chess
+        response=client.post('/api/evaluations/lookup-batch',json={'items':[{'context':{'fen':chess.STARTING_FEN,'root_fen':chess.STARTING_FEN,'root_history_complete':True},'require_trusted':True,'allow_cloud':False}]})
+        assert response.status_code==200 and response.json()['items'][0]['status']=='UNAVAILABLE'
+    assert hashlib.sha256(path.read_bytes()).hexdigest()==before
+    assert not (tmp_path/'missing-cache.db').exists() and not (tmp_path/'missing-progressive.db').exists()
+
+
+def test_partial_position_game_search_does_not_claim_absence(dashboard):
+    client,path,ids=dashboard
+    from src.positions import PositionIndex
+    with GameLibrary(str(path)) as lib:
+        PositionIndex(lib._conn).index_game(ids[0])
+        position=lib._conn.execute('SELECT position_id FROM position_occurrences WHERE game_id=? AND ply=1',(ids[0],)).fetchone()[0]
+    data=client.get('/api/players/games',params={'source':'chess.com','username':'Hero','position_id':position}).json()
+    assert data['matching_total']==1 and data['selected_total']==2
+    assert data['position_coverage']=={'total_games':2,'complete_games':1,'partial_index':True,'absence_is_conclusive':False}
