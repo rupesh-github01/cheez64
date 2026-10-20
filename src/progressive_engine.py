@@ -79,11 +79,11 @@ class UCIProcess:
             try:
                 event=json.loads(raw)
                 allowed={'GUARDIAN_START','LOCK_OPEN','LOCK_UNSAFE','LOCK_BUSY','LOCK_ACQUIRED','CHILD_SPAWN','CHILD_SPAWNED',
-                         'RSS_UNAVAILABLE','RSS_READY','RSS_REFUSED','PARENT_EOF','CHILD_EOF','RELAY_LIMIT','RELAY_BROKEN_PIPE',
+                         'RSS_UNAVAILABLE','RSS_READY','RSS_SAMPLE','RSS_REFUSED','PARENT_EOF','CHILD_EOF','RELAY_LIMIT','RELAY_BROKEN_PIPE',
                          'CHILD_EXIT_OBSERVED','OS_ERROR','GUARDIAN_ERROR','CHILD_STOP','CHILD_KILL','CHILD_REAPED','GUARDIAN_CLOSED'}
                 if isinstance(event,dict) and event.get('event') in allowed and len(self.diagnostics)<34:
                     self.diagnostics.append({k:v for k,v in event.items() if k=='event' or
-                                             (k in ('pid','errno','rss','returncode','signal') and type(v) is int)})
+                                             (k in ('pid','errno','rss','returncode','signal','worker_rss','guardian_rss','child_rss','worker_pid','guardian_pid','child_pid','limit','elapsed_ms') and type(v) is int)})
             except (ValueError,TypeError):pass
 
     def send(self,line):

@@ -6,6 +6,7 @@ import selectors
 import signal
 import subprocess
 import sys
+import time
 from .progressive_resources import resident_bytes
 
 
@@ -38,13 +39,21 @@ def main():
         pending_in=b'';pending_out=b'info string guardian-ready\n'
         selector=selectors.DefaultSelector();selector.register(sys.stdin.buffer,selectors.EVENT_READ,'parent')
         selector.register(child.stdout,selectors.EVENT_READ,'engine')
-        initialized=False
+        initialized=False;sample_started=time.monotonic();sample_checkpoints=iter((.1,.5,1.,2.,4.));sample_due=next(sample_checkpoints)
         while child.poll() is None:
-            try:size=sum(resident_bytes(pid) for pid in (os.getpid(),os.getppid(),child.pid))
+            # Read the same three roles once; diagnostics reuse these exact values.
+            pids=(os.getpid(),os.getppid(),child.pid)
+            try:guardian_rss,worker_rss,child_rss=(resident_bytes(pid) for pid in pids)
             except OSError as exc:
                 diagnostic('RSS_UNAVAILABLE',errno=exc.errno or 0);return 78
-            if not initialized:diagnostic('RSS_READY',rss=size);initialized=True
-            if size>512*1024**2:diagnostic('RSS_REFUSED',rss=size);return 78
+            size=guardian_rss+worker_rss+child_rss
+            memory={'rss':size,'guardian_rss':guardian_rss,'worker_rss':worker_rss,'child_rss':child_rss,
+                    'guardian_pid':pids[0],'worker_pid':pids[1],'child_pid':pids[2],'limit':512*1024**2,
+                    'elapsed_ms':int((time.monotonic()-sample_started)*1000)}
+            if not initialized:diagnostic('RSS_READY',**memory);initialized=True
+            if size>512*1024**2:diagnostic('RSS_REFUSED',**memory);return 78
+            if time.monotonic()-sample_started>=sample_due:
+                diagnostic('RSS_SAMPLE',**memory);sample_due=next(sample_checkpoints,float('inf'))
             for key,_ in selector.select(.1):
                 data=os.read(key.fileobj.fileno(),4096)
                 if not data:

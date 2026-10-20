@@ -141,3 +141,40 @@ def test_startup_signal_and_diagnostic_sanitization(tmp_path):
         engine._diagnostic_data(b'x'*20000)
         assert len(engine.diagnostic_buffer)<=8192
     finally:engine.close()
+
+
+def test_guardian_memory_breakdown_reads_each_role_once(tmp_path):
+    import subprocess
+    code='''import os
+import src.progressive_engine_guard as g
+calls=[]
+def measure(pid):
+    assert pid not in calls
+    calls.append(pid)
+    return (16 if pid==os.getpid() else 32 if pid==os.getppid() else 520)*1024**2
+g.resident_bytes=measure
+raise SystemExit(g.main())
+'''
+    run=subprocess.run([sys.executable,'-c',code,str(tmp_path/'memory-lock'),json.dumps([sys.executable,str(FAKE)])],
+                       input=b'uci\n',capture_output=True,timeout=5)
+    assert run.returncode==78
+    events=[json.loads(x) for x in run.stderr.splitlines()]
+    for event in [x for x in events if x['event'] in ('RSS_READY','RSS_REFUSED')]:
+        assert len({event['worker_pid'],event['guardian_pid'],event['child_pid']})==3
+        assert event['worker_rss']==32*1024**2
+        assert event['guardian_rss']==16*1024**2
+        assert event['child_rss']==520*1024**2
+        assert event['rss']==event['worker_rss']+event['guardian_rss']+event['child_rss']==568*1024**2
+        assert event['limit']==512*1024**2
+        assert event['elapsed_ms']>=0
+    assert any(x['event']=='CHILD_REAPED' for x in events)
+
+
+def test_memory_diagnostic_fields_survive_bounded_parser(tmp_path):
+    engine=UCIProcess([sys.executable,str(FAKE)],tmp_path/'memory-parser-lock',probe=True)
+    try:
+        event={'event':'RSS_SAMPLE','rss':6,'worker_rss':1,'guardian_rss':2,'child_rss':3,
+               'worker_pid':10,'guardian_pid':11,'child_pid':12,'limit':512*1024**2,'elapsed_ms':100,'secret':'must-not-leak'}
+        engine._diagnostic_data((json.dumps(event)+'\n').encode())
+        assert engine.diagnostics[-1]=={k:v for k,v in event.items() if k!='secret'}
+    finally:engine.close()
