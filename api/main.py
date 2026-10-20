@@ -11,6 +11,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure repo root is on path so src.* imports work
@@ -43,6 +44,9 @@ set_management_deps(DB_PATH, import_manager)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup recovery for stale imports and expired analysis queue leases."""
+    if os.environ.get("CHESS_COACH_READ_ONLY", "").lower() == "true":
+        yield
+        return
     try:
         import_manager.recover_stale_imports()
     except Exception:
@@ -75,19 +79,30 @@ app.add_middleware(
 
 from api.positions import router as positions_router
 from api.players import router as players_router
+from api.player_dashboard import router as player_dashboard_router
 from api.evaluations import router as evaluations_router
 from api.progressive import router as progressive_router
 
 app.include_router(management_router)
 app.include_router(positions_router)
 app.include_router(players_router)
+app.include_router(player_dashboard_router)
 app.include_router(evaluations_router)
 app.include_router(progressive_router)
 
 
+@app.middleware("http")
+async def read_only_boundary(request, call_next):
+    if os.environ.get("CHESS_COACH_READ_ONLY", "").lower() == "true":
+        local_lookup = request.method == "POST" and request.url.path == "/api/evaluations/lookup-batch"
+        if (request.method not in ("GET", "HEAD", "OPTIONS") and not local_lookup) or request.url.path.startswith("/api/management") or request.url.path == "/api/coach/chat":
+            return JSONResponse({"detail": "Server is in read-only mode"}, status_code=403)
+    return await call_next(request)
+
+
 def get_library() -> GameLibrary:
     """Open a short-lived library connection per request."""
-    return GameLibrary(DB_PATH)
+    return GameLibrary(DB_PATH, read_only=True)
 
 
 # ---------------------------------------------------------------------------

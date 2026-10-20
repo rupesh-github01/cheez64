@@ -196,8 +196,14 @@ class GameLibrary:
     SQLite-backed local game library and analysis repository.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None, *, read_only: bool = False):
         self.db_path = db_path if db_path is not None else DEFAULT_DB_PATH
+        if read_only:
+            if self.db_path == ":memory:":raise ValueError("Read-only library requires an existing file")
+            self._conn = sqlite3.connect(Path(self.db_path).resolve().as_uri()+"?mode=ro", uri=True, check_same_thread=False, timeout=1)
+            self._conn.row_factory = sqlite3.Row
+            self._conn.execute("PRAGMA query_only=ON")
+            return
         if self.db_path != ":memory:":
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(self.db_path, check_same_thread=False, timeout=30.0)

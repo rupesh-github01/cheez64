@@ -235,7 +235,7 @@ def build_fast_profile(conn, source, username, *, color='either', date_from=None
                 'replay_requested': replay, 'processed_games': 0, 'replayed_games': 0, 'replay_failed_games': 0, 'unsupported_games': 0,
                 'clock_moves': None if not replay else 0, 'emt_moves': None if not replay else 0}
     counts = Counter(); phase_counts = Counter(); captured = Counter(); imbalances = Counter(); clock_counts = Counter()
-    opening_groups = defaultdict(Counter); opening_trends = defaultdict(Counter); move_orders = Counter(); structures = Counter()
+    opening_examples = defaultdict(list); opening_groups = defaultdict(Counter); opening_trends = defaultdict(Counter); move_orders = Counter(); structures = Counter()
     opening_sources = Counter(); opening_confidence = Counter(); known_openings = Counter(); reported_ecos = Counter()
     duration_groups = defaultdict(Samples); phase_durations = defaultdict(Samples); last_five = Samples()
     time_by_control = defaultdict(Samples); checkpoints = defaultdict(Samples); durations_games = set()
@@ -323,6 +323,7 @@ def build_fast_profile(conn, source, username, *, color='either', date_from=None
                 reported_ecos[header_eco] += 1
                 metadata['eco_header_disagreements'] += bool(label['eco']) and header_eco != label['eco']
             elif header_eco: metadata['invalid_eco_headers'] += 1
+            if len(opening_examples[key]) < 5: opening_examples[key].append(g['game_id'])
             opening_groups[key][result] += 1; opening_sources[label['source']] += 1; opening_confidence[label['confidence']] += 1
             if label['name'] != 'Unknown': known_openings[(side, label['name'])] += 1
             if month: opening_trends[(month, side, label['name'])][result] += 1
@@ -360,7 +361,7 @@ def build_fast_profile(conn, source, username, *, color='either', date_from=None
               'recent_20_dated_games': outcomes(recent_counts), 'recent_calendar': {'from': recent_from.isoformat(), 'through': day.isoformat(), 'timezone': 'Asia/Kolkata', **outcomes(recent_calendar)},
               'limitations': ['Ratings are pre-game reports, not inferred post-game ratings. Same-day order without timestamps is unknown; ID tie-breaks are not chronological evidence.', 'Missing played dates are never replaced by import timestamps.']}
     ng = sum(known_openings.values()); entropy = -sum(v/ng*math.log(v/ng) for v in known_openings.values()) if ng else None
-    rep = {'classification_provenance': 'HEURISTIC', 'confidence_is_classifier_label_not_probability': True, 'openings': [{'color': k[0], 'name': k[1], 'variation': k[2] or None, 'confidence': k[3], 'eco': k[4] or None, **outcomes(v),
+    rep = {'classification_provenance': 'HEURISTIC', 'confidence_is_classifier_label_not_probability': True, 'openings': [{'color': k[0], 'name': k[1], 'variation': k[2] or None, 'confidence': k[3], 'eco': k[4] or None, 'evidence_game_ids': opening_examples[k], 'examples_are_bounded': True, **outcomes(v),
                          'frequency_by_color': rate(sum(v.values()), sum(sum(b.values()) for a, b in opening_groups.items() if a[0] == k[0]), games=pgames, partial=partial)}
                         for k, v in sorted(opening_groups.items(), key=lambda x: (-sum(x[1].values()), x[0]))[:top_k]],
            'reported_eco_headers': {'provenance': 'OBSERVED', 'counts': dict(reported_ecos.most_common(top_k)), 'limitation': 'Reported headers are not verified full-variation labels.'},
