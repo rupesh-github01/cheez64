@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -31,7 +32,7 @@ export default function RootLayout({
             background: "var(--bg-secondary)",
           }}
         >
-          <a
+          <Link
             href="/games"
             style={{
               display: "flex",
@@ -45,9 +46,10 @@ export default function RootLayout({
             <span style={{ fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.02em" }}>
               Personal Chess Coach
             </span>
-          </a>
-          <nav style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-            <a
+          </Link>
+          <nav style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            <Link href="/practice" style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Practice</Link>
+            <Link
               href="/dashboard"
               style={{
                 color: "var(--text-secondary)",
@@ -58,8 +60,8 @@ export default function RootLayout({
               }}
             >
               Dashboard
-            </a>
-            <a
+            </Link>
+            <Link
               href="/games"
               style={{
                 color: "var(--text-secondary)",
@@ -70,8 +72,8 @@ export default function RootLayout({
               }}
             >
               Game Library
-            </a>
-            <a
+            </Link>
+            <Link
               href="/library/manage"
               style={{
                 color: "var(--text-secondary)",
@@ -82,7 +84,7 @@ export default function RootLayout({
               }}
             >
               Manage
-            </a>
+            </Link>
           </nav>
         </header>
         <main>{children}</main>

@@ -674,3 +674,46 @@ accuracy, coaching/profile calculations and engine execution code are unchanged.
 Use temporary databases for tests. Frontend helper checks include
 `node --test tests/*.mjs` from `web/`. All implementation changes are left uncommitted;
 the user handles Git and GitHub actions manually.
+
+### Personal puzzle practice (Segment 20)
+
+`/practice` offers explicit, bounded discovery from up to three selected games and
+an exact player/platform identity. Mate-in-one objectives are graded by legal
+replay and checkmate detection for **every** submitted move. Guided exercises
+show legal tactical witnesses; other legal choices remain unassessed, never
+labeled objectively wrong. No engine, cloud, provider or analysis job is started.
+
+Initialize a **separate** local store explicitly (use canonical absolute paths;
+never point it at a library, cache, progressive store or backup):
+
+```sh
+.venv/bin/python -m src.practice_cli init --db /absolute/path/practice.sqlite3 --library /absolute/path/library.db
+```
+
+Set `CHESS_COACH_PRACTICE_DB` to that file and set
+`CHESS_COACH_PRACTICE_WRITES=true` to enable generation and practice events.
+`CHESS_COACH_READ_ONLY=true` continues to block all practice writes. Initialization
+does not open or migrate the library. Bind the API to loopback; browser writes
+accept only the existing localhost/127.0.0.1 port-3000 frontend origins and the
+practice JSON action header. This is single-user local software, not remote
+multi-user authentication. The UI uses `NEXT_PUBLIC_API_URL` as usual.
+
+Attempts, hints, reveals, retries and idempotent revision-fenced events survive
+restart. An attempt URL contains its opaque ID for reload/resume. Comment edits
+or deleted sources conservatively block continued grading. Opening the original
+game can reveal the continuation. Questions omit private witnesses; the owner
+can still inspect their local practice database.
+
+Default capacities are 5,000 puzzles, 50,000 attempts, 500,000 events and 512 MiB
+of logical serialized payload, with a 64-event limit per attempt. Optional
+`CHESS_COACH_PRACTICE_LIMITS` JSON must match the limits used when initializing the
+store. Capacity refusal never deletes history. SQLite indexes/pages/journals are
+additional disk space, so this is not a physical-file quota. The CLI currently
+initializes with defaults; custom limits require explicit programmatic init.
+All personal SQLite files and sidecars remain Git-ignored.
+
+Discovery is sampled (12 roots maximum), not a tactical scan of entire games.
+No verified-blunder, best-move, numerical difficulty or player-strength claim is
+made. Engine-evidence enrichment, multi-move grading, adaptive scheduling and
+spaced repetition are deferred. Native progressive dispatch and its 512 MiB RSS
+policy are unchanged.

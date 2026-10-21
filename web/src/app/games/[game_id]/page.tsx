@@ -18,6 +18,7 @@ import EvaluationBar from "@/components/GameReview/EvaluationBar";
 import CoachChatPanel from "@/components/GameReview/CoachChatPanel";
 import GamePositionBrowser from "@/components/PlayerDashboard/GamePositionBrowser";
 import "@/components/Understanding/understanding.css";
+import PracticeLink from "@/components/Practice/PracticeLink";
 
 const Understanding = nextDynamic(() => import("@/components/Understanding/UnderstandingPanel"), { ssr: false });
 
@@ -765,6 +766,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
             />
           </div>
 
+          <PracticeLink gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
           <Understanding gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
 
           {/* Main content pane: Coach vs Chat vs Explorer */}
