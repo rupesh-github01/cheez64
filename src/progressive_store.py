@@ -586,3 +586,83 @@ class ProgressiveStore:
             c.execute('UPDATE progressive_meta SET refresh_tick=refresh_tick+1')
             tick=c.execute('SELECT refresh_tick FROM progressive_meta').fetchone()[0]
             c.executemany('UPDATE jobs SET checked=? WHERE id=?',[(tick,jid) for jid in ids])
+
+    def understanding_evidence(self, game_id, pgn_hash, context, budget, config_hash=None):
+        """Bounded read-side admission; never dispatch, maintain or publish.
+
+        Published work is the acceptance authority, not artifact aggregate counts.
+        Reuse-only rows cannot establish an original non-simulated producer.
+        """
+        from .understanding_models import BudgetExceeded
+        budget.check(evidence=True)
+        target = canonical_json(context.identity()); cid = digest(context.identity())
+        with self.connection() as c:
+            c.set_progress_handler(lambda: int(budget.clock()-budget.started >= budget.total_seconds), 1000)
+            jobs = c.execute('SELECT * FROM jobs WHERE game_id=? ORDER BY created DESC,id LIMIT 11', (game_id,)).fetchall()
+            if len(jobs) > 10:
+                return {'status': 'DEFERRED', 'reason': 'JOB_READ_BOUND', 'accepted': []}
+            eligible_jobs = [r['id'] for r in jobs if r['pgn_hash'] == pgn_hash and
+                             r['state'] not in ('CANCELLED', 'SOURCE_MISSING', 'STALE_SOURCE', 'UNSUPPORTED', 'FAILED') and not self._current(r)]
+            if not eligible_jobs:
+                return {'status': 'UNAVAILABLE', 'reason': 'NO_CURRENT_ACCEPTED_JOB', 'accepted': []}
+            slots = ','.join('?' for _ in eligible_jobs)
+            rows = c.execute('''SELECT DISTINCT w.id,w.state,w.token,w.lease,w.attempts,w.tier,w.created,w.context_id,
+                CASE WHEN length(CAST(w.config AS BLOB))<=8192 THEN w.config END AS config,
+                CASE WHEN length(CAST(w.result AS BLOB))<=131072 THEN w.result END AS result,
+                CASE WHEN length(CAST(pf.config AS BLOB))<=8192 THEN pf.config END AS profile_config,pf.simulation AS profile_simulation,
+                CASE WHEN length(CAST(x.canonical AS BLOB))<=65536 THEN x.canonical END AS canonical_context FROM work w JOIN contexts x ON x.id=w.context_id
+                JOIN interests i ON i.work_id=w.id JOIN jobs j ON j.id=i.job_id
+                JOIN batches b ON b.id=j.batch_id JOIN profiles pf ON pf.id=b.profile
+                WHERE w.context_id=? AND i.active=1 AND j.id IN ('''+slots+''') ORDER BY w.id LIMIT 65''', [cid]+eligible_jobs).fetchall()
+            if len(rows) > 64:
+                return {'status': 'DEFERRED', 'reason': 'EVIDENCE_READ_BOUND', 'accepted': []}
+            admitted = []; reasons = []
+            for row in rows:
+                budget.check(evidence=True)
+                try:
+                    result = json.loads(row['result']) if row['result'] else {}
+                    if row['state'] != 'SUCCEEDED' or row['token'] is not None or row['lease'] is not None or not result:
+                        reasons.append('NO_ACCEPTED_PUBLICATION'); continue
+                    if row['profile_simulation'] != 0 or result.get('simulation') is not False:
+                        reasons.append('SIMULATION'); continue
+                    if result.get('origin') != 'LOCAL_SEARCH':
+                        reasons.append('PRODUCER_UNATTESTED'); continue
+                    attempts = c.execute('SELECT charged,uncertain FROM attempts WHERE work_id=? LIMIT 4', (row['id'],)).fetchall()
+                    if not attempts or len(attempts) != row['attempts'] or any(a['charged'] is None or a['uncertain'] for a in attempts):
+                        reasons.append('SETTLEMENT_UNATTESTED'); continue
+                    base = SearchConfig.model_validate_json(row['profile_config'])
+                    config = SearchConfig.model_validate_json(row['config'])
+                    if canonical_json(tier_config(base, row['tier']).model_dump()) != canonical_json(config.model_dump()):
+                        reasons.append('CONFIG_MISMATCH'); continue
+                    import re
+                    if not re.fullmatch(r'sha256:[a-f0-9]{64}', config.source.engine_build or '') or not config.source.provenance.startswith('pcis-progressive:v1:reset-per-context') or not re.fullmatch(r'(embedded:)?sha256:[a-f0-9]{64}', config.source.nnue or ''):
+                        reasons.append('PRODUCER_UNATTESTED'); continue
+                    if config.source.nnue.startswith('embedded:') and config.source.nnue != 'embedded:'+config.source.engine_build:
+                        reasons.append('PRODUCER_UNATTESTED'); continue
+                    if row['canonical_context'] != target or not context.root_history_complete:
+                        reasons.append('CONTEXT_MISMATCH'); continue
+                    raw = result.get('evaluation', {})
+                    if raw.get('achieved_depth', 0) < 16 or result.get('quality') != 'MINIMUM_TIER_MET' or len(raw.get('pvs', [])) != config.multipv:
+                        reasons.append('QUALITY_INSUFFICIENT'); continue
+                    for pv in raw.get('pvs', []):
+                        for _ in pv.get('moves', []):budget.push(evidence=True)
+                    evaluation = Evaluation.model_validate(raw)
+                    if canonical_json(evaluation.context.identity()) != target or evaluation.config != config:
+                        reasons.append('CONTEXT_OR_CONFIG_MISMATCH'); continue
+                    ch = digest(config.model_dump())
+                    if config_hash and ch != config_hash:
+                        reasons.append('CONFIG_MISMATCH'); continue
+                    admitted.append({'work_id': row['id'], 'context_id': cid, 'config_hash': ch,
+                                     'family_hash': config.family(), 'context_compatibility': 'TRUSTED_CONTEXT_MATCH',
+                                     'understanding_admission': 'ACCEPTED_NON_SIMULATED', 'origin': 'LOCAL_SEARCH',
+                                     'evaluation': evaluation.model_dump(), 'work_created_at': row['created'], 'observed_at': None})
+                except BudgetExceeded:
+                    raise
+                except (ValueError, KeyError, TypeError, AttributeError):
+                    reasons.append('INVALID_EVIDENCE')
+            families = {r['family_hash'] for r in admitted}
+            if len(families) > 1:
+                return {'status': 'CONFIG_REQUIRED', 'accepted': [], 'available': sorted({r['config_hash'] for r in admitted})}
+            admitted.sort(key=lambda r: (-r['evaluation']['achieved_depth'], -(r['evaluation'].get('nodes') or 0), -r['work_created_at'], r['work_id']))
+            return {'status': 'ACCEPTED_NON_SIMULATED' if admitted else ('PRODUCER_UNATTESTED' if 'PRODUCER_UNATTESTED' in reasons else (reasons[0] if reasons else 'UNAVAILABLE')),
+                    'accepted': admitted[:1], 'rejected_reasons': sorted(set(reasons))}

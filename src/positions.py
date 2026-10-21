@@ -307,3 +307,116 @@ class PositionQueries:
         return {"items": items, "outgoing_occurrence_count": total,
                 "frequency_basis": "occurrences", "outcome_basis": "distinct_games_per_move",
                 "result_perspective": "white", "coverage": self.coverage()}
+
+
+def reconstruct_understanding_position(pgn, ply, budget):
+    """Validate the entire mainline, retain only the selected pair of boards.
+
+    Additive reader: no occurrence publication, schema or legacy replay changes.
+    Variations are skipped; malformed mainline tails never become valid prefixes.
+    """
+    if len(pgn.encode('utf-8')) > MAX_PGN_BYTES:
+        raise ValueError('PGN_TOO_LARGE')
+    if not isinstance(ply, int) or isinstance(ply, bool) or not 0 <= ply <= MAX_PLIES:
+        raise ValueError('INVALID_PLY')
+
+    # python-chess intentionally skips unknown text; this read contract must not
+    # silently accept a malformed tail. Audit tokens, not chess semantics, first.
+    import re
+    token = re.compile(r'(?:\s+|\{[^}]*\}|;[^\n]*|(?m:^%[^\n]*)|'
+                       r'\[[A-Za-z0-9_+#=:-]+\s+"(?:[^"\\\n]|\\.)*"\s*\]|'
+                       r'1/2-1/2|1-0|0-1|\*|\d+\.(?:\.\.)?|\.\.\.|\$\d{1,6}|'
+                       r'[()!?]|--|Z0|0000|@@@@|'
+                       r'(?:[KQRBN]?[a-h]?[1-8]?[x-]?[a-h][1-8](?:=?[QRBNqrbn])?|[O0]-[O0](?:-[O0])?)[+#]?)')
+    cursor = 1 if pgn.startswith('\ufeff') else 0
+    depth = 0; tokens = 0; in_moves = False; ended = False
+    while cursor < len(pgn):
+        budget.check()
+        match = token.match(pgn, cursor)
+        if match is None:raise ValueError('INVALID_PGN_TOKEN')
+        text = match.group()
+        if ended and not text.isspace() and not text.startswith(('{',';','%')):raise ValueError('TOKENS_AFTER_PGN_RESULT')
+        if text in ('*','1-0','0-1','1/2-1/2') and depth == 0:ended = True
+        if text.startswith('['):
+            if in_moves:raise ValueError('UNEXPECTED_PGN_HEADER')
+        elif not text.isspace() and not text.startswith(('{',';','%')):
+            in_moves = True
+        if text == '(' :depth += 1
+        if text == ')' :depth -= 1
+        if not 0 <= depth <= 64:raise ValueError('PGN_VARIATION_DEPTH')
+        cursor = match.end(); tokens += 1
+        if tokens > 100000:raise ValueError('PGN_TOKEN_LIMIT')
+    if depth:raise ValueError('UNBALANCED_PGN_VARIATION')
+
+    class Visitor(chess.pgn.GameBuilder):
+        def begin_game(self):
+            budget.check()
+            self.count = 0
+            return super().begin_game()
+
+        def visit_header(self, name, value):
+            budget.check()
+            return super().visit_header(name, value)
+
+        def visit_comment(self, comment):
+            budget.check()  # Comments are not chess evidence and need not be retained.
+
+        def begin_variation(self):
+            budget.check()
+            return chess.pgn.SKIP
+
+        def end_variation(self):
+            budget.check()
+
+        def visit_move(self, board, move):
+            budget.check()
+            self.count += 1
+            if self.count > MAX_PLIES:
+                raise ValueError('PGN_PLY_LIMIT')
+            if not move or not board.is_legal(move):
+                raise ValueError('ILLEGAL_OR_NULL_MOVE')
+            return super().visit_move(board, move)
+
+        def handle_error(self, error):
+            raise ValueError('INVALID_PGN') from None
+
+    budget.check()
+    stream = io.StringIO(pgn)
+    game = chess.pgn.read_game(stream, Visitor=Visitor)
+    if game is None or game.errors or stream.read().strip():
+        raise ValueError('EXPECTED_ONE_LEGAL_PGN')
+    if game.headers.get('Variant', 'standard').lower() not in ('standard', 'chess', 'classical', 'normal', 'from position'):
+        raise UnsupportedVariant('STANDARD_CHESS_ONLY')
+    board = game.board()
+    canonical_position(board)
+    root = board.fen(en_passant='legal')
+    complete = root == chess.STARTING_FEN
+    total = game.end().ply() - board.ply()
+    if ply > total:
+        raise ValueError('PLY_NOT_IN_GAME')
+    # Original minor-piece history is meaningful only with a known standard root.
+    actors = {chess.square_name(s): {'square': s, 'ever_moved': False}
+              for s, p in board.piece_map().items() if p.piece_type in (chess.KNIGHT, chess.BISHOP)} if complete else None
+    before = None; move_played = None; before_actors = None; prefix = []
+    for index, move in enumerate(game.mainline_moves(), 1):
+        if index > ply:
+            break
+        budget.check()
+        if index == ply:
+            before = board.copy(stack=True)
+            before_actors = {k: dict(v) for k, v in actors.items()} if actors is not None else None
+            move_played = move
+        if actors is not None:
+            victim = move.to_square
+            for actor in actors.values():
+                if actor['square'] == victim:
+                    actor['square'] = None
+                elif actor['square'] == move.from_square:
+                    actor.update(square=move.to_square, ever_moved=True)
+        board.push(move)
+        if total <= 1000:
+            prefix.append(move.uci())
+    budget.check()
+    return {'before': before, 'after': board, 'move': move_played, 'root_fen': root,
+            'root_history_complete': complete, 'moves': prefix, 'total_plies': total,
+            'before_development': before_actors, 'after_development': actors}

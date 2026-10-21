@@ -627,3 +627,50 @@ npm run build -- --webpack
 
 Use temporary databases for Python tests. Segment plans and validation reports
 belong in intentionally ignored `plan_report/`; never stage that directory.
+
+## Selected-position understanding (Segment 19)
+
+Game review includes an on-demand **Understand this position** panel for both
+stored-analysis and unanalyzed PGN reviews. It follows the selected recorded ply;
+variation previews are a different history and disable this panel until returning
+to the game. Neither navigation nor dashboard loading computes understanding.
+
+`GET /api/games/{game_id}/understanding` requires `ply` (including zero) and
+`expected_pgn_sha256`, the lowercase SHA-256 of the exact displayed UTF-8 PGN.
+An edited/deleted source returns 409/404. It validates the full bounded mainline
+before presenting a selected position; malformed tails are not accepted as valid
+prefixes. The existing index and stored analysis are not prerequisites.
+
+The `position-understanding/1` response separates deterministic board facts,
+heuristic interpretations, legal witnesses, before/after changes, positional
+feature maps, examination prompts, detector coverage and optional engine evidence.
+Pins, forks, skewer alignments and attack/defense counts do not establish forced
+material gain. Mate-in-one witnesses are legal child positions that are actually
+checkmate; no deeper tactical solver or static exchange evaluation is implied.
+
+Optional `evidence=accepted_local` reads existing stores only. Context compatibility
+is separate from producer admission: a cache record alone, or a CACHE_REUSE wrapper,
+cannot establish non-simulated execution. The reader requires a retained accepted
+non-simulated LOCAL_SEARCH publication, compatible complete history/configuration,
+settlement consistency, valid PVs and achieved depth at least 16. Requested depth,
+actual depth and typed White-relative cp/mate stay distinct. Synthetic fixtures
+exercise these contracts in tests; no real-engine qualification is claimed.
+Missing/unattested stores leave board understanding useful. No cloud resolution,
+engine launch, queue mutation, cache ingestion or store initialization occurs.
+
+Bounds: 2 MiB PGN, 10,000 mainline plies, 64 variation nesting levels and 100,000
+lexical tokens; engine enrichment remains unsupported for games over 1,000 plies
+or unknown roots. Selected-board move lists cap at 256; opportunity probes at 16;
+child/PV pushes at 512; output at 32 findings, eight explanations and 256 KiB.
+Time checks are cooperative (one second board work / two seconds including optional
+evidence), not hard process preemption. Partial coverage and omissions are explicit;
+absence of a finding never establishes tactical safety. There is no persistent
+understanding cache. Native dispatch remains default-disabled under the unchanged
+512 MiB policy.
+
+The existing `CHESS_COACH_READ_ONLY=true` deployment boundary permits this GET
+without expanding its mutation allowlist. Legacy stored JSON, CPL, critical-move,
+accuracy, coaching/profile calculations and engine execution code are unchanged.
+Use temporary databases for tests. Frontend helper checks include
+`node --test tests/*.mjs` from `web/`. All implementation changes are left uncommitted;
+the user handles Git and GitHub actions manually.

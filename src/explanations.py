@@ -451,3 +451,61 @@ def generate_move_explanation(
         return explain_missed_check_or_forcing_move(analysis, ev, conf, limitations, board_before=board_before)
     else:
         return explain_unclassified(analysis, ev, conf, limitations)
+
+
+# Segment 19 templates do not call legacy judgment/CPL templates.
+def explain_understanding_finding(finding):
+    """Every interpretation is explicitly heuristic and cites a board finding."""
+    motif = finding['motif']; squares = finding['squares']; facts = finding['facts']
+    descriptions = {
+        'fork': ('One piece attacks multiple non-pawn enemy targets.', 'Check whether the attacker is safe and which targets can move with check.'),
+        'double_attack': ('One piece attacks multiple enemy targets.', 'Examine captures and checking replies before judging the double attack.'),
+        'absolute_pin': ('A piece lies on an enemy slider’s ray to its king.', 'Which moves along the pin ray remain legal?'),
+        'relative_pin': ('A slider lines up two enemy pieces with different conventional values.', 'Can either side change the alignment with check or a capture?'),
+        'skewer_alignment': ('A slider lines up a front target and a rear target.', 'Examine legal evasions and counterchecks; the rear piece is not necessarily lost.'),
+        'discovered_attack': ('The played move removed a blocker and uncovered an attack.', 'Can the newly attacked target move with tempo or be defended?'),
+        'discovered_check': ('Removing a blocker uncovered a check from a slider.', 'Examine the legal check evasions and any other attacked pieces.'),
+        'overloaded_defender_candidate': ('A piece geometrically supports multiple attacked targets.', 'Can one legal reply meet both duties? Geometric counts do not prove overload.'),
+        'loose_piece': ('A piece is attacked and has no geometric defender.', 'Examine legal captures, checking replies and compensation; this is not proof of a free piece.'),
+        'mate_in_one': ('A legal move produces immediate checkmate on this board.', 'Replay the legal witness and inspect every king escape square.'),
+        'tactical_opportunity': ('A bounded legal probe gives check, captures or forms a double attack.', 'Compare the opponent’s legal responses before judging this candidate.'),
+        'checkmate': ('The selected board is checkmate.', 'Inspect the checking line and covered escape squares.'),
+        'terminal_position': ('The known board/history has an automatic terminal outcome.', 'Review the recorded termination; a claimable draw is a separate rule.'),
+    }
+    description, prompt = descriptions[motif]
+    return {'template_id': 'understanding.'+motif+'.v1', 'supports': [finding['id']],
+            'what_changed': {'before': 'Before the move: ', 'after': 'Selected position: ', 'transition': 'Played transition: ', 'candidate': 'Candidate position: '}[finding['stage']]+description+' Squares: '+(', '.join(squares) or 'not square-specific')+'.',
+            'why_examine': 'HEURISTIC: this relationship may affect available plans; objective advantage is not inferred.',
+            'examine_next': prompt, 'provenance': finding['provenance'],
+            'arguments': {'squares': squares, 'legal_witness': facts.get('uci'), 'root_fen': facts.get('root_fen')},
+            'limitations': finding['limitations']}
+
+
+def explain_understanding_position(features, color):
+    """Examination prompts grounded in named positional descriptor paths."""
+    if features is None:return []
+    f = features['colors'][color]
+    rows = [
+        ('pawn_structure', f"Isolated pawn squares by this rule: {', '.join(f['pawn_structure']['isolated']) or 'none'}.",
+         'Examine pawn support, exchanges and blockades; structure alone is not a weakness.'),
+        ('files', f"Open files: {', '.join(f['files']['open']) or 'none'}; semi-open files: {', '.join(f['files']['semi_open']) or 'none'}.",
+         'Which rook or queen can use a file without allowing a tactical reply?'),
+        ('king_safety', f"The king is on {f['king_safety']['king_square']}; {len(f['king_safety']['geometrically_attacked_ring'])} ring squares are geometrically attacked.",
+         'Inspect checks and pawn cover; geometric pressure is not a safety verdict.'),
+        ('piece_activity', 'Piece-specific attack sets are available; only actual-side legal mobility is assessed.',
+         'Which piece has useful destinations, and which apparent moves are restricted by a pin?'),
+        ('development', f"Development history status: {f['development']['status']}.",
+         'With known history, examine original minor-piece movement; setup roots do not establish development.'),
+        ('weak_squares', 'Supported enemy-half minor pieces without a current opposing-pawn attack are outpost candidates.',
+         'Can future pawn advances, exchanges or a sacrifice challenge the candidate square?'),
+        ('space', f"The geometric enemy-half control descriptor covers {f['space']['count']} of 32 squares.",
+         'Inspect accessible piece routes; geometric control is not ownership or objective advantage.'),
+        ('material', 'Piece-count vectors and conventional 1/3/3/5/9 weights are listed separately.',
+         'Compare the piece combination and practical activity; the weights do not establish compensation.'),
+    ]
+    return [{'template_id': 'understanding.position.'+name+'.v1',
+             'supports': ['features.after.material' if name == 'material' else 'features.after.colors.'+color+'.'+name],
+             'what_changed': color.capitalize()+': '+fact,
+             'why_examine': 'HEURISTIC: positional significance depends on legal continuations, not this descriptor alone.',
+             'examine_next': prompt, 'provenance': 'HEURISTIC', 'arguments': {'color': color}, 'limitations': []}
+            for name, fact, prompt in rows]

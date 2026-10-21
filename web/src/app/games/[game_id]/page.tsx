@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback, use, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
+import nextDynamic from "next/dynamic";
 import { getGame, getAnalysis, queueAnalysis } from "@/lib/api";
 import type { Game, GameAnalysis, MoveData } from "@/lib/types";
 import ChessboardPane from "@/components/GameReview/ChessboardPane";
@@ -16,6 +17,9 @@ import EpisodeList from "@/components/GameReview/EpisodeList";
 import EvaluationBar from "@/components/GameReview/EvaluationBar";
 import CoachChatPanel from "@/components/GameReview/CoachChatPanel";
 import GamePositionBrowser from "@/components/PlayerDashboard/GamePositionBrowser";
+import "@/components/Understanding/understanding.css";
+
+const Understanding = nextDynamic(() => import("@/components/Understanding/UnderstandingPanel"), { ssr: false });
 
 type FilterMode = "all" | "critical" | "tactical" | "positional" | "endgame";
 type ReviewTab = "coach" | "chat" | "explorer";
@@ -439,7 +443,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
   if (!analysis) {
     return (
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 20px" }}>
-        <div className="pd-root" style={{ padding: 0 }}><GamePositionBrowser key={game_id} pgn={game.pgn} initialPly={Number(searchParams.get("ply") || 0)} /></div>
+        <div className="pd-root" style={{ padding: 0 }}><GamePositionBrowser key={game_id} pgn={game.pgn} understandingGameID={game.game_id} initialPly={Number(searchParams.get("ply") || 0)} /></div>
         {/* Game header */}
         <div
           style={{
@@ -647,7 +651,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
       </div>
 
       {/* Main layout */}
-      <div
+      <div className="understanding-review-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "auto 24px 1fr",
@@ -760,6 +764,8 @@ function GameReviewContent({ game_id }: { game_id: string }) {
               highlightEpisode={currentMove?.episode_index ?? null}
             />
           </div>
+
+          <Understanding gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
 
           {/* Main content pane: Coach vs Chat vs Explorer */}
           {activeTab === "coach" ? (

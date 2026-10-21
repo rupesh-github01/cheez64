@@ -563,3 +563,191 @@ def detect_tactical_consequence(analysis: MoveAnalysis) -> Optional[TacticalFind
         },
         limitations=limitations,
     )
+
+
+# Segment 19: independent board predicates; no changes to legacy CPL consumers.
+def understanding_motifs(board, budget, stage='after'):
+    import hashlib
+    import json
+    try:
+        from src.understanding_models import BudgetExceeded
+    except ImportError:
+        from understanding_models import BudgetExceeded
+
+    findings = []; omitted = 0
+    coverage = {name: {'status': 'NOT_ASSESSED'} for name in
+                ('legal_moves', 'geometry', 'loose_pieces', 'overloaded_defenders', 'mate_in_one', 'opportunities')}
+    legal = []
+    def emit(motif, color, squares, facts, heuristic=False):
+        nonlocal omitted
+        squares = [chess.square_name(s) for s in squares]
+        item = {'id': hashlib.sha256(json.dumps([stage, motif, color, squares, facts], sort_keys=True).encode()).hexdigest()[:16],
+                'motif': motif, 'rule_version': 1, 'perspective': 'white' if color else 'black', 'stage': stage,
+                'provenance': 'HEURISTIC' if heuristic else 'BOARD_FACT',
+                'predicate_status': 'CANDIDATE' if heuristic else 'ESTABLISHED', 'squares': squares, 'facts': facts,
+                'limitations': ['Geometry does not prove forced gain or objective advantage.']}
+        if len(findings) < 128:
+            findings.append(item)
+        else:
+            omitted += 1
+
+    try:
+        budget.check()
+        outcome = board.outcome(claim_draw=False)
+        if outcome is not None:
+            if board.is_checkmate():
+                emit('checkmate', not board.turn, [board.king(board.turn)], {'terminal': outcome.termination.name})
+            else:
+                emit('terminal_position', board.turn, [], {'termination': outcome.termination.name, 'winner': outcome.winner})
+            return findings, {name: {'status': 'NOT_APPLICABLE', 'reason': 'TERMINAL_POSITION'} for name in coverage}, legal, omitted
+        for move in board.legal_moves:
+            budget.check()
+            if len(legal) >= 256:
+                break
+            legal.append(move)
+        legal_complete = len(legal) < 256
+        coverage['legal_moves'] = {'status': 'COMPLETE' if legal_complete else 'PARTIAL_BUDGET', 'visited': len(legal)}
+        captures = {}
+        for m in legal:
+            if board.is_capture(m):
+                victim = m.to_square + (-8 if board.turn else 8) if board.is_en_passant(m) else m.to_square
+                captures.setdefault(victim, []).append(m.uci())
+        piece_map = board.piece_map()
+        for sq, p in sorted(piece_map.items()):
+            budget.check()
+            targets = sorted(t for t in board.attacks(sq) if board.color_at(t) == (not p.color))
+            important = [t for t in targets if board.piece_type_at(t) != chess.PAWN]
+            if len(important) >= 2:
+                emit('fork', p.color, [sq]+important, {'relation': 'geometric_attack', 'attacker': p.symbol(),
+                      'targets': [chess.square_name(t) for t in important], 'attacker_pinned': board.is_pinned(p.color, sq)})
+            elif len(targets) >= 2:
+                emit('double_attack', p.color, [sq]+targets, {'relation': 'geometric_attack', 'targets': [chess.square_name(t) for t in targets]})
+            if p.piece_type not in (chess.ROOK, chess.BISHOP, chess.QUEEN):
+                continue
+            directions = ((1,0),(-1,0),(0,1),(0,-1)) if p.piece_type == chess.ROOK else ((1,1),(1,-1),(-1,1),(-1,-1))
+            if p.piece_type == chess.QUEEN:
+                directions += ((1,0),(-1,0),(0,1),(0,-1))
+            for df, dr in directions:
+                occupants = []; f, r = chess.square_file(sq)+df, chess.square_rank(sq)+dr
+                while 0 <= f < 8 and 0 <= r < 8:
+                    target = chess.square(f, r); q = piece_map.get(target)
+                    if q:
+                        if q.color == p.color:
+                            break
+                        occupants.append(target)
+                        if len(occupants) == 2:
+                            break
+                    f += df; r += dr
+                if len(occupants) != 2:
+                    continue
+                front, rear = occupants; a, b = piece_map[front], piece_map[rear]
+                if b.piece_type == chess.KING and board.is_pinned(b.color, front):
+                    emit('absolute_pin', p.color, [sq, front, rear], {'relation': 'king_pin_ray', 'pinned_piece': a.symbol(),
+                         'limitations': 'Moves along the pin ray may remain legal.'})
+                elif a.piece_type != chess.KING and b.piece_type != chess.KING and get_piece_value(b.piece_type) > get_piece_value(a.piece_type):
+                    emit('relative_pin', p.color, [sq, front, rear], {'relation': 'alignment', 'front': a.symbol(), 'rear': b.symbol()}, True)
+                elif a.piece_type == chess.KING or (b.piece_type != chess.KING and get_piece_value(a.piece_type) > get_piece_value(b.piece_type)):
+                    emit('skewer_alignment', p.color, [sq, front, rear], {'relation': 'alignment', 'front': a.symbol(), 'rear': b.symbol()})
+        coverage['geometry'] = {'status': 'COMPLETE', 'pieces_visited': len(piece_map)}
+        attacked = {}
+        for sq, p in sorted(piece_map.items()):
+            budget.check()
+            if p.piece_type == chess.KING:
+                continue
+            attackers = sorted(board.attackers(not p.color, sq)); defenders = sorted(board.attackers(p.color, sq))
+            if attackers:
+                attacked[sq] = defenders
+                if not defenders:
+                    emit('loose_piece', p.color, [sq]+attackers, {'piece': p.symbol(), 'geometric_defenders': [],
+                         'geometric_attackers': [chess.square_name(s) for s in attackers],
+                         'legal_capture_now': captures.get(sq, []) if board.turn != p.color else None,
+                         'legal_witness_status': ('COMPLETE' if legal_complete else 'PARTIAL_BUDGET') if board.turn != p.color else 'NOT_APPLICABLE',
+                         'interpretation': 'Attacked and geometrically undefended; compensation is not assessed.'})
+        coverage['loose_pieces'] = {'status': 'COMPLETE' if legal_complete else 'PARTIAL_BUDGET', 'legal_moves_visited': len(legal)}
+        for sq, p in sorted(piece_map.items()):
+            budget.check()
+            if p.piece_type == chess.KING:
+                continue
+            duties = [t for t, defenders in attacked.items() if board.color_at(t) == p.color and sq in defenders]
+            if len(duties) >= 2:
+                emit('overloaded_defender_candidate', p.color, [sq]+duties, {'relation': 'geometric_defense',
+                     'sole_geometric_defender_for': [chess.square_name(t) for t in duties if len(attacked[t]) == 1],
+                     'defender_pinned': board.is_pinned(p.color, sq)}, True)
+        coverage['overloaded_defenders'] = {'status': 'COMPLETE', 'meaning': 'Geometric duties only; overload is not proven.'}
+        # Bounded quiet probes get their own quota, rather than being starved by forcing moves.
+        ordered = sorted(legal, key=lambda m: m.uci()); chosen = []
+        groups = {'checks': [m for m in ordered if board.gives_check(m)],
+                  'captures': [m for m in ordered if board.is_capture(m)],
+                  'quiet': [m for m in ordered if not board.gives_check(m) and not board.is_capture(m)]}
+        for group in groups.values():
+            for m in group[:4]:
+                if m not in chosen and budget.probes + len(chosen) < 16:
+                    chosen.append(m)
+        inspected = 0
+        for m in chosen:
+            budget.push(); budget.probes += 1
+            child = board.copy(stack=False); child.push(m); inspected += 1
+            piece = child.piece_at(m.to_square)
+            targets = sorted(t for t in child.attacks(m.to_square) if child.color_at(t) == (not board.turn) and child.piece_type_at(t) != chess.PAWN)
+            if board.gives_check(m) or board.is_capture(m) or len(targets) >= 2:
+                emit('tactical_opportunity', board.turn, [m.from_square, m.to_square]+targets,
+                     {'uci': m.uci(), 'san': board.san(m), 'check': board.gives_check(m), 'capture': board.is_capture(m),
+                      'new_double_attack_geometry': len(targets) >= 2 and not set(targets).issubset(set(board.attacks(m.from_square))), 'piece': piece.symbol() if piece else None,
+                      'root_fen': board.fen(), 'line_origin': 'legal_witness'}, True)
+        coverage['opportunities'] = {'status': 'COMPLETE' if inspected == len(legal) and legal_complete else 'PARTIAL_BUDGET',
+                                     'inspected': inspected, 'legal_moves_visited': len(legal),
+                                     'candidate_group_sizes': {k: len(v) for k, v in groups.items()}, 'global_probe_limit': 16}
+        checked = 0
+        for m in ordered:
+            budget.push()
+            child = board.copy(stack=False); child.push(m); checked += 1
+            if child.is_checkmate():
+                emit('mate_in_one', board.turn, [m.from_square, m.to_square],
+                     {'uci': m.uci(), 'san': board.san(m), 'root_fen': board.fen(), 'line_origin': 'legal_witness',
+                      'root_history_complete_required_for_game_adjudication': True})
+        coverage['mate_in_one'] = {'status': 'COMPLETE' if legal_complete else 'PARTIAL_BUDGET', 'moves_inspected': checked}
+    except BudgetExceeded as exc:
+        for value in coverage.values():
+            if value['status'] == 'NOT_ASSESSED':
+                value.update(status='PARTIAL_BUDGET', reason=str(exc))
+    return findings, coverage, legal, omitted
+
+
+def understanding_transition(before, after, move, budget):
+    """Facts about the played transition, including multi-square special moves."""
+    if before is None:
+        return [], []
+    import hashlib
+    facts = []; discoveries = []; color = before.turn
+    victim = move.to_square + (-8 if color else 8) if before.is_en_passant(move) else move.to_square
+    capture = before.piece_at(victim) if before.is_capture(move) else None
+    facts.append({'kind': 'played_move', 'uci': move.uci(), 'san': before.san(move),
+                  'from': chess.square_name(move.from_square), 'to': chess.square_name(move.to_square),
+                  'piece_before': before.piece_at(move.from_square).symbol(), 'piece_after': after.piece_at(move.to_square).symbol(),
+                  'capture': {'piece': capture.symbol(), 'square': chess.square_name(victim)} if capture else None,
+                  'promotion': chess.piece_name(move.promotion) if move.promotion else None,
+                  'castling': before.is_castling(move), 'en_passant': before.is_en_passant(move)})
+    if before.is_castling(move):
+        rank = 0 if color else 7; kingside = chess.square_file(move.to_square) > chess.square_file(move.from_square)
+        facts.append({'kind': 'castling_rook', 'from': chess.square_name(chess.square(7 if kingside else 0, rank)),
+                      'to': chess.square_name(chess.square(5 if kingside else 3, rank))})
+    for sq, piece in sorted(before.piece_map().items()):
+        budget.check()
+        if piece.color != color or piece.piece_type not in (chess.BISHOP, chess.ROOK, chess.QUEEN) or after.piece_at(sq) != piece:
+            continue
+        for target in after.attacks(sq):
+            enemy = after.piece_at(target)
+            if not enemy or enemy.color == color or before.piece_at(target) != enemy or target in before.attacks(sq):
+                continue
+            blockers = list(chess.SquareSet(chess.between(sq, target)) & before.occupied)
+            if not blockers or any(after.piece_at(s) for s in blockers):
+                continue
+            squares = [chess.square_name(s) for s in [sq, target]+blockers]
+            motif = 'discovered_check' if enemy.piece_type == chess.KING else 'discovered_attack'
+            discoveries.append({'id': hashlib.sha256((motif+str(squares)).encode()).hexdigest()[:16],
+                                'motif': motif, 'perspective': 'white' if color else 'black', 'stage': 'transition',
+                                'provenance': 'BOARD_FACT', 'predicate_status': 'ESTABLISHED', 'squares': squares,
+                                'facts': {'relation': 'new_unblocked_ray', 'blockers_removed': [chess.square_name(s) for s in blockers],
+                                          'double_check': len(after.checkers()) >= 2 if enemy.piece_type == chess.KING else False},
+                                'limitations': ['New attack geometry is not a forced material gain.']})
+    return facts, discoveries
