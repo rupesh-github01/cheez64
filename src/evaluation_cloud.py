@@ -126,6 +126,29 @@ class CloudResolver:
         self.cache = cache; self.enabled = enabled; self.transport = transport
 
     async def resolve(self, request, deadline=None):
+        if not request.prefer_cloud_pvs:
+            return await self._resolve(request, deadline)
+        # Prefer count only within the explicitly requested provider configuration.
+        # No cross-engine/family blending, force-refresh, retry or quota bypass.
+        cfg = SearchConfig(source=Source(kind='lichess_cloud', provenance=URL),
+                           limit_kind='cloud', multipv=request.cloud_multipv)
+        scoped = request.model_copy(update={'prefer_cloud_pvs': False,
+            'config_hash': request.config_hash or digest(cfg.model_dump())})
+        goal = scoped.model_copy(update={'min_pvs': max(request.min_pvs, request.cloud_multipv)})
+        attempt = await self._resolve(goal, deadline)
+        selected = attempt if attempt['evaluation'] is not None else self.cache.lookup(scoped)
+        if selected['evaluation'] is None:
+            fallback = self.cache.lookup(request)
+            if fallback['evaluation'] is not None:
+                selected = fallback
+        if selected['evaluation'] is None:
+            selected = attempt
+        return {**selected, 'requested_pvs': goal.min_pvs,
+                'pv_goal_met': selected['evaluation'] is not None and selected['evaluation']['returned_multipv'] >= goal.min_pvs,
+                'cloud_resolution_status': attempt['status'],
+                'cloud_resolution_reason': attempt.get('reason')}
+
+    async def _resolve(self, request, deadline=None):
         result = self.cache.lookup(request)
         if result['evaluation'] is not None:
             return result

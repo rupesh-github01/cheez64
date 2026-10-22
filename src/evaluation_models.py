@@ -232,9 +232,12 @@ class Lookup(StrictModel):
     source: Literal['local_stockfish', 'lichess_cloud'] | None = None
     allow_cloud: StrictBool = False
     cloud_multipv: StrictInt = Field(1, ge=1, le=5)
+    prefer_cloud_pvs: StrictBool = False
 
     @model_validator(mode='after')
     def compatible_request(self):
+        if self.prefer_cloud_pvs and (not self.allow_cloud or not self.allow_advisory or self.require_trusted or self.source != 'lichess_cloud'):
+            raise ValueError('PV preference requires explicit advisory cloud-only opt-in')
         if self.require_trusted and not self.context.root_history_complete:
             raise ValueError('Trusted request requires complete verified history')
         return self

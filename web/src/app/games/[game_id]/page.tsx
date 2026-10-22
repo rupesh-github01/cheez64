@@ -680,7 +680,12 @@ function GameReviewContent({ game_id }: { game_id: string }) {
 
         {/* Right: Panels */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
-          <PositionEvaluation pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
+          <PositionEvaluation pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} legacy={{
+            value: currentMove ? currentMove.evaluation_after : allMoves[0]?.evaluation_before ?? null,
+            color: currentMove?.color || allMoves[0]?.color || "",
+            fen: currentMove?.fen_after || allMoves[0]?.fen_before || "",
+            schema: analysis.schema_version,
+          }} />
           {/* Critical navigation */}
           <CriticalNav
             criticalMoves={criticalMoves}

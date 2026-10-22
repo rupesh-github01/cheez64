@@ -118,12 +118,15 @@ def lookup_batch(body: LocalBatch):
 @router.get('/status')
 def status():
     cache = get_cache()
+    capabilities = {'cloud_enabled': enabled(), 'cloud_requires_operator_key': True,
+                    'cloud_resolution_allowed': enabled() and os.environ.get('CHESS_COACH_READ_ONLY', '').lower() != 'true'
+                    and len(os.environ.get('CHESS_COACH_EVAL_RESOLVE_KEY', '')) >= 16}
     try:
         if cache is None:
             raise CacheUnavailable('No cache configured')
-        return {'status': 'OK', 'cloud_enabled': enabled(), 'cloud_requires_operator_key': True, **cache.status()}
+        return {'status': 'OK', **capabilities, **cache.status()}
     except (CacheUnavailable, sqlite3.DatabaseError):
-        return {**unavailable('CACHE_UNINITIALIZED_OR_INCOMPATIBLE'), 'cloud_enabled': enabled()}
+        return {**unavailable('CACHE_UNINITIALIZED_OR_INCOMPATIBLE'), **capabilities}
 
 
 def authorize(items, key):

@@ -47,7 +47,7 @@ function sessionHarness() {
  const fetches={...helper,evaluationStatus:async()=>({cloud_enabled:false}),fetchEvaluation:(_ctx,signal)=>new Promise(resolve=>pending.push({signal,resolve}))};
  const code=ts.transpileModule(fs.readFileSync(new URL('../src/components/GameReview/PositionEvaluation.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText+'\nexports.Session=EvaluationSession;';
  vm.runInNewContext(code,{exports,require:n=>n==='react'?react:n==='react/jsx-runtime'?{jsx,jsxs:jsx}:n==='@/lib/position-evaluation'?fetches:n.endsWith('pgn-context')?pgn:{},AbortController,setTimeout,clearTimeout});
- return {pending,render(replay,ply=0){cursor=0;const tree=exports.Session({replay,ply});for(const f of nextEffects.splice(0))f();return JSON.stringify(tree);},unmount(){for(const e of effects)e?.cleanup?.();}};
+ return {pending,render(replay,ply=0,legacy){cursor=0;const tree=exports.Session({replay,ply,legacy});for(const f of nextEffects.splice(0))f();return JSON.stringify(tree);},unmount(){for(const e of effects)e?.cleanup?.();}};
 }
 test('navigation aborts old sessions and late cache responses cannot replace a new position',async()=>{
  const old=sessionHarness(), replay=pgn.replayPGN('1. e4 *');old.render(replay);assert.equal(old.pending.length,1);old.unmount();assert.equal(old.pending[0].signal.aborted,true);
@@ -60,4 +60,38 @@ test('returning to the original position starts a fresh request rather than revi
 
 test('cloud evidence retains advisory status and cannot masquerade as context verified',()=>{
  const h=helpers(),r=result(1),replay=pgn.replayPGN('1. e4 *');r.evaluation.source.kind='lichess_cloud';assert.throws(()=>h.legalLines(replay,0,r));r.context_compatibility='ADVISORY_CONTEXT_UNVERIFIED';assert.equal(h.legalLines(replay,0,r).length,1);
+});
+test('legacy estimates are display-only cp with exact FEN/schema and mover perspective',()=>{
+ const h=helpers(),fen=pgn.replayPGN('1. e4 *').fens[1];
+ assert.equal(h.legacyEstimate({value:125,color:'Black',fen,schema:'1.1.0'},fen).cp,-125);
+ assert.equal(h.legacyEstimate({value:0,color:'White',fen,schema:'1.1.0'},fen).cp,0);
+ for(const patch of [{value:null},{value:100000},{value:-99990},{value:90000},{value:1.5},{color:'unknown'},{schema:'unknown'},{fen:'broken'}])assert.equal(h.legacyEstimate({value:1,color:'White',fen,schema:'1.1.0',...patch},fen),undefined);
+ assert.equal(h.legacyEstimate({value:125,color:'White',fen,schema:'1.1.0'},pgn.replayPGN('1. d4 *').fens[1]),undefined);
+});
+test('coverage is an explicit bounded cache-only window with truthful one/two/three counts',async()=>{
+ const calls=[];const replay=pgn.replayPGN('1. e4 e5 *');const h=load('../src/lib/position-evaluation.ts',async(url,options)=>{calls.push([url,options]);return {ok:true,json:async()=>({items:JSON.parse(options.body).items.map(q=>{
+ const r=result(q.context.moves.length+1);r.evaluation.pvs=(q.context.moves.length===1?['e7e5','c7c5']:q.context.moves.length===2?['g1f3','f1c4','b1c3']:['e2e4']).map(m=>({kind:'cp',cp:10,moves:[m]}));return r;})})};});assert.equal(calls.length,0);
+ const rows=await h.inspectCoverage(replay,[0,1,2],new AbortController().signal);const counts=h.coverageCounts(rows);assert.equal(counts.compatible,3);assert.equal(counts.one,1);assert.equal(counts.two,1);assert.equal(counts.three_plus,1);assert.equal(calls.length,1);assert.ok(calls[0][0].endsWith('/lookup-batch'));for(const item of JSON.parse(calls[0][1].body).items)assert.equal(item.allow_cloud,false);
+});
+test('diagnostics distinguish missing, incompatible, storage unavailable and history cap',async()=>{
+ const h=helpers();const rows=['CACHE_MISS','INCOMPATIBLE','CONFIG_REQUIRED','UNAVAILABLE','HISTORY_LIMIT'].map((status,ply)=>({ply,lines:0,item:{status,evaluation:null}}));const c=h.coverageCounts(rows);assert.equal(c.missing,1);assert.equal(c.incompatible,2);assert.equal(c.unavailable,2);assert.equal(c.compatible,0);assert.match(h.unavailableReason(rows[2].item),/configurations/);assert.match(h.unavailableReason(rows[4].item),/1,000/);
+});
+test('coverage refuses bulk cloud/duplicate/invalid selections and opts into PV preference only explicitly',async()=>{
+ const calls=[];const h=load('../src/lib/position-evaluation.ts',async(...args)=>{calls.push(args);const body=JSON.parse(args[1].body);return {ok:true,json:async()=>({items:body.items.map(()=>({status:'CLOUD_MISS',evaluation:null,available:[]}))})};});const replay=pgn.replayPGN('1. e4 e5 2. Nf3 Nc6 *');
+ for(const plies of [[0,1,2,3],[0,0],[-1],[20]])await assert.rejects(h.inspectCoverage(replay,plies,new AbortController().signal,'ephemeral'));
+ assert.equal(calls.length,0);await h.inspectCoverage(replay,[0,1,2],new AbortController().signal,'ephemeral');assert.ok(calls[0][0].endsWith('/resolve-batch'));assert.equal(calls[0][1].headers['X-Evaluation-Key'],'ephemeral');for(const q of JSON.parse(calls[0][1].body).items){assert.equal(q.prefer_cloud_pvs,true);assert.equal(q.cloud_multipv,3);assert.equal(q.source,'lichess_cloud');}
+});
+test('long-history inspection splits requests below body bounds without truncating prefixes',async()=>{
+ const calls=[];const h=load('../src/lib/position-evaluation.ts',async(url,options)=>{calls.push(options.body);return {ok:true,json:async()=>({items:JSON.parse(options.body).items.map(()=>({status:'CACHE_MISS',evaluation:null,available:[]}))})};});
+ const replay={root_fen:new Chess().fen(),root_history_complete:true,moves:Array.from({length:1001},(_,i)=>['g1f3','g8f6','f3g1','f6g8'][i%4]),fens:Array(1002).fill(new Chess().fen()),sans:[]};
+ const rows=await h.inspectCoverage(replay,Array.from({length:20},(_,i)=>981+i),new AbortController().signal);assert.equal(rows.length,20);assert.equal(calls.length,2);for(const body of calls)assert.ok(new TextEncoder().encode(body).length<=96*1024);assert.equal(JSON.parse(calls.at(-1)).items.at(-1).context.moves.length,1000);
+ const before=calls.length;const over=await h.inspectCoverage(replay,[1001],new AbortController().signal);assert.equal(calls.length,before);assert.equal(over[0].item.status,'HISTORY_LIMIT');
+});
+test('invalid cached PV cannot count as compatible coverage and abort cannot launch requests',async()=>{
+ const h=load('../src/lib/position-evaluation.ts',async()=>({ok:true,json:async()=>{const r=result(1);r.evaluation.pvs[0].moves=['e2e5'];return {items:[r]};}}));const replay=pgn.replayPGN('1. e4 *');const rows=await h.inspectCoverage(replay,[0],new AbortController().signal);assert.equal(h.coverageCounts(rows).compatible,0);assert.equal(rows[0].item.status,'INVALID_EVIDENCE');const c=new AbortController();c.abort();await assert.rejects(h.inspectCoverage(replay,[0],c.signal),{name:'AbortError'});
+});
+
+test('actual session marks a legacy fallback and gives cached evidence precedence',async()=>{
+ const replay=pgn.replayPGN('1. e4 *');const legacy={value:125,color:'White',fen:replay.fens[0],schema:'1.1.0'};
+ for(const hit of [false,true]){const session=sessionHarness();session.render(replay,0,legacy);session.pending[0].resolve(hit?result(1):{status:'CACHE_MISS',context_compatibility:'UNAVAILABLE',evaluation:null,available:[]});await Promise.resolve();await Promise.resolve();const tree=session.render(replay,0,legacy);if(hit){assert.match(tree, /"score":\{"kind":"cp","cp":35/);assert.doesNotMatch(tree,/"tier":"LEGACY_ESTIMATE"/);}else{assert.match(tree,/"tier":"LEGACY_ESTIMATE"/);assert.match(tree,/"cp":125/);}session.unmount();}
 });

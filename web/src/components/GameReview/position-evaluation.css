@@ -13,3 +13,8 @@
 .position-eval-details pre { max-height:240px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; }
 .position-eval-lines { padding-left:20px; }.position-eval-lines li { margin-bottom:10px; line-height:1.6; }.position-eval-note { color:var(--text-muted,#94a3b8); }
 @media(max-width:480px) { .position-evaluation { padding:10px; }.position-eval-layout { gap:8px; grid-template-columns:30px minmax(0,1fr); }.position-eval-bar { width:30px; height:210px; } }
+.position-coverage { margin-top:16px; padding-top:12px; border-top:1px solid var(--border-color,#334155); font-size:.83rem; overflow-wrap:anywhere; }
+.position-coverage input[type=number],.position-coverage input[type=password] { display:block; max-width:100%; width:100%; padding:8px; margin:6px 0; background:var(--bg-secondary,#172033); color:inherit; }
+.position-coverage button { padding:8px; margin:4px; }.position-coverage button:disabled { opacity:.5; }
+.position-coverage-rows { padding-left:0; list-style:none; max-height:400px; overflow:auto; }
+.position-coverage-rows li { padding:8px 0; border-bottom:1px solid var(--border-color,#334155); }.position-coverage-rows p { color:var(--text-muted,#94a3b8); margin:6px 0; }

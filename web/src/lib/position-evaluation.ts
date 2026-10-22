@@ -1,7 +1,7 @@
 import { Chess } from "chess.js";
 import type { Replay } from "@/components/PlayerDashboard/pgn-context";
 export type Score = { kind: "cp"; cp: number } | { kind: "mate"; mate: number } | { kind: "terminal_checkmate"; mate: 0; winner: "white" | "black" };
-export type CacheResult = { status: string; reason?: string; context_compatibility: string; partial: boolean; available_truncated?: boolean; available: { config_hash: string; source: { kind: string; engine_name?: string }; available_depths: number[] }[]; evaluation: null | { perspective: string; achieved_depth: number; returned_multipv: number; source: { kind: string; engine_name?: string; engine_version?: string }; config: { multipv: number; depth: number | null; time_seconds: number | null }; pvs: (Score & { moves: string[] })[]; limitations: string[] } };
+export type CacheResult = { status: string; reason?: string; context_compatibility: string; partial: boolean; requested_pvs?: number; pv_goal_met?: boolean; cloud_resolution_status?: string; cloud_resolution_reason?: string; available_truncated?: boolean; available: { config_hash: string; source: { kind: string; engine_name?: string }; available_depths: number[] }[]; evaluation: null | { perspective: string; achieved_depth: number; returned_multipv: number; source: { kind: string; engine_name?: string; engine_version?: string }; config: { multipv: number; depth: number | null; time_seconds: number | null }; pvs: (Score & { moves: string[] })[]; limitations: string[] } };
 export function scoreText(score?: Score) {
   if (!score) return "Unavailable";
   if (score.kind === "cp") return `${score.cp >= 0 ? "+" : ""}${(score.cp / 100).toFixed(2)}`;
@@ -47,7 +47,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 export async function fetchEvaluation(context: unknown, signal: AbortSignal, config = "", cloudKey?: string): Promise<CacheResult> {
   if (signal.aborted) throw new DOMException("Aborted", "AbortError");
   const cloud = cloudKey !== undefined;
-  const item = { context, require_trusted: false, allow_advisory: true, allow_partial: true, allow_cloud: cloud, min_pvs: 1, ...(cloud ? { source: "lichess_cloud", cloud_multipv: 3 } : config ? { config_hash: config } : {}) };
+  const item = { context, require_trusted: false, allow_advisory: true, allow_partial: true, allow_cloud: cloud, min_pvs: 1, ...(cloud ? { source: "lichess_cloud", cloud_multipv: 3, prefer_cloud_pvs: true } : config ? { config_hash: config } : {}) };
   const response = await fetch(`${API}/api/evaluations/${cloud ? "resolve" : "lookup-batch"}`, { method: "POST", cache: "no-store", signal, headers: { "Content-Type": "application/json", ...(cloud ? { "X-Evaluation-Key": cloudKey } : {}) }, body: JSON.stringify(cloud ? item : { items: [item] }) });
   if (!response.ok) throw new Error(response.status === 403 ? "Resolution refused: server read-only or operator key unavailable/invalid." : `Evaluation service unavailable (${response.status}).`);
   const data = await response.json();
@@ -55,8 +55,68 @@ export async function fetchEvaluation(context: unknown, signal: AbortSignal, con
   if (!result || typeof result.status !== "string" || !Array.isArray(result.available)) throw new Error("Invalid evaluation response; no score available.");
   return result;
 }
-export async function evaluationStatus(signal: AbortSignal): Promise<{ cloud_enabled: boolean }> {
+export async function evaluationStatus(signal: AbortSignal): Promise<{ cloud_enabled: boolean; cloud_resolution_allowed?: boolean }> {
   const response = await fetch(`${API}/api/evaluations/status`, { cache: "no-store", signal });
   if (!response.ok) throw new Error("Evaluation status unavailable");
   return response.json();
+}
+
+export type LegacySample = { value: number | null; color: string; fen: string; schema: string };
+export function legacyEstimate(sample: LegacySample | undefined, fen: string): Score | undefined {
+  if (!sample || sample.schema !== "1.1.0" || !Number.isInteger(sample.value) || sample.value === null || Math.abs(sample.value) >= 90000 || !["White", "Black"].includes(sample.color)) return undefined;
+  try { if (new Chess(sample.fen).fen() !== new Chess(fen).fen()) return undefined; } catch { return undefined; }
+  return { kind: "cp", cp: sample.color === "White" ? sample.value : -sample.value };
+}
+export function unavailableReason(item: CacheResult): string {
+  if (item.evaluation) return item.context_compatibility === "TRUSTED_CONTEXT_MATCH" ? "Context-compatible cache; producer execution not independently attested" : "Advisory evidence; draw/history compatibility unverified";
+  const reasons: Record<string, string> = {
+    CACHE_MISS: "No record for this exact history or accepted advisory context; other histories are not searched.",
+    CONFIG_REQUIRED: "Several engine configurations exist; select one in the position widget.",
+    INCOMPATIBLE: "Records exist but do not meet source, configuration, freshness, depth or PV requirements.",
+    UNAVAILABLE: "Evaluation cache/service is absent, incompatible or unavailable.",
+    CLOUD_DISABLED: "Server cloud access is disabled or request opt-in is absent.",
+    CLOUD_MISS: "No upstream cloud record was available for this request.",
+    DEFERRED: "Request deferred by shared rate/lease or batch budget; retry explicitly later.",
+    RATE_LIMITED: "Provider cooldown is active; retry explicitly later.",
+    HISTORY_LIMIT: "Complete context exceeds 1,000 plies; history is never truncated.",
+    INVALID_EVIDENCE: "Returned score or PV failed legal validation."
+  };
+  return `${reasons[item.status] || "No admissible evaluation was returned."}${item.reason ? ` (${item.reason})` : ""}`;
+}
+export type CoverageRow = { ply: number; item: CacheResult; lines: number };
+export function coverageCounts(rows: CoverageRow[]) {
+  return { inspected: rows.length, compatible: rows.filter(r => r.item.evaluation).length,
+    trusted_context: rows.filter(r => r.item.evaluation && r.item.context_compatibility === "TRUSTED_CONTEXT_MATCH").length,
+    advisory: rows.filter(r => r.item.evaluation && r.item.context_compatibility === "ADVISORY_CONTEXT_UNVERIFIED").length,
+    one: rows.filter(r => r.lines === 1).length, two: rows.filter(r => r.lines === 2).length, three_plus: rows.filter(r => r.lines >= 3).length,
+    missing: rows.filter(r => r.item.status === "CACHE_MISS").length,
+    incompatible: rows.filter(r => ["CONFIG_REQUIRED", "INCOMPATIBLE", "INVALID_EVIDENCE"].includes(r.item.status)).length,
+    unavailable: rows.filter(r => !r.item.evaluation && !["CACHE_MISS", "CONFIG_REQUIRED", "INCOMPATIBLE", "INVALID_EVIDENCE"].includes(r.item.status)).length };
+}
+function rowFor(replay: Replay, ply: number, item: CacheResult): CoverageRow {
+  try { return { ply, item, lines: legalLines(replay, ply, item).length }; }
+  catch { return { ply, lines: 0, item: { ...item, evaluation: null, status: "INVALID_EVIDENCE", context_compatibility: "INCOMPATIBLE", pv_goal_met: false } }; }
+}
+export async function inspectCoverage(replay: Replay, plies: number[], signal: AbortSignal, cloudKey?: string): Promise<CoverageRow[]> {
+  const cloud = cloudKey !== undefined;
+  if (!plies.length || plies.length > (cloud ? 3 : 20) || new Set(plies).size !== plies.length || plies.some(p => !Number.isInteger(p) || p < 0 || p >= replay.fens.length)) throw new Error("Select up to twenty local or three cloud positions.");
+  const rows: CoverageRow[] = []; let batch: { ply: number; query: object }[] = [];
+  async function flush() {
+    if (!batch.length) return;
+    if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+    const queries = batch.map(r => r.query);
+    const response = await fetch(`${API}/api/evaluations/${cloud ? "resolve-batch" : "lookup-batch"}`, { method: "POST", cache: "no-store", signal, headers: { "Content-Type": "application/json", ...(cloud ? { "X-Evaluation-Key": cloudKey! } : {}) }, body: JSON.stringify({ items: queries }) });
+    if (!response.ok) throw new Error(response.status === 403 ? "Resolution refused: read-only server or invalid/unconfigured operator key." : `Coverage unavailable (${response.status}).`);
+    const data = await response.json();
+    if (!Array.isArray(data.items) || data.items.length !== batch.length) throw new Error("Incomplete coverage response");
+    batch.forEach((r, i) => rows.push(rowFor(replay, r.ply, data.items[i]))); batch = [];
+  }
+  for (const ply of plies) {
+    if (ply > 1000) { rows.push({ ply, lines: 0, item: { status: "HISTORY_LIMIT", context_compatibility: "UNAVAILABLE", partial: true, evaluation: null, available: [] } }); continue; }
+    const query = { context: { variant: "standard", fen: replay.fens[ply], root_fen: replay.root_fen, moves: replay.moves.slice(0, ply), root_history_complete: replay.root_history_complete }, allow_advisory: true, allow_partial: true, allow_cloud: cloud, ...(cloud ? { source: "lichess_cloud", cloud_multipv: 3, prefer_cloud_pvs: true } : {}) };
+    if (new TextEncoder().encode(JSON.stringify({ items: [...batch.map(r => r.query), query] })).length > 96 * 1024) await flush();
+    batch.push({ ply, query });
+  }
+  await flush();
+  return rows.sort((a, b) => a.ply - b.ply);
 }
