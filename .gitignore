@@ -47,3 +47,5 @@ htmlcov/
 
 # Plan and report files
 plan_report/
+# Local accepted reasoning evidence (personal history; never commit)
+data/reasoning/

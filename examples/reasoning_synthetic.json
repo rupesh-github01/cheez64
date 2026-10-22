@@ -1,0 +1,128 @@
+{
+  "schema_version": "reasoning-evidence/1",
+  "policy_version": 1,
+  "root": {
+    "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+    "variant": "standard",
+    "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "moves": [
+      "e2e4",
+      "e7e5"
+    ],
+    "root_history_complete": true,
+    "draw_policy": "fide_claims_and_automatic_v1"
+  },
+  "producer": {
+    "name": "Synthetic contract fixture",
+    "exporter_version": "1",
+    "simulation": true,
+    "uncertain": false,
+    "method": "synthetic_fixture",
+    "receipt": "uci_inventory_readyok_exact_final_iteration"
+  },
+  "mode": "ROOT_MULTIPV_COHORT",
+  "records": [
+    {
+      "id": "root-search",
+      "context": {
+        "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+        "variant": "standard",
+        "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "moves": [
+          "e2e4",
+          "e7e5"
+        ],
+        "root_history_complete": true,
+        "draw_policy": "fide_claims_and_automatic_v1"
+      },
+      "settings": {
+        "engine": {
+          "family": "stockfish",
+          "uci_name": "Stockfish SYNTHETIC FIXTURE",
+          "version": "not a real run",
+          "binary_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "build": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "build_method": "binary_sha256",
+          "nnue": "embedded:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "identity_method": "exported_uci_inventory_and_streamed_hashes"
+        },
+        "requested_options": {
+          "Threads": 1,
+          "Hash": 64
+        },
+        "applied_options": {
+          "Threads": 1,
+          "Hash": 64,
+          "MultiPV": 2,
+          "UCI_Chess960": false,
+          "Ponder": false
+        },
+        "option_inventory": [
+          "Threads",
+          "Hash",
+          "MultiPV",
+          "UCI_Chess960",
+          "Ponder"
+        ],
+        "applied_options_complete": true,
+        "application_method": "exporter_readyok_receipt",
+        "reset_policy": "ucinewgame_clear_hash_per_context",
+        "limit_kind": "depth",
+        "requested_depth": 16,
+        "time_seconds": null,
+        "node_limit": null,
+        "multipv": 2,
+        "search_scope": "unrestricted",
+        "searched_roots": [],
+        "perspective": "white",
+        "draw_policy": "fide_claims_and_automatic_v1"
+      },
+      "cohort": "fixture-cohort",
+      "session": "fixture-session",
+      "edge_uci": null,
+      "achieved_depth": 16,
+      "final_iteration": 16,
+      "nodes": 120,
+      "elapsed_seconds": 0.01,
+      "score_conversion": "white_relative_export",
+      "lines": [
+        {
+          "rank": 1,
+          "depth": 16,
+          "iteration": 16,
+          "bound": "exact",
+          "score": {
+            "kind": "cp",
+            "cp": 35,
+            "mate": null,
+            "winner": null,
+            "moves": [
+              "g1f3",
+              "b8c6",
+              "f1c4"
+            ],
+            "original_moves": null
+          }
+        },
+        {
+          "rank": 2,
+          "depth": 16,
+          "iteration": 16,
+          "bound": "exact",
+          "score": {
+            "kind": "cp",
+            "cp": 10,
+            "mate": null,
+            "winner": null,
+            "moves": [
+              "b1c3",
+              "g8f6",
+              "f1c4"
+            ],
+            "original_moves": null
+          }
+        }
+      ]
+    }
+  ]
+}

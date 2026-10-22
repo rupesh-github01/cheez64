@@ -717,3 +717,26 @@ No verified-blunder, best-move, numerical difficulty or player-strength claim is
 made. Engine-evidence enrichment, multi-move grading, adaptive scheduling and
 spaced repetition are deferred. Native progressive dispatch and its 512 MiB RSS
 policy are unchanged.
+
+### Selected-position reasoning (Segment 20.5)
+
+Both game-review modes have a separate, explicitly activated **Reasoning** panel.
+It compares compatible recorded root-MultiPV or sibling-child cohorts, displays
+legal opponent continuations and checkpoint facts, and separates searched
+observations from heuristic interpretations. Missing alternatives stay
+unassessed; no global best-move, forced-win or causal attribution is inferred.
+
+This release never launches an engine or provider. Import an **already available**
+independent export through the offline `src.reasoning_import` CLI; point
+`CHESS_COACH_REASONING_DIR` at its dedicated accepted-artifact directory. GET-only
+routes work with `CHESS_COACH_READ_ONLY=true` and never initialize stores. The
+existing cache is not sufficient producer-lineage proof, and native progressive
+search remains disabled/unqualified under the unchanged 512 MiB policy.
+
+See [the format and explicitly synthetic example](examples/reasoning_format.md).
+Operator acceptance is a provenance acknowledgement, not cryptographic proof of
+engine execution. Synthetic demo comparisons require the separate explicit
+`CHESS_COACH_REASONING_ALLOW_SYNTHETIC=true` flag and remain visibly synthetic.
+The frozen 14-case contract corpus does **not** establish chess-quality accuracy;
+that evaluation remains NOT_RUN without independently reviewed genuine evidence.
+No puzzle grading, legacy analysis, CPL or coaching calculation is changed.

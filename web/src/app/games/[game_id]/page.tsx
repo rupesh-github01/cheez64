@@ -20,6 +20,7 @@ import GamePositionBrowser from "@/components/PlayerDashboard/GamePositionBrowse
 import "@/components/Understanding/understanding.css";
 import PracticeLink from "@/components/Practice/PracticeLink";
 
+const Reasoning = nextDynamic(() => import("@/components/Reasoning/ReasoningPanel"), { ssr: false });
 const Understanding = nextDynamic(() => import("@/components/Understanding/UnderstandingPanel"), { ssr: false });
 
 type FilterMode = "all" | "critical" | "tactical" | "positional" | "endgame";
@@ -768,6 +769,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
 
           <PracticeLink gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
           <Understanding gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
+          <Reasoning gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
 
           {/* Main content pane: Coach vs Chat vs Explorer */}
           {activeTab === "coach" ? (
