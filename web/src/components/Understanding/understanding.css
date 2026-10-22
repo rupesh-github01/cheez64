@@ -3,7 +3,7 @@
 .pd-understanding .pd-fact h3 { margin-top: 8px; }
 .pd-understanding small { overflow-wrap: anywhere; }
 @media (max-width: 900px) {
-  .understanding-review-grid { grid-template-columns: minmax(0, 1fr) 24px !important; }
+  .understanding-review-grid { grid-template-columns: minmax(0, 1fr) !important; }
   .understanding-review-grid > div:last-child { grid-column: 1 / -1; }
   .understanding-review-grid .eval-bar { height: min(520px, calc(100vw - 80px)) !important; }
   .understanding-review-grid .mode-toggle-group,

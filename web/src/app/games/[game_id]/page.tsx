@@ -14,7 +14,7 @@ import ExplanationPanel from "@/components/GameReview/ExplanationPanel";
 import PositionExplorer from "@/components/GameReview/PositionExplorer";
 import CriticalNav from "@/components/GameReview/CriticalNav";
 import EpisodeList from "@/components/GameReview/EpisodeList";
-import EvaluationBar from "@/components/GameReview/EvaluationBar";
+import PositionEvaluation from "@/components/GameReview/PositionEvaluation";
 import CoachChatPanel from "@/components/GameReview/CoachChatPanel";
 import GamePositionBrowser from "@/components/PlayerDashboard/GamePositionBrowser";
 import "@/components/Understanding/understanding.css";
@@ -73,7 +73,7 @@ export default function GameReviewPage({
         </div>
       }
     >
-      <GameReviewContent game_id={game_id} />
+      <GameReviewContent key={game_id} game_id={game_id} />
     </Suspense>
   );
 }
@@ -342,20 +342,6 @@ function GameReviewContent({ game_id }: { game_id: string }) {
     handleStepVariation,
     handleExitVariation,
   ]);
-
-  // Current eval normalized to White's perspective (positive = White ahead, negative = Black ahead)
-  const currentEval = (() => {
-    if (variationState?.active && variationState.eval_cp !== undefined) {
-      // Evaluation from perspective of side to move at fen_before
-      const side = currentMove?.color ?? "White";
-      return side === "White" ? variationState.eval_cp : -variationState.eval_cp;
-    }
-    if (!currentMove) {
-      return allMoves[0]?.evaluation_before ?? 0;
-    }
-    const raw = currentMove.evaluation_after ?? 0;
-    return currentMove.color === "White" ? raw : -raw;
-  })();
 
   if (loading) {
     return (
@@ -656,7 +642,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
       <div className="understanding-review-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: "auto 24px 1fr",
+          gridTemplateColumns: "auto 1fr",
           gap: 16,
           alignItems: "start",
         }}
@@ -692,11 +678,9 @@ function GameReviewContent({ game_id }: { game_id: string }) {
           />
         </div>
 
-        {/* Eval bar */}
-        <EvaluationBar eval_cp={currentEval} />
-
         {/* Right: Panels */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
+          <PositionEvaluation pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
           {/* Critical navigation */}
           <CriticalNav
             criticalMoves={criticalMoves}
