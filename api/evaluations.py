@@ -40,8 +40,20 @@ class ResolveBatch(StrictModel):
 
 
 def cache_from_environment():
-    limits = CacheLimits.model_validate_json(os.environ.get('CHESS_COACH_EVAL_LIMITS', '{}'))
-    return EvaluationCache(os.environ.get('CHESS_COACH_EVAL_CACHE_DB'), limits)
+    path = os.environ.get('CHESS_COACH_EVAL_CACHE_DB', '')
+    if not path.strip():
+        raise CacheUnavailable('CACHE_NOT_CONFIGURED')
+    try:
+        limits = CacheLimits.model_validate_json(os.environ.get('CHESS_COACH_EVAL_LIMITS', '{}'))
+    except ValueError as exc:
+        raise CacheUnavailable('CACHE_LIMITS_INVALID') from exc
+    try:
+        cache = EvaluationCache(path, limits)
+        if cache.path.exists() and not cache.path.is_file():
+            raise CacheUnavailable('CACHE_PATH_REFUSED')
+        return cache
+    except (CacheUnavailable, ValueError, OSError) as exc:
+        raise CacheUnavailable('CACHE_PATH_REFUSED') from exc
 
 
 def enabled():
@@ -53,16 +65,41 @@ def unavailable(reason='CACHE_UNAVAILABLE'):
             'partial': False, 'available': [], 'available_truncated': False, 'coverage_basis': 'requested_context_only'}
 
 
+def cache_failure(exc):
+    # Return only allowlisted codes, never paths, SQL, env values or exception text.
+    if isinstance(exc, CacheUnavailable):
+        if isinstance(exc.__cause__, sqlite3.DatabaseError):
+            cause = exc.__cause__
+            primary = getattr(cause, 'sqlite_errorcode', 0) & 255
+            if primary in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED):
+                return 'CACHE_BUSY'
+            if primary in (sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_CANTOPEN):
+                return 'CACHE_DATABASE_ERROR'
+        code = str(exc)
+        if code in {'CACHE_NOT_CONFIGURED', 'CACHE_LIMITS_INVALID', 'CACHE_PATH_REFUSED'}:
+            return code
+        return {'CACHE_UNINITIALIZED': 'CACHE_FILE_MISSING',
+                'CACHE_UNINITIALIZED_OR_INCOMPATIBLE': 'CACHE_SCHEMA_INVALID',
+                'INCOMPATIBLE_CACHE_VERSION': 'CACHE_VERSION_INCOMPATIBLE'}.get(code, 'CACHE_UNAVAILABLE')
+    if isinstance(exc, sqlite3.DatabaseError):
+        if getattr(exc, 'sqlite_errorcode', 0) & 255 in (sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED):
+            return 'CACHE_BUSY'
+        return 'CACHE_DATABASE_ERROR'
+    if isinstance(exc, OSError):
+        return 'CACHE_IO_ERROR'
+    return 'CACHE_DATA_INVALID'
+
+
 def get_cache():
     try:
         return cache_from_environment()
-    except (ValueError, CacheUnavailable):
-        return None
+    except (ValueError, CacheUnavailable, OSError) as exc:
+        return unavailable(cache_failure(exc))
 
 
 def local_batch(cache, items):
-    if cache is None:
-        return [unavailable('CACHE_UNINITIALIZED_OR_INVALID_CONFIGURATION') for _ in items]
+    if isinstance(cache, dict):
+        return [cache.copy() for _ in items]
     try:
         with cache.reader() as conn:
             memo = {}
@@ -73,8 +110,8 @@ def local_batch(cache, items):
                     memo[key] = cache.lookup(item, conn)
                 out.append(memo[key])
             return out
-    except (CacheUnavailable, sqlite3.DatabaseError):
-        return [unavailable() for _ in items]
+    except (CacheUnavailable, sqlite3.DatabaseError, OSError, ValueError) as exc:
+        return [unavailable(cache_failure(exc)) for _ in items]
 
 
 def envelope(items, results):
@@ -119,14 +156,16 @@ def lookup_batch(body: LocalBatch):
 def status():
     cache = get_cache()
     capabilities = {'cloud_enabled': enabled(), 'cloud_requires_operator_key': True,
+                    'read_only': os.environ.get('CHESS_COACH_READ_ONLY', '').lower() == 'true',
+                    'cloud_operator_key_configured': len(os.environ.get('CHESS_COACH_EVAL_RESOLVE_KEY', '')) >= 16,
                     'cloud_resolution_allowed': enabled() and os.environ.get('CHESS_COACH_READ_ONLY', '').lower() != 'true'
                     and len(os.environ.get('CHESS_COACH_EVAL_RESOLVE_KEY', '')) >= 16}
     try:
-        if cache is None:
-            raise CacheUnavailable('No cache configured')
+        if isinstance(cache, dict):
+            return {**cache, **capabilities}
         return {'status': 'OK', **capabilities, **cache.status()}
-    except (CacheUnavailable, sqlite3.DatabaseError):
-        return {**unavailable('CACHE_UNINITIALIZED_OR_INCOMPATIBLE'), **capabilities}
+    except (CacheUnavailable, sqlite3.DatabaseError, OSError, ValueError) as exc:
+        return {**unavailable(cache_failure(exc)), **capabilities}
 
 
 def authorize(items, key):
@@ -139,8 +178,8 @@ def authorize(items, key):
 async def resolve_items(items, key):
     authorize(items, key)
     cache = get_cache()
-    if cache is None:
-        return [unavailable('CACHE_UNINITIALIZED_OR_INVALID_CONFIGURATION') for _ in items]
+    if isinstance(cache, dict):
+        return [cache.copy() for _ in items]
     resolver = CloudResolver(cache, enabled=enabled())
     deadline = time.monotonic()+15
     memo = {}; results = []
@@ -149,8 +188,8 @@ async def resolve_items(items, key):
         if identity not in memo:
             try:
                 memo[identity] = await resolver.resolve(item, deadline=deadline)
-            except (CacheUnavailable, sqlite3.DatabaseError):
-                memo[identity] = unavailable()
+            except (CacheUnavailable, sqlite3.DatabaseError, OSError, ValueError) as exc:
+                memo[identity] = unavailable(cache_failure(exc))
         results.append(memo[identity])
     return results
 

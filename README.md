@@ -420,6 +420,30 @@ python -m src.evaluation_cli status --cache /path/to/separate/evaluations.sqlite
 python -m src.evaluation_cli maintain --cache /path/to/separate/evaluations.sqlite3
 ```
 
+For this checkout, an operator-approved one-time setup can use:
+
+```sh
+.venv/bin/python -m src.evaluation_cli init --cache "$PWD/data/evaluations.sqlite3"
+export CHESS_COACH_EVAL_CACHE_DB="$PWD/data/evaluations.sqlite3"
+```
+
+This creates only the **independent, initially empty** `data/evaluations.sqlite3`
+(and SQLite sidecars as needed), never the game library. Do not run it against an
+existing unknown/incompatible file, library or backup. Initialization does not
+produce scores or PVs: a compatible empty cache returns `CACHE_MISS`. Evidence
+must already have been legitimately ingested or come from an explicitly opted-in
+cloud request. Native Stockfish is not started by this setup.
+
+Persist the canonical absolute cache path in the ignored `.env` if using
+`./run.sh`; otherwise export it in the environment launching the API. Restart the
+API yourself after changing configuration. `./run.sh` warns about unset/missing
+cache storage but **never initializes or repairs it**. `/api/evaluations/status`
+is a cache-only GET reporting exact setup/read errors, `read_only`, cloud
+enablement and whether an operator key is configured (never its value). Read-only
+API mode permits cache lookup but refuses cloud resolution. Cloud also requires
+server enablement and a matching private operator key of at least 16 characters;
+there is no automatic provider request on game navigation.
+
 Library/backup paths, sidecars and aliases are rejected. Do not point this at
 `data/library.db`. Missing/uninitialized/incompatible cache storage is reported
 as unavailable; reads do not initialize it. The existing application's legacy

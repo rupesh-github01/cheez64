@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { lookupContext } from "@/components/PlayerDashboard/pgn-context";
 import type { Replay } from "@/components/PlayerDashboard/pgn-context";
 import { usePGNReplay } from "@/components/PlayerDashboard/usePGNReplay";
-import { evaluationStatus, fetchEvaluation, legalLines, scoreText, legacyEstimate, unavailableReason } from "@/lib/position-evaluation";
+import { evaluationStatus, fetchEvaluation, legalLines, scoreText, legacyEstimate, unavailableReason, cloudStatusExplanation } from "@/lib/position-evaluation";
 import type { CacheResult, LegacySample } from "@/lib/position-evaluation";
 import EvaluationBar from "./EvaluationBar";
 import EvaluationCoverage from "./EvaluationCoverage";
@@ -19,7 +19,7 @@ function EvaluationSession({ replay, ply, legacy }: { replay: Replay; ply: numbe
   const [config, setConfig] = useState("");
   const [action, setAction] = useState<{ id: number; key?: string }>({ id: 0 });
   const [operatorKey, setOperatorKey] = useState("");
-  const [cloud, setCloud] = useState<{ cloud_enabled: boolean; cloud_resolution_allowed?: boolean }>();
+  const [cloud, setCloud] = useState<Awaited<ReturnType<typeof evaluationStatus>>>();
   const [view, setView] = useState<{ request: string; item?: CacheResult; error?: string }>();
   const request = JSON.stringify([config, action.id]);
   useEffect(() => {
@@ -59,6 +59,6 @@ function EvaluationSession({ replay, ply, legacy }: { replay: Replay; ply: numbe
     {legacy && !estimate && <p>Legacy value unavailable: absent/non-cp or mate sentinel, unknown schema/perspective, or position mismatch. No verified mate distance is reconstructed.</p>}
     <button disabled={loading} onClick={() => setAction(a => ({ id: a.id + 1 }))}>Refresh cached evaluation</button>
     <p className="position-eval-note">Selected position only · cache reads never launch an engine or contact a provider. Fewer than three lines means fewer recorded variations, not invented alternatives.</p>
-    <details><summary>Explicit Lichess cloud lookup</summary><p>Cloud is advisory. A request sends this position to Lichess and may write only the separate evaluation cache. Server enablement and an operator key are required; read-only deployments refuse resolution.</p>{cloud?.cloud_enabled && cloud.cloud_resolution_allowed !== false ? <><label>Operator key<input type="password" autoComplete="off" value={operatorKey} onChange={e => setOperatorKey(e.target.value)} /></label><button disabled={loading || !operatorKey} onClick={() => { setAction(a => ({ id: a.id + 1, key: operatorKey })); setOperatorKey(""); }}>Fetch available cloud evaluation</button></> : <p>{cloud?.cloud_enabled ? "Cloud resolution refused by read-only mode or missing server operator authorization." : cloud ? "Cloud access is disabled on this server." : "Cloud availability could not be established; no request will be sent."}</p>}</details>
+    <details><summary>Explicit Lichess cloud lookup</summary><p>Cloud is advisory. A request sends this position to Lichess and may write only the separate evaluation cache. Server enablement and an operator key are required; read-only deployments refuse resolution.</p>{cloud?.cloud_enabled && cloud.cloud_resolution_allowed !== false ? <><label>Operator key<input type="password" autoComplete="off" value={operatorKey} onChange={e => setOperatorKey(e.target.value)} /></label><button disabled={loading || !operatorKey} onClick={() => { setAction(a => ({ id: a.id + 1, key: operatorKey })); setOperatorKey(""); }}>Fetch available cloud evaluation</button></> : <p>{cloudStatusExplanation(cloud)}</p>}</details>
   </div></div>;
 }

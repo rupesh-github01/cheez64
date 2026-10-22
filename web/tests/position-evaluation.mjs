@@ -95,3 +95,23 @@ test('actual session marks a legacy fallback and gives cached evidence precedenc
  const replay=pgn.replayPGN('1. e4 *');const legacy={value:125,color:'White',fen:replay.fens[0],schema:'1.1.0'};
  for(const hit of [false,true]){const session=sessionHarness();session.render(replay,0,legacy);session.pending[0].resolve(hit?result(1):{status:'CACHE_MISS',context_compatibility:'UNAVAILABLE',evaluation:null,available:[]});await Promise.resolve();await Promise.resolve();const tree=session.render(replay,0,legacy);if(hit){assert.match(tree, /"score":\{"kind":"cp","cp":35/);assert.doesNotMatch(tree,/"tier":"LEGACY_ESTIMATE"/);}else{assert.match(tree,/"tier":"LEGACY_ESTIMATE"/);assert.match(tree,/"cp":125/);}session.unmount();}
 });
+test('setup diagnostics distinguish missing configuration from misses and database failures',()=>{
+ const h=helpers();
+ const checks={CACHE_NOT_CONFIGURED:/not configured.*CHESS_COACH_EVAL_CACHE_DB/i,CACHE_FILE_MISSING:/does not exist/i,CACHE_LIMITS_INVALID:/LIMITS.*invalid/i,CACHE_PATH_REFUSED:/path was refused/i,CACHE_SCHEMA_INVALID:/schema/i,CACHE_VERSION_INCOMPATIBLE:/version is incompatible/i,CACHE_BUSY:/temporarily locked/i,CACHE_DATABASE_ERROR:/database error/i,CACHE_IO_ERROR:/permissions/i,CACHE_DATA_INVALID:/record could not be decoded/i};
+ for(const [reason,pattern] of Object.entries(checks))assert.match(h.unavailableReason({status:'UNAVAILABLE',reason,evaluation:null}),pattern);
+ assert.doesNotMatch(h.unavailableReason({status:'CACHE_MISS',evaluation:null}),/initialize|not configured/);
+});
+test('cloud status distinguishes disabled, read-only and missing authorization without enabling access',()=>{
+ const h=helpers();assert.match(h.cloudStatusExplanation(),/could not be established/);
+ assert.match(h.cloudStatusExplanation({cloud_enabled:false}),/disabled/);
+ assert.match(h.cloudStatusExplanation({cloud_enabled:true,read_only:true,cloud_operator_key_configured:true}),/read-only/);
+ assert.match(h.cloudStatusExplanation({cloud_enabled:true,read_only:false,cloud_operator_key_configured:false}),/operator key is missing/);
+ assert.match(h.cloudStatusExplanation({cloud_enabled:true,cloud_resolution_allowed:true,cloud_operator_key_configured:true}),/explicit request/);
+});
+test('actual evaluation bar renders a numeric cached score and a distinct unavailable state',async()=>{
+ const {jsx,jsxs}=await import('react/jsx-runtime');const {renderToStaticMarkup}=await import('react-dom/server');
+ const exports={};const code=ts.transpileModule(fs.readFileSync(new URL('../src/components/GameReview/EvaluationBar.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+ vm.runInNewContext(code,{exports,require:n=>n==='react/jsx-runtime'?{jsx,jsxs}:helpers()});
+ const html=renderToStaticMarkup(exports.default({score:{kind:'cp',cp:35}}));assert.match(html,/White-relative evaluation: \+0.35/);assert.match(html,/position-eval-fill/);
+ const missing=renderToStaticMarkup(exports.default({}));assert.match(missing,/White-relative evaluation: Unavailable/);assert.match(missing,/unknown/);assert.doesNotMatch(missing,/\+0\.00/);
+});

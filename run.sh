@@ -119,7 +119,18 @@ check_env() {
   fi
 }
 
+# Metadata-only warning: never initialize, repair, or open an evaluation database.
+check_evaluation_setup() {
+  if [[ -z "${CHESS_COACH_EVAL_CACHE_DB:-}" ]]; then
+    warn "Evaluation cache is not configured: set CHESS_COACH_EVAL_CACHE_DB to an independent cache file."
+    warn "Initialize it explicitly with python3 -m src.evaluation_cli init --cache /absolute/path/to/evaluations.sqlite3 (creates empty storage, not evaluations)."
+  elif [[ ! -f "$CHESS_COACH_EVAL_CACHE_DB" ]]; then
+    warn "The configured evaluation cache file is missing; initialize it explicitly before expecting cached evidence."
+  fi
+}
+
 start_api() {
+  check_evaluation_setup
   check_python
   kill_existing_port "$PORT_API" "FastAPI Backend"
   info "Starting FastAPI backend on http://localhost:$PORT_API ..."
@@ -140,6 +151,7 @@ start_web() {
 }
 
 start_all() {
+  check_evaluation_setup
   check_env
   echo ""
   kill_existing_port "$PORT_API" "FastAPI Backend"

@@ -55,7 +55,7 @@ export async function fetchEvaluation(context: unknown, signal: AbortSignal, con
   if (!result || typeof result.status !== "string" || !Array.isArray(result.available)) throw new Error("Invalid evaluation response; no score available.");
   return result;
 }
-export async function evaluationStatus(signal: AbortSignal): Promise<{ cloud_enabled: boolean; cloud_resolution_allowed?: boolean }> {
+export async function evaluationStatus(signal: AbortSignal): Promise<{ cloud_enabled: boolean; cloud_resolution_allowed?: boolean; read_only?: boolean; cloud_operator_key_configured?: boolean }> {
   const response = await fetch(`${API}/api/evaluations/status`, { cache: "no-store", signal });
   if (!response.ok) throw new Error("Evaluation status unavailable");
   return response.json();
@@ -68,6 +68,19 @@ export function legacyEstimate(sample: LegacySample | undefined, fen: string): S
   return { kind: "cp", cp: sample.color === "White" ? sample.value : -sample.value };
 }
 export function unavailableReason(item: CacheResult): string {
+  const setup: Record<string, string> = {
+    CACHE_NOT_CONFIGURED: "Evaluation cache is not configured on the API server. Set CHESS_COACH_EVAL_CACHE_DB to an explicitly initialized independent cache and restart the API. An empty cache contains no scores or lines.",
+    CACHE_LIMITS_INVALID: "The API's CHESS_COACH_EVAL_LIMITS configuration is invalid. Correct it and restart; do not recreate the cache.",
+    CACHE_PATH_REFUSED: "The configured evaluation cache path was refused. Use a canonical independent file, never the library, a backup, symlink or hard-link alias. Do not delete existing data.",
+    CACHE_FILE_MISSING: "The configured evaluation cache file does not exist. An operator must explicitly initialize that independent file; page loads never create it. Initialization alone supplies no evaluations.",
+    CACHE_SCHEMA_INVALID: "The configured file is not an initialized evaluation cache or its schema cannot be read. Verify the path and preserve the file; do not overwrite or migrate it automatically.",
+    CACHE_VERSION_INCOMPATIBLE: "The evaluation cache version is incompatible. Preserve it and ask the operator to check the running API version; no automatic migration is performed.",
+    CACHE_BUSY: "The evaluation cache is temporarily locked. Retry later; it does not need initialization.",
+    CACHE_DATABASE_ERROR: "The evaluation cache could not be read due to a database error. Check permissions, locking and file integrity; do not recreate it as an initialization fix.",
+    CACHE_IO_ERROR: "The evaluation cache file could not be accessed. Check filesystem permissions and availability; do not recreate it automatically.",
+    CACHE_DATA_INVALID: "An evaluation cache record could not be decoded or validated. Preserve the cache and ask the operator to inspect it; this is not a missing-cache setup error."
+  };
+  if (!item.evaluation && item.reason && setup[item.reason]) return setup[item.reason];
   if (item.evaluation) return item.context_compatibility === "TRUSTED_CONTEXT_MATCH" ? "Context-compatible cache; producer execution not independently attested" : "Advisory evidence; draw/history compatibility unverified";
   const reasons: Record<string, string> = {
     CACHE_MISS: "No record for this exact history or accepted advisory context; other histories are not searched.",
@@ -119,4 +132,13 @@ export async function inspectCoverage(replay: Replay, plies: number[], signal: A
   }
   await flush();
   return rows.sort((a, b) => a.ply - b.ply);
+}
+
+export function cloudStatusExplanation(status?: { cloud_enabled: boolean; cloud_resolution_allowed?: boolean; read_only?: boolean; cloud_operator_key_configured?: boolean }) {
+  if (!status) return "Cloud availability could not be established; no provider request will be made.";
+  if (!status.cloud_enabled) return "Cloud access is disabled on the API server. It is never enabled by a page load.";
+  if (status.read_only) return "The API is in read-only mode: cached reads are allowed, but cloud resolution and cache writes are refused.";
+  if (status.cloud_operator_key_configured === false) return "Cloud is enabled, but the server operator key is missing or shorter than 16 characters. Resolution is unavailable until the operator configures it.";
+  if (status.cloud_resolution_allowed === false) return "Cloud resolution is unavailable under the server's current authorization policy.";
+  return "Cloud requires an explicit request and the matching operator key. Results remain advisory; availability and three lines are not guaranteed.";
 }
