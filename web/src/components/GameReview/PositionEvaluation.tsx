@@ -7,12 +7,13 @@ import { evaluationStatus, fetchEvaluation, legalLines, scoreText, legacyEstimat
 import type { CacheResult, LegacySample } from "@/lib/position-evaluation";
 import EvaluationBar from "./EvaluationBar";
 import EvaluationCoverage from "./EvaluationCoverage";
+import LiveAnalysis from "./LiveAnalysis";
 import "./position-evaluation.css";
 export default function PositionEvaluation({ pgn, ply, replay: supplied, disabled = false, legacy }: { pgn: string; ply: number; replay?: Replay; disabled?: boolean; legacy?: LegacySample }) {
   const loaded = usePGNReplay(pgn, supplied);
   const replay = loaded.replay;
   const reason = disabled ? "Return to the recorded mainline for context-compatible evaluation." : loaded.error || (ply > 1000 ? "Evaluation unavailable: complete history exceeds 1,000 plies." : undefined);
-  return <section className="position-evaluation" aria-label="Position evaluation"><h3>Position evaluation</h3>{reason || !replay ? <div className="position-eval-layout"><EvaluationBar loading={!reason} /><p role="status">{reason || "Loading legal game history…"}</p></div> : <EvaluationSession key={JSON.stringify([pgn, ply])} replay={replay} ply={ply} legacy={legacy} />}{replay && !disabled && <EvaluationCoverage key={pgn} replay={replay} />}</section>;
+  return <section className="position-evaluation" aria-label="Position evaluation"><h3>Position evaluation</h3>{reason || !replay ? <div className="position-eval-layout"><EvaluationBar loading={!reason} /><p role="status">{reason || "Loading legal game history…"}</p></div> : <><LiveAnalysis key={pgn} replay={replay} ply={ply} pgn={pgn} /><div className="cached-position-evaluation"><EvaluationSession key={JSON.stringify([pgn, ply])} replay={replay} ply={ply} legacy={legacy} /></div></>}{replay && !disabled && <EvaluationCoverage key={pgn} replay={replay} />}</section>;
 }
 function EvaluationSession({ replay, ply, legacy }: { replay: Replay; ply: number; legacy?: LegacySample }) {
   const context = useMemo(() => lookupContext(replay, ply), [replay, ply]);

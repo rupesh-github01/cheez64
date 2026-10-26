@@ -1,3 +1,4 @@
+import { assertNoBrowserEngine } from "./browser-engine-lease";
 /**
  * Typed fetch wrappers for the FastAPI chess coach API.
  * All functions are read-only (GET requests only).
@@ -214,6 +215,7 @@ export async function resumeImport(jobId: string): Promise<{ message: string; jo
 }
 
 export async function queueAnalysis(params: QueueAnalysisParams): Promise<{ message: string; queued_count: number; job_ids?: string[]; batch_id?: string }> {
+  await assertNoBrowserEngine();
   return fetchMutate<{ message: string; queued_count: number; job_ids?: string[]; batch_id?: string }>("/api/management/analysis/queue", params);
 }
 

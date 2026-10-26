@@ -6,14 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "predev": "node scripts/prepare-browser-stockfish.mjs",
+    "prebuild": "node scripts/prepare-browser-stockfish.mjs"
   },
   "dependencies": {
     "chess.js": "^1.4.0",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-chessboard": "^5.12.1",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "stockfish": "19.0.1"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

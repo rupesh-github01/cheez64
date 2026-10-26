@@ -764,3 +764,33 @@ engine execution. Synthetic demo comparisons require the separate explicit
 The frozen 14-case contract corpus does **not** establish chess-quality accuracy;
 that evaluation remains NOT_RUN without independently reviewed genuine evidence.
 No puzzle grading, legacy analysis, CPL or coaching calculation is changed.
+
+### Browser Live Analysis (Segment 20.7)
+
+Both game-review modes offer **Start Live Analysis** for the selected position,
+independently of server cache setup. The bundled Stockfish.js 19.0.1 Lite WASM
+runs in a dedicated single-thread browser worker with Hash=16 MiB, MultiPV=3,
+and depth 14 or 10 seconds. No server engine or cloud request is made. Scores
+are White-relative `LIVE_ENGINE_UNVERIFIED` estimates; only legal, actual PVs
+from the same depth cohort are displayed. They are never inserted into trusted
+caches, reasoning, coaching or legacy scoring.
+
+Stop terminates the worker and retains the current position's last valid result.
+Close the live result to return to cache/legacy display. While enabled, selecting
+a different move cancels the old search and analyzes the newly selected recorded
+history. Leaving the review terminates the worker. Crashes require an explicit
+restart. Terminal positions show deterministic board facts without a search.
+
+Web Locks exclude participating same-origin tabs. Browsers without Web Locks
+require an explicit acknowledgment that other analysis tabs have been closed;
+only tab-local exclusion can then be enforced. Browser RSS is not measurable or
+precisely capped by this controller. WASM/Hash/search limits reduce resource use;
+the backend's separate 512 MiB policy and disabled native dispatch are unchanged.
+
+`npm ci` installs the pinned package. `predev`/`prebuild` verify and copy only the
+lite single-thread JS/WASM assets; no build-time provider downloads occur.
+GPL-3.0 license, exact upstream source archive, NNUE build input, attribution,
+hashes and build instructions are served under
+`web/public/engines/stockfish-19.0.1/` (see `SOURCE.md`). Preserve these materials
+when distributing the application. This browser feature does not change the
+separately configured, explicitly initialized server evaluation cache.

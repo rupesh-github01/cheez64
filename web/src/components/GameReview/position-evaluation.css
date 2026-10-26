@@ -5,6 +5,7 @@
 .position-eval-fill { position:absolute; bottom:0; width:100%; background:#fafafa; transition:height .2s ease; }
 .position-eval-bar.unknown { background:repeating-linear-gradient(135deg,#334155 0 8px,#475569 8px 16px); }
 .position-eval-black,.position-eval-white,.position-eval-value { position:absolute; z-index:1; left:50%; transform:translateX(-50%); font-size:.62rem; }
+.position-eval-black,.position-eval-white { white-space:nowrap; overflow-wrap:normal; }
 .position-eval-black { top:5px; color:#fff; background:#18181b; }.position-eval-white { bottom:5px; color:#111; background:#fafafa; }
 .position-eval-value { top:45%; writing-mode:vertical-rl; background:#334155; color:white; padding:5px 2px; border-radius:4px; }
 .position-eval-details { min-width:0; font-size:.83rem; overflow-wrap:anywhere; }.position-eval-details p { margin:0 0 10px; }
@@ -18,3 +19,10 @@
 .position-coverage button { padding:8px; margin:4px; }.position-coverage button:disabled { opacity:.5; }
 .position-coverage-rows { padding-left:0; list-style:none; max-height:400px; overflow:auto; }
 .position-coverage-rows li { padding:8px 0; border-bottom:1px solid var(--border-color,#334155); }.position-coverage-rows p { color:var(--text-muted,#94a3b8); margin:6px 0; }
+.live-evaluation { min-width:0; margin-bottom:14px; font-size:.83rem; overflow-wrap:anywhere; }
+.live-evaluation[data-override="true"] + .cached-position-evaluation { display:none; }
+.live-evaluation-controls { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.live-evaluation-controls button { padding:9px 12px; border:1px solid var(--border-color,#475569); border-radius:6px; cursor:pointer; }
+.live-evaluation-controls button:disabled { opacity:.5; cursor:default; }.live-evaluation-controls button:first-child { background:#164e63; color:#f8fafc; }
+.live-evaluation pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:240px; overflow:auto; }.live-evaluation-result { margin:12px 0; }.live-fallback { display:block; margin:8px 0; }
+.live-evaluation a { text-decoration:underline; }.live-evaluation small { color:var(--text-muted,#94a3b8); }
