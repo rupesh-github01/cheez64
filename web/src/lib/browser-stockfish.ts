@@ -35,13 +35,13 @@ export function positionCommand(position: LivePosition) {
   return `position fen ${position.root}${position.moves.length ? ` moves ${position.moves.join(" ")}` : ""}`;
 }
 export type ParsedInfo = { rank: number; depth: number; kind: "cp" | "mate"; value: number; bound: Bound; moves: string[]; nodes?: number; time?: number };
-export function parseInfo(line: string): ParsedInfo | undefined {
+export function parseInfo(line: string, maxDepth: 14 | 16 = 14): ParsedInfo | undefined {
   if (line.length > 8192 || !line.startsWith("info ") || line.startsWith("info string ")) return;
   const tokens = line.trim().split(/\s+/); const pvAt = tokens.indexOf("pv"); if (pvAt < 0) return;
   const fields = tokens.slice(0, pvAt); const moves = tokens.slice(pvAt + 1);
   const number = (name: string) => { const i = fields.indexOf(name); return i >= 0 && /^-?\d+$/.test(fields[i + 1] || "") ? Number(fields[i + 1]) : undefined; };
   const depth = number("depth"), rank = number("multipv") ?? 1, at = fields.indexOf("score");
-  if (!depth || depth < 1 || depth > 14 || (fields.includes("multipv") && number("multipv") === undefined) || rank < 1 || rank > 3 || fields.filter(x => x === "score").length !== 1 || fields.filter(x => x === "depth").length !== 1 || fields.filter(x => x === "multipv").length > 1) return;
+  if (!depth || depth < 1 || depth > maxDepth || (fields.includes("multipv") && number("multipv") === undefined) || rank < 1 || rank > 3 || fields.filter(x => x === "score").length !== 1 || fields.filter(x => x === "depth").length !== 1 || fields.filter(x => x === "multipv").length > 1) return;
   const kind = fields[at + 1], raw = fields[at + 2];
   if (!["cp", "mate"].includes(kind) || !/^-?\d+$/.test(raw || "") || !moves.length || moves.length > 64 || moves.some(m => !/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m))) return;
   const value = Number(raw); if (!Number.isSafeInteger(value) || Math.abs(value) > 10000000 || (kind === "mate" && (!value || Math.abs(value) > 512))) return;

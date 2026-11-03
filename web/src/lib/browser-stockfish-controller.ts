@@ -13,7 +13,7 @@ export interface UciWorker {
   postMessage(command: string): void;
   terminate(): void;
 }
-type ControllerOptions = { worker?: () => UciWorker; lease?: (fallback: boolean) => Promise<() => void>; now?: () => number };
+type ControllerOptions = { worker?: () => UciWorker; lease?: (fallback: boolean) => Promise<() => void>; now?: () => number; reasoningEvidence?: boolean; observe?: (kind: "send" | "recv" | "worker_started" | "terminated", text: string) => void };
 export class BrowserStockfishController {
   private worker?: UciWorker;
   private epoch = 0;
@@ -24,6 +24,7 @@ export class BrowserStockfishController {
   private position?: LivePosition;
   private cohort = new DepthCohort(3);
   private configuredMultiPV = 3;
+  private observationFailed = false;
   private phase: "closed" | "uci" | "config" | "reset" | "search" | "stopping" | "barrier" | "idle" = "closed";
   private advertised = new Map<string, UciOption>();
   private stageTimer?: ReturnType<typeof setTimeout>;
@@ -32,17 +33,22 @@ export class BrowserStockfishController {
   private searchStarted = 0;
   private view: LiveSnapshot = { key: "", enabled: false, status: "idle", engine: "", lines: [], depth: 0, complete: false, expected: 3, options: {}, elapsed: 0, workerAlive: false, workerStarts: 0 };
   constructor(private publish: (state: LiveSnapshot) => void, private dependencies: ControllerOptions = {}) {}
+  private trace(kind: "send" | "recv" | "worker_started" | "terminated", text = "") {
+    if (this.observationFailed) return;
+    try { this.dependencies.observe?.(kind, text); }
+    catch { this.observationFailed = true; queueMicrotask(() => this.fatal("Evidence observation failed; export is incomplete.")); }
+  }
   private update(change: Partial<LiveSnapshot>) { this.view = { ...this.view, ...change }; if (!this.disposed) this.publish({ ...this.view, lines: [...this.view.lines], options: { ...this.view.options } }); }
   private clearTimers() { clearTimeout(this.stageTimer); clearTimeout(this.searchTimer); clearTimeout(this.navigationTimer); }
   private teardownWorker() {
     this.epoch++; this.clearTimers();
-    if (this.worker) { this.worker.onmessage = null; this.worker.onerror = null; this.worker.onmessageerror = null; this.worker.terminate(); this.worker = undefined; }
+    if (this.worker) { this.worker.onmessage = null; this.worker.onerror = null; this.worker.onmessageerror = null; this.worker.terminate(); this.trace("terminated"); this.worker = undefined; }
     this.phase = "closed";
   }
   private fatal(message: string) { this.teardownWorker(); this.release?.(); this.release = undefined; this.update({ enabled: false, status: "error", workerAlive: false, error: message }); }
   private send(command: string) {
     if (!this.worker) return false;
-    try { this.worker.postMessage(command); return true; } catch { this.fatal("Engine command delivery failed. Start again explicitly."); return false; }
+    try { this.worker.postMessage(command); this.trace("send", command); return true; } catch { this.fatal("Engine command delivery failed. Start again explicitly."); return false; }
   }
   private deadline(ms: number, message: string) { clearTimeout(this.stageTimer); this.stageTimer = setTimeout(() => this.fatal(message), ms); }
   start(position: LivePosition, allowUncoordinated = false) {
@@ -86,6 +92,7 @@ export class BrowserStockfishController {
     if (!this.view.enabled || !this.position || this.position.terminal || this.disposed) return;
     try {
       const worker = (this.dependencies.worker || (() => new Worker(ENGINE_URL)))(); this.worker = worker; const epoch = ++this.epoch;
+      this.trace("worker_started");
       this.phase = "uci"; this.advertised.clear();
       this.update({ status: "loading", engine: "", options: {}, capability: undefined, workerAlive: true, workerStarts: this.view.workerStarts + 1, message: "Loading pinned Stockfish WASM and UCI…" });
       worker.onmessage = event => {
@@ -100,6 +107,7 @@ export class BrowserStockfishController {
     } catch { this.fatal("Browser Worker creation failed. A supported browser and local engine assets are required."); }
   }
   private receive(line: string) {
+    this.trace("recv", line);
     if (!line || line.length > 8192) return;
     if (this.phase === "uci") {
       if (line.startsWith("id name ")) this.update({ engine: line.slice(8, 168) });
@@ -128,7 +136,7 @@ export class BrowserStockfishController {
       return;
     }
     if (this.phase !== "search" || !this.position) return;
-    const info = parseInfo(line); if (!info) return;
+    const info = parseInfo(line, this.dependencies.reasoningEvidence ? 16 : 14); if (!info) return;
     try {
       const projected = projectLiveLine(this.position, info);
       if (this.cohort.accept(projected)) this.update({ lines: this.cohort.lines, depth: this.cohort.depth, complete: this.cohort.complete, elapsed: this.now() - this.searchStarted });
@@ -147,8 +155,19 @@ export class BrowserStockfishController {
     if (threads) options.Threads = 1;
     if (mp) options.MultiPV = multipv;
     if (this.advertised.has("ponder")) options.Ponder = false;
+    if (this.dependencies.reasoningEvidence) {
+      if (this.advertised.size > 64 || !this.advertised.has("clear hash") || !threads || !mp || multipv !== 3) { this.fatal("Complete evidence options, Clear Hash, Threads=1 and MultiPV=3 are required."); return; }
+      for (const option of this.advertised.values()) {
+        if (option.type === "button") { if (option.name !== "Clear Hash") { this.fatal("Unsupported evidence button option."); return; } continue; }
+        if (option.name in options) continue;
+        if (option.type === "spin" && /^-?\d+$/.test(option.default || "")) options[option.name] = Number(option.default);
+        else if (option.type === "check" && ["true", "false"].includes(option.default || "")) options[option.name] = option.default === "true";
+        else if (option.name !== "EvalFile" || option.type !== "string" || option.default !== "nn-61e7af4bb97d.nnue") { this.fatal("Unsupported evidence option inventory."); return; }
+      }
+    }
     this.phase = "config";
     for (const [name, value] of Object.entries(options)) if (!this.send(`setoption name ${name} value ${value}`)) return;
+    if (this.dependencies.reasoningEvidence && !this.send("setoption name EvalFile value nn-61e7af4bb97d.nnue")) return;
     this.update({ options, expected: multipv, capability: multipv < 3 ? `Engine supports only ${multipv} PV(s), not three.` : undefined, message: multipv < 3 ? `Engine capability: only ${multipv} PV(s); missing lines will not be invented.` : "MultiPV=3 sent; awaiting readyok. Observed output confirms returned line count." });
     this.deadline(5000, "Engine option readiness timed out."); this.send("isready");
   }
@@ -157,17 +176,20 @@ export class BrowserStockfishController {
     clearTimeout(this.stageTimer); this.phase = "reset";
     this.update({ status: "ready", lines: [], depth: 0, complete: false, bestmove: undefined });
     if (!this.send("ucinewgame")) return;
+    if (this.dependencies.reasoningEvidence && !this.send("setoption name Clear Hash")) return;
     this.deadline(5000, "Engine reset readiness timed out."); this.send("isready");
   }
   private beginSearch() {
     if (!this.position || !this.view.enabled) return;
     clearTimeout(this.stageTimer); this.phase = "search"; this.cohort = new DepthCohort(Math.min(this.configuredMultiPV, this.position.legalCount)); this.searchStarted = this.now();
-    this.update({ key: this.position.key, status: "searching", expected: this.cohort.expected, lines: [], depth: 0, complete: false, elapsed: 0, message: "Depth 14 or 10 seconds, whichever is reached first." });
-    if (!this.send(positionCommand(this.position)) || !this.send("go depth 14 movetime 10000")) return;
+    const depth = this.dependencies.reasoningEvidence ? 16 : 14, milliseconds = this.dependencies.reasoningEvidence ? 20000 : 10000;
+    this.update({ key: this.position.key, status: "searching", expected: this.cohort.expected, lines: [], depth: 0, complete: false, elapsed: 0, message: `Depth ${depth} or ${milliseconds / 1000} seconds, whichever is reached first.` });
+    if (!this.send(positionCommand(this.position)) || !this.send(`go depth ${depth} movetime ${milliseconds}`)) return;
     this.searchTimer = setTimeout(() => {
       if (this.phase !== "search") return;
+      if (this.dependencies.reasoningEvidence) { this.fatal("Evidence search deadline reached; worker terminated. Retained output is incomplete."); return; }
       if (this.send("stop")) this.searchTimer = setTimeout(() => this.fatal("Search deadline exceeded; worker terminated."), 750);
-    }, 10000);
+    }, milliseconds);
   }
   private now() { return (this.dependencies.now || (() => performance.now()))(); }
   stop() {

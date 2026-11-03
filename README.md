@@ -794,3 +794,39 @@ hashes and build instructions are served under
 `web/public/engines/stockfish-19.0.1/` (see `SOURCE.md`). Preserve these materials
 when distributing the application. This browser feature does not change the
 separately configured, explicitly initialized server evaluation cache.
+
+### Qualified browser reasoning evidence (Segment 20.6.1)
+
+The separate **Collect browser reasoning evidence** control in the Reasoning
+panel starts one explicit selected-position search: depth 16 or 20 seconds,
+Hash16, Threads1, MultiPV3, using the same browser lease and pinned lite engine.
+Ordinary Live Analysis stays at depth14/10s. No automatic catalog, cache, library
+or reasoning-result update occurs. Downloaded receipts include chronological
+worker/session-bound UCI commands, actual acknowledgments, reset/history/search
+and termination. UCI readiness is not an independent option-value readback.
+Browser RSS remains unmeasurable; native resource policy is unchanged.
+
+The offline verifier uses the unchanged reasoning models and depth policy:
+
+```sh
+.venv/bin/python -m src.browser_reasoning_export receipts.json --output /canonical/independent/bundle.json
+.venv/bin/python -m src.reasoning_import validate /canonical/independent/bundle.json
+```
+
+After personally reviewing the exact bundle and receipts, an operator may
+explicitly accept it into a separately chosen directory:
+
+```sh
+.venv/bin/python -m src.reasoning_import accept /canonical/independent/bundle.json --artifact-dir /canonical/independent/reasoning-artifacts --acknowledge-external-engine
+```
+
+This is EXTERNAL_ATTESTED, not cryptographic proof, independent verification or
+an objective-best-move certificate. Without that explicit acknowledgment the
+importer refuses acceptance. A shallow, partial, bound-only or failed collection
+cannot become a qualified comparison. Truncated, inconsistent, illegal or
+missing receipts are refused. Existing source/history checks still apply.
+The importer intentionally rejects source/report directories as live artifact
+locations; use an independent canonical directory. Configure the existing
+`CHESS_COACH_REASONING_DIR` only after an authorized import, then explicitly
+refresh existing evidence. Root MultiPV supports the present bounded candidate
+and recorded-principal-reply comparison; no child tree or new scheduler is added.

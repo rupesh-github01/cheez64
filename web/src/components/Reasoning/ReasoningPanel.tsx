@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { loadReasoning, reasoningKey, reasoningScore, currentReasoningView, type Reasoning, type Availability, type ReasoningLine } from "@/lib/position-reasoning";
 import "./reasoning.css";
+import ReasoningEvidenceSearch from './ReasoningEvidenceSearch';
 const Board = dynamic(() => import("@/components/PlayerDashboard/BoardPreview"), { ssr: false, loading: () => <p>Loading legal variation board…</p> });
 function LineExplorer({ line }: { line: ReasoningLine }) {
   const [step, setStep] = useState(0);
@@ -46,7 +47,8 @@ export default function ReasoningPanel({ gameID, pgn, ply, disabled = false }: {
   }
   const profiles = [...new Set([...(catalog?.bundles.find(b => b.id === bundle)?.profiles || []), ...(data?.comparison.available_profiles || [])])];
   return <section className="reasoning-panel" aria-label="Position reasoning"><p className="reasoning-kicker">SELECTED-POSITION REASONING · EXISTING EVIDENCE ONLY</p><h2>Compare concrete continuations</h2>
-    <p>Compare recorded candidates and a legal alternative. No search, cloud call or background job is started.</p>
+    <p>Compare recorded candidates and a legal alternative. Comparison reads never start a search, cloud call or background job.</p>
+    {!disabled && <ReasoningEvidenceSearch key={JSON.stringify([pgn, ply])} pgn={pgn} ply={ply} />}
     {disabled ? <p>Return to the recorded mainline to inspect reasoning.</p> : <><button onClick={() => void load(true)} disabled={active?.loading}>Inspect existing reasoning evidence</button>
       <label>Alternative move (coordinate notation)<input value={alternative} onChange={e => setAlternative(e.target.value)} placeholder="g1f3 or a7a8n" autoComplete="off" /></label>
       {catalog && <><p>Catalog: {catalog.status}. Entries describe availability, not proof of engine execution.</p><label>Evidence bundle<select value={bundle} onChange={e => setBundle(e.target.value)}><option value="">Retained local evidence / structural fallback</option>{catalog.bundles.map(b => <option key={b.id} value={b.id}>{b.origin} · {b.id.slice(0, 16)}</option>)}</select></label></>}

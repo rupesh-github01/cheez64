@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 const base=new URL('../src/lib/',import.meta.url);
 function module(file,imports={},globals={}){
  const exports={};const source=ts.transpileModule(fs.readFileSync(new URL(file,base),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
- vm.runInNewContext(source,{exports,require:name=>{if(name==='chess.js')return {Chess};if(name in imports)return imports[name];throw new Error(name);},Map,Set,Promise,Error,setTimeout,clearTimeout,performance,fetch:()=>assert.fail('No backend/cloud request permitted'),...globals});return exports;
+ vm.runInNewContext(source,{exports,require:name=>{if(name==='chess.js')return {Chess};if(name in imports)return imports[name];throw new Error(name);},Map,Set,Promise,Error,setTimeout,clearTimeout,queueMicrotask,performance,fetch:()=>assert.fail('No backend/cloud request permitted'),...globals});return exports;
 }
 const model=module('browser-stockfish.ts');
 const replaySource=ts.transpileModule(fs.readFileSync(new URL('../src/components/PlayerDashboard/pgn-context.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -20,11 +20,11 @@ class FakeWorker{
  postMessage(command){this.commands.push(command);}terminate(){this.terminated++;}
  emit(line){this.onmessage?.({data:line});}
 }
-function harness(){
+function harness(extra={}){
  let time=0,id=0,releases=0;const timers=new Map(),workers=[],views=[];
  const set=(fn,delay)=>{const token=++id;timers.set(token,{fn,at:time+delay});return token;};
  const controller=module('browser-stockfish-controller.ts',{'./browser-stockfish':model,'./browser-engine-lease':{acquireBrowserEngine:()=>assert.fail('Injected admission only')}},{setTimeout:set,clearTimeout:token=>timers.delete(token)});
- const c=new controller.BrowserStockfishController(v=>views.push(v),{worker:()=>{const w=new FakeWorker();workers.push(w);return w;},lease:async()=>()=>releases++,now:()=>time});
+ const c=new controller.BrowserStockfishController(v=>views.push(v),{worker:()=>{const w=new FakeWorker();workers.push(w);return w;},lease:async()=>()=>releases++,now:()=>time,...extra});
  return {c,workers,views,get view(){return views.at(-1);},get releases(){return releases;},get timers(){return timers.size;},async start(p=position()){c.start(p);await Promise.resolve();await Promise.resolve();},advance(ms){time+=ms;for(const [key,t] of [...timers])if(t.at<=time){timers.delete(key);t.fn();}}};
 }
 function handshake(h,mp=3){const w=h.workers.at(-1);w.emit('id name Stockfish 19 Lite WASM');w.emit('option name Hash type spin default 16 min 1 max 1024');w.emit('option name Threads type spin default 1 min 1 max 1');w.emit(`option name MultiPV type spin default 1 min 1 max ${mp}`);w.emit('uciok');w.emit('readyok');w.emit('readyok');return w;}
@@ -89,4 +89,17 @@ test('Stop or dispose during asynchronous admission releases the late lease with
  for(const action of ['stop','dispose']){
   let resolve,released=0,created=0;const states=[];const {BrowserStockfishController}=module('browser-stockfish-controller.ts',{'./browser-stockfish':model,'./browser-engine-lease':{}});const c=new BrowserStockfishController(s=>states.push(s),{lease:()=>new Promise(r=>resolve=r),worker:()=>{created++;return new FakeWorker();}});c.start(position());c[action]();resolve(()=>released++);await new Promise(setImmediate);assert.equal(created,0);assert.equal(released,1);c.dispose();
  }
+});
+test('separate evidence mode sends complete options/reset receipts and bounded depth16; live remains depth14',async()=>{
+ const events=[];const h=harness({reasoningEvidence:true,observe:(kind,text)=>events.push({kind,text})});await h.start();const w=h.workers[0];w.emit('id name Stockfish 19 Lite WASM');
+ for(const line of ['Threads type spin default 1 min 1 max 1','Hash type spin default 16 min 1 max 33554432','Clear Hash type button','Ponder type check default false','MultiPV type spin default 1 min 1 max 256','Skill Level type spin default 20 min 0 max 20','Move Overhead type spin default 10 min 0 max 5000','nodestime type spin default 0 min 0 max 10000','UCI_Chess960 type check default false','UCI_LimitStrength type check default false','UCI_Elo type spin default 1320 min 1320 max 3190','UCI_ShowWDL type check default false','EvalFile type string default nn-61e7af4bb97d.nnue'])w.emit('option name '+line);
+ w.emit('uciok');w.emit('readyok');w.emit('readyok');assert.ok(w.commands.includes('setoption name Clear Hash'));assert.equal(w.commands.at(-1),'go depth 16 movetime 20000');assert.ok(w.commands.includes('setoption name UCI_Elo value 1320'));assert.ok(w.commands.includes('setoption name EvalFile value nn-61e7af4bb97d.nnue'));
+ for(const [rank,move]of [[1,'e2e4'],[2,'d2d4'],[3,'g1f3']])w.emit(`info depth 16 multipv ${rank} score cp 35 pv ${move}`);w.emit('bestmove e2e4');assert.equal(h.view.depth,16);assert.equal(h.view.complete,true);h.c.dispose();assert.equal(events.at(-1).kind,'terminated');assert.equal(events[0].kind,'worker_started');assert.equal(events.filter(x=>x.kind==='send'&&x.text.startsWith('go ')).length,1);
+ assert.equal(model.parseInfo('info depth 16 multipv 1 score cp 3 pv e2e4'),undefined);assert.ok(model.parseInfo('info depth 16 multipv 1 score cp 3 pv e2e4',16));
+});
+test('evidence observation failure terminates the worker without automatic restart',async()=>{
+ const h=harness({reasoningEvidence:true,observe:()=>{throw Error('Transcript full');}});await h.start();await new Promise(setImmediate);assert.equal(h.view.status,'error');assert.equal(h.workers[0].terminated,1);assert.equal(h.releases,1);h.c.dispose();
+});
+test('evidence deadline terminates immediately at20s while live keeps its original stop grace',async()=>{
+ const h=harness({reasoningEvidence:true});await h.start();h.workers[0].emit('option name Clear Hash type button');const w=handshake(h);h.advance(19999);assert.equal(w.terminated,0);h.advance(1);assert.equal(w.terminated,1);assert.equal(h.view.status,'error');assert.equal(h.releases,1);assert.equal(h.timers,0);h.c.dispose();
 });
