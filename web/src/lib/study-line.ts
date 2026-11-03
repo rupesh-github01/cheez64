@@ -1,8 +1,8 @@
 import { Chess, DEFAULT_POSITION } from 'chess.js';
 export { DEFAULT_POSITION };
 export const MAX_STUDY_PLIES = 500;
-export type StudyMove = { id?: string; ply_index: number; uci: string; san: string; fen_after: string; has_comment?: boolean };
-export type StudySequence = { line_id: string; initial_fen: string; updated_at: string; moves: StudyMove[] };
+export type StudyMove = { id?: string; ply_index: number; uci: string; san: string; fen_after: string; has_comment?: boolean; comment?: string };
+export type StudySequence = { line_id: string; initial_fen: string; updated_at: string; moves: StudyMove[]; starting_note?: string; notes_enabled?: boolean };
 export function terminal(board: Chess) {
   return board.isCheckmate() || board.isStalemate() || board.isInsufficientMaterial() || Number(board.fen().split(' ')[4]) >= 150;
 }
@@ -41,4 +41,35 @@ export function proposeMove(sequence: Pick<StudySequence, 'initial_fen' | 'moves
   if (sequence.moves[selected]?.uci === uci) return { advance: true as const, uci, replacement: false };
   replayLine(sequence.initial_fen, [...prefix, uci]);
   return { advance: false as const, uci, replacement: selected < sequence.moves.length };
+}
+
+export type NoteDrafts = Record<string, string>;
+export type CommentResult = { line_id: string; move_id: string | null; comment: string; updated_at: string };
+export function noteText(line: StudySequence, key: string | null) {
+  return key === 'root' ? line.starting_note || '' : line.moves.find(m => m.id === key)?.comment || '';
+}
+export function editNoteDraft(line: StudySequence, drafts: NoteDrafts, key: string, text: string): NoteDrafts {
+  const next = { ...drafts };
+  if (text === noteText(line, key)) delete next[key]; else next[key] = text;
+  return next;
+}
+export async function persistNoteDrafts(line: StudySequence, drafts: NoteDrafts,
+  write: (path: string, body: { comment: string; expected_updated_at: string }) => Promise<CommentResult>,
+  accepted: (line: StudySequence, key: string) => void) {
+  let current = line;
+  for (const [key, text] of Object.entries(drafts)) {
+    if (key !== 'root' && !current.moves.some(m => m.id === key)) throw Error('This move is no longer in the saved line. Reload before editing.');
+    const result = await write(`/lines/${current.line_id}/${key === 'root' ? 'starting-note' : `moves/${key}/comment`}`, { comment: text, expected_updated_at: current.updated_at });
+    if (result.line_id !== current.line_id || result.move_id !== (key === 'root' ? null : key)) throw Error('Unexpected note identity returned by the server.');
+    current = { ...current, updated_at: result.updated_at,
+      ...(key === 'root' ? { starting_note: result.comment } : { moves: current.moves.map(m => m.id === key ? { ...m, comment: result.comment, has_comment: !!result.comment } : m) }) };
+    // Publish each accepted revision. A later failure retains only the unsaved drafts.
+    accepted(current, key);
+  }
+  return current;
+}
+
+export function initialNoteForFen(saved: StudySequence, current: StudySequence, fen: string) {
+  // Returning to the saved root before saving must restore its original note.
+  return fen === saved.initial_fen ? saved.starting_note || '' : fen === current.initial_fen ? current.starting_note || '' : '';
 }

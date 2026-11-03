@@ -9,12 +9,13 @@ import sqlite3
 import uuid
 import chess
 from .evaluation_cache import safe_path, CacheUnavailable, ROOT
-from .study_models import Metadata, SubStudyInput, SequenceInput
+from .study_models import Metadata, SubStudyInput, SequenceInput, CommentInput
 
 
 class StudyUnavailable(ValueError):pass
 class StudyConflict(ValueError):pass
 class StudySequenceError(ValueError):pass
+class StudyMigrationRequired(StudyUnavailable):pass
 
 
 def replay_sequence(fen, moves):
@@ -38,7 +39,7 @@ def replay_sequence(fen, moves):
 
 
 DDL = (
- 'CREATE TABLE study_meta(id INTEGER PRIMARY KEY CHECK(id=1),version INTEGER NOT NULL CHECK(version=1))',
+ 'CREATE TABLE study_meta(id INTEGER PRIMARY KEY CHECK(id=1),version INTEGER NOT NULL CHECK(version=2))',
  '''CREATE TABLE studies(id TEXT PRIMARY KEY NOT NULL,title TEXT NOT NULL CHECK(length(trim(title)) BETWEEN 1 AND 160),
  description TEXT NOT NULL CHECK(length(description)<=5000),created_at TEXT NOT NULL,updated_at TEXT NOT NULL)''',
  '''CREATE TABLE sub_studies(id TEXT PRIMARY KEY NOT NULL,study_id TEXT NOT NULL REFERENCES studies(id) ON DELETE CASCADE,
@@ -46,6 +47,7 @@ DDL = (
  sort_order INTEGER NOT NULL CHECK(sort_order>=0),created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(study_id,sort_order))''',
  '''CREATE TABLE study_lines(id TEXT PRIMARY KEY NOT NULL,sub_study_id TEXT NOT NULL REFERENCES sub_studies(id) ON DELETE CASCADE,
  title TEXT NOT NULL CHECK(length(trim(title)) BETWEEN 1 AND 160),description TEXT NOT NULL CHECK(length(description)<=5000),initial_fen TEXT NOT NULL,
+ starting_note TEXT NOT NULL DEFAULT '' CHECK(length(starting_note)<=5000),
  sort_order INTEGER NOT NULL CHECK(sort_order>=0),created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(sub_study_id,sort_order))''',
  '''CREATE TABLE line_moves(id TEXT PRIMARY KEY NOT NULL,line_id TEXT NOT NULL REFERENCES study_lines(id) ON DELETE CASCADE,
  ply_index INTEGER NOT NULL CHECK(ply_index>=1),uci TEXT NOT NULL,san TEXT NOT NULL,fen_after TEXT NOT NULL,comment TEXT NOT NULL DEFAULT '',UNIQUE(line_id,ply_index))''',
@@ -77,10 +79,12 @@ class StudyStore:
         try:
             row=c.execute('SELECT version FROM study_meta WHERE id=1').fetchone()
             tables={r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-            if row is None or row[0]!=1 or tables != {'study_meta','studies','sub_studies','study_lines','line_moves'}:raise StudyUnavailable('STUDY_STORE_INCOMPATIBLE')
+            if row is None or row[0] not in (1,2) or c.execute('SELECT count(*) FROM study_meta').fetchone()[0]!=1 or tables != {'study_meta','studies','sub_studies','study_lines','line_moves'}:raise StudyUnavailable('STUDY_STORE_INCOMPATIBLE')
             # Fail before writes if a same-name but foreign schema was supplied.
-            for table,cols in [('studies',{'id','title','description','created_at','updated_at'}),('sub_studies',{'id','study_id','title','description','source_url','sort_order','created_at','updated_at'}),('study_lines',{'id','sub_study_id','title','description','initial_fen','sort_order','created_at','updated_at'}),('line_moves',{'id','line_id','ply_index','uci','san','fen_after','comment'})]:
+            for table,cols in [('study_meta',{'id','version'}),('studies',{'id','title','description','created_at','updated_at'}),('sub_studies',{'id','study_id','title','description','source_url','sort_order','created_at','updated_at'}),('study_lines',{'id','sub_study_id','title','description','initial_fen','sort_order','created_at','updated_at'}),('line_moves',{'id','line_id','ply_index','uci','san','fen_after','comment'})]:
+                if table=='study_lines' and row[0]==2:cols=cols|{'starting_note'}
                 if {r[1] for r in c.execute(f'PRAGMA table_info({table})')}!=cols:raise StudyUnavailable('STUDY_STORE_INCOMPATIBLE')
+            return row[0]
         except sqlite3.DatabaseError:raise StudyUnavailable('STUDY_STORE_INCOMPATIBLE') from None
 
     @contextmanager
@@ -93,8 +97,8 @@ class StudyStore:
         try:
             c.execute('PRAGMA foreign_keys=ON');c.execute('PRAGMA busy_timeout=1000')
             if not write:c.execute('PRAGMA query_only=ON')
-            if not initialize:self._check(c)
             c.execute('BEGIN IMMEDIATE' if write else 'BEGIN')
+            if not initialize:self._check(c)
             yield c
             if write:c.commit()
         finally:c.rollback();c.close()
@@ -103,12 +107,21 @@ class StudyStore:
         with self.connection(True,True) as c:
             if c.execute("SELECT 1 FROM sqlite_master WHERE type='table'").fetchone():self._check(c);return
             for sql in DDL:c.execute(sql)
-            c.execute('INSERT INTO study_meta VALUES(1,1)')
+            c.execute('INSERT INTO study_meta VALUES(1,2)')
+
+    def migrate(self):
+        """Explicit, transactional v1 -> v2 only; never called by HTTP or initialize."""
+        with self.connection(True) as c:
+            if self._check(c)==2:return
+            c.execute("ALTER TABLE study_lines ADD COLUMN starting_note TEXT NOT NULL DEFAULT '' CHECK(length(starting_note)<=5000)")
+            # v1's CHECK(version=1) cannot be updated in place. Rebuild only its singleton marker.
+            c.execute('DROP TABLE study_meta');c.execute(DDL[0]);c.execute('INSERT INTO study_meta VALUES(1,2)')
+            self._check(c)
 
     def status(self):
         try:
-            with self.connection():pass
-            return {'status':'AVAILABLE','schema_version':1}
+            with self.connection() as c:version=self._check(c)
+            return {'status':'AVAILABLE','schema_version':version,'notes_enabled':version==2,'migration_required':version==1}
         except (CacheUnavailable,StudyUnavailable,sqlite3.DatabaseError,OSError):
             return {'status':'UNINITIALIZED' if not self.path.exists() else 'UNAVAILABLE','message':'Initialize an independent study store explicitly; no file was created by this read.'}
 
@@ -120,7 +133,7 @@ class StudyStore:
 
     def get(self,kind,identifier):
         table,_,_=TABLES[kind]
-        with self.connection() as c:return self._get(c,table,identifier)
+        with self.connection() as c:return {k:v for k,v in self._get(c,table,identifier).items() if k!='starting_note'}
 
     def listing(self,kind,parent=None,limit=50,offset=0):
         if not 1<=limit<=100 or offset<0:raise ValueError('Invalid page')
@@ -130,7 +143,8 @@ class StudyStore:
             where=f' WHERE {fk}=?' if fk else '';args=(parent,) if fk else ()
             total=c.execute(f'SELECT count(*) FROM {table}'+where,args).fetchone()[0]
             order='sort_order,id' if fk else 'updated_at DESC,id'
-            rows=[dict(r) for r in c.execute(f'SELECT * FROM {table}{where} ORDER BY {order} LIMIT ? OFFSET ?',(*args,limit,offset))]
+            columns=','.join(r[1] for r in c.execute(f'PRAGMA table_info({table})') if r[1]!='starting_note')
+            rows=[dict(r) for r in c.execute(f'SELECT {columns} FROM {table}{where} ORDER BY {order} LIMIT ? OFFSET ?',(*args,limit,offset))]
             return {'items':rows,'total':total,'offset':offset,'limit':limit,'next_offset':offset+limit if offset+limit<total else None}
 
     def create(self,kind,body,parent=None):
@@ -144,14 +158,14 @@ class StudyStore:
             if kind=='line':values['initial_fen']=chess.STARTING_FEN
             fields=','.join(values);marks=','.join('?' for _ in values)
             c.execute(f'INSERT INTO {table} ({fields}) VALUES ({marks})',tuple(values.values()))
-            return self._get(c,table,values['id'])
+            return {k:v for k,v in self._get(c,table,values['id']).items() if k!='starting_note'}
 
     def update(self,kind,identifier,body):
         values=(SubStudyInput if kind=='sub' else Metadata).model_validate(body).model_dump();table=TABLES[kind][0]
         with self.connection(True) as c:
             self._get(c,table,identifier);values['updated_at']=now()
             c.execute(f'UPDATE {table} SET '+','.join(k+'=?' for k in values)+' WHERE id=?',(*values.values(),identifier))
-            return self._get(c,table,identifier)
+            return {k:v for k,v in self._get(c,table,identifier).items() if k!='starting_note'}
 
     def delete(self,kind,identifier):
         table=TABLES[kind][0]
@@ -169,7 +183,8 @@ class StudyStore:
                 raise StudyUnavailable('STUDY_SEQUENCE_INCONSISTENT')
         except StudySequenceError:raise StudyUnavailable('STUDY_SEQUENCE_INCONSISTENT') from None
         return {'line_id':identifier,'initial_fen':fen,'updated_at':line['updated_at'],
-                'moves':[{k:r[k] for k in ('id','ply_index','uci','san','fen_after')}|{'has_comment':bool(r['comment'])} for r in rows]}
+                'starting_note':line.get('starting_note',''),'notes_enabled':'starting_note' in line,
+                'moves':[{k:r[k] for k in ('id','ply_index','uci','san','fen_after','comment')}|{'has_comment':bool(r['comment'])} for r in rows]}
 
     def sequence(self,identifier):
         with self.connection() as c:return self._sequence(c,identifier)
@@ -187,14 +202,31 @@ class StudyStore:
                 for previous,current in zip(old['moves'],records):
                     if previous['uci']!=current['uci']:break
                     prefix+=1
-            if prefix<len(old['moves']) and not body.confirm_discard:
+            root_changed=fen!=old['initial_fen']
+            if (prefix<len(old['moves']) or (root_changed and old['starting_note'])) and not body.confirm_discard:
                 raise StudyConflict('Confirm replacement of the existing continuation and any associated comments')
             c.execute('DELETE FROM line_moves WHERE line_id=? AND ply_index>?',(identifier,prefix))
             for record in records[prefix:]:
                 c.execute('INSERT INTO line_moves(id,line_id,ply_index,uci,san,fen_after) VALUES(?,?,?,?,?,?)',
                           (uuid.uuid4().hex,identifier,record['ply_index'],record['uci'],record['san'],record['fen_after']))
             c.execute('UPDATE study_lines SET initial_fen=?,updated_at=? WHERE id=?',(fen,now(),identifier))
+            if root_changed and old['notes_enabled']:c.execute("UPDATE study_lines SET starting_note='' WHERE id=?",(identifier,))
             return self._sequence(c,identifier)
+
+    def save_comment(self,identifier,move_id,body):
+        body=CommentInput.model_validate(body)
+        with self.connection(True) as c:
+            line=self._get(c,'study_lines',identifier)
+            if 'starting_note' not in line:raise StudyMigrationRequired('Study notes require explicit schema2 migration')
+            if move_id is not None:
+                row=c.execute('SELECT id FROM line_moves WHERE id=? AND line_id=?',(move_id,identifier)).fetchone()
+                if row is None:raise KeyError('STUDY_MOVE_NOT_FOUND')
+            if line['updated_at']!=body.expected_updated_at:
+                raise StudyConflict('Line changed since it was loaded. Reload the saved line before editing again.')
+            if move_id is None:c.execute('UPDATE study_lines SET starting_note=? WHERE id=?',(body.comment,identifier))
+            else:c.execute('UPDATE line_moves SET comment=? WHERE id=? AND line_id=?',(body.comment,move_id,identifier))
+            stamp=now();c.execute('UPDATE study_lines SET updated_at=? WHERE id=?',(stamp,identifier))
+            return {'line_id':identifier,'move_id':move_id,'comment':body.comment,'updated_at':stamp}
 
     def reorder(self,kind,parent,ids):
         from .study_models import Reorder
@@ -223,8 +255,9 @@ class StudyStore:
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('command',choices=['init','status','backup']);parser.add_argument('--db');parser.add_argument('--output');a=parser.parse_args();store=StudyStore(a.db)
-    if a.command=='init':store.initialize();print('Independent study store initialized (schema1).')
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('command',choices=['init','migrate','status','backup']);parser.add_argument('--db');parser.add_argument('--output');a=parser.parse_args();store=StudyStore(a.db)
+    if a.command=='init':store.initialize();print(json.dumps(store.status()))
+    elif a.command=='migrate':store.migrate();print(json.dumps(store.status()))
     elif a.command=='status':print(json.dumps(store.status()))
     else:
         if not a.output:parser.error('backup requires --output')

@@ -83,6 +83,7 @@ class SequenceMove(BaseModel):
     san: str
     fen_after: str
     has_comment: bool
+    comment: str
 
 
 class SequenceView(BaseModel):
@@ -90,6 +91,28 @@ class SequenceView(BaseModel):
     initial_fen: str
     updated_at: str
     moves: list[SequenceMove]
+    starting_note: str
+    notes_enabled: bool
+
+
+class CommentInput(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    comment: str = Field(max_length=5000)
+    expected_updated_at: str = Field(min_length=1, max_length=64)
+
+    @field_validator('comment')
+    @classmethod
+    def text(cls,value):
+        # Preserve the author's whitespace/newlines exactly, without accepting NULs.
+        if '\0' in value or any(0xD800<=ord(c)<=0xDFFF for c in value):raise ValueError('Notes require valid Unicode without NUL characters')
+        return value
+
+
+class CommentView(BaseModel):
+    line_id: str
+    move_id: str | None
+    comment: str
+    updated_at: str
 
 
 from typing import Generic, TypeVar

@@ -5,8 +5,8 @@ import sqlite3
 from urllib.parse import urlsplit
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.routing import APIRoute
-from src.study_models import Metadata,SubStudyInput,StudyView,SubStudyView,LineView,Page,Reorder,SequenceInput,SequenceView
-from src.study_store import StudyStore,StudyUnavailable,StudyConflict,StudySequenceError
+from src.study_models import Metadata,SubStudyInput,StudyView,SubStudyView,LineView,Page,Reorder,SequenceInput,SequenceView,CommentInput,CommentView
+from src.study_store import StudyStore,StudyUnavailable,StudyConflict,StudySequenceError,StudyMigrationRequired
 from src.evaluation_cache import CacheUnavailable
 
 
@@ -46,6 +46,7 @@ def invoke(call):
     except KeyError:raise HTTPException(404,'Study item or parent not found') from None
     except StudyConflict as e:raise HTTPException(409,str(e)) from None
     except StudySequenceError as e:raise HTTPException(400,str(e)) from None
+    except StudyMigrationRequired:raise HTTPException(503,'Study notes require explicit operator migration: python -m src.study_store migrate') from None
     except (StudyUnavailable,CacheUnavailable):raise HTTPException(503,'Study store uninitialized, incompatible or unsafe. Explicit operator setup is required.') from None
     except ValueError:raise HTTPException(400,'Invalid study metadata or ordering') from None
     except sqlite3.IntegrityError:raise HTTPException(409,'Study relationship or order conflict') from None
@@ -147,3 +148,13 @@ def sequence(line_id:str):return invoke(lambda s:s.sequence(line_id))
 @router.put('/lines/{line_id}/sequence',response_model=SequenceView)
 def save_sequence(line_id:str,body:SequenceInput,request:Request):
     authorize(request);return invoke(lambda s:s.save_sequence(line_id,body.model_dump()))
+
+
+@router.put('/lines/{line_id}/moves/{move_id}/comment',response_model=CommentView)
+def save_comment(line_id:str,move_id:str,body:CommentInput,request:Request):
+    authorize(request);return invoke(lambda s:s.save_comment(line_id,move_id,body.model_dump()))
+
+
+@router.put('/lines/{line_id}/starting-note',response_model=CommentView)
+def save_starting_note(line_id:str,body:CommentInput,request:Request):
+    authorize(request);return invoke(lambda s:s.save_comment(line_id,None,body.model_dump()))

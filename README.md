@@ -831,7 +831,7 @@ locations; use an independent canonical directory. Configure the existing
 refresh existing evidence. Root MultiPV supports the present bounded candidate
 and recorded-principal-reply comparison; no child tree or new scheduler is added.
 
-### Personal Study Workspace (Segments 20.8A–B)
+### Personal Study Workspace (Segments 20.8A–C)
 
 Open **Study** in the main navigation (`/study`) to organize
 **Study → Sub-study → Study Line**. Titles, descriptions, optional HTTP(S) source
@@ -841,7 +841,7 @@ keyboard entry, move navigation and board flip. Reset to standard chess or paste
 a custom six-field FEN, then explicitly **Save line**. The server validates the
 whole sequence and generates SAN/FEN; up to 500 plies are supported. Replacing a
 continuation requires confirmation. Unchanged move rows and any existing notes
-are preserved; per-move note editing remains deferred. Concurrent stale saves
+are preserved. Concurrent stale saves
 are rejected: reload the saved line before editing again. No engine runs here.
 
 One-time explicit initialization (creates only the independent study database):
@@ -881,4 +881,40 @@ Lists are paginated; sub-studies and lines append in stable order. Each parent
 supports up to 500 children. Reordering requires the exact current sibling set;
 the UI offers arrows when all siblings fit on one 50-item page. Duplicate titles
 are allowed, identities are separate, and deletion requires explicit confirmation
-before cascading to descendants. No study move-editing endpoints exist yet.
+before cascading to descendants.
+
+Select a saved move (or **Initial position**) to edit its plain-text note. Notes
+support multiline Unicode text, up to 5,000 characters. **Save note** saves the
+selected draft; **Save all notes** explicitly saves all drafts in this line.
+Drafts remain associated with stable move IDs while navigating. Clear comment
+stages an empty draft; save to persist the deletion. Save/discard note drafts
+before changing moves, and save the sequence before annotating new moves.
+Concurrent stale writes return a conflict and keep local drafts. Save all notes
+uses sequential revision-checked requests: if a later request fails, earlier
+accepted notes remain saved and the remaining drafts are retained.
+
+Fresh stores use schema2. Existing schema1 stores remain browseable/editable for
+sequences, but notes require an **explicit operator migration**. Startup, GET,
+`init` on an existing store and ordinary API writes never migrate it. Back up the
+configured study store to a new dedicated path, verify the snapshot, stop study
+writers, and then run these commands manually with the same canonical `--db`:
+
+```sh
+.venv/bin/python -m src.study_store migrate --db /canonical/private/studies.db
+.venv/bin/python -m src.study_store status --db /canonical/private/studies.db
+```
+
+The transactional, idempotent v1→v2 migration adds `study_lines.starting_note`,
+preserving hierarchy, IDs, moves, comments and timestamps. Restart the API with
+this code after migration and reload the editor. Migration does not touch the
+GameLibrary or any other independent store. No personal store was migrated by
+automated validation.
+
+The selected-line sequence GET includes its comments and starting note. Focused
+PUT endpoints `/api/studies/lines/{line_id}/moves/{move_id}/comment` and
+`/api/studies/lines/{line_id}/starting-note` require comment text and the expected
+line timestamp, with the existing local-action and read-only protections.
+Changing the initial FEN requires confirmation before deleting an existing root
+note; replacing a tail never transfers notes to a different move at the same ply.
+The sub-study source link is available on the line page without embedding or
+fetching it. No engine/provider/evidence operation is involved.
