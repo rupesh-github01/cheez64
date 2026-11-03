@@ -830,3 +830,50 @@ locations; use an independent canonical directory. Configure the existing
 `CHESS_COACH_REASONING_DIR` only after an authorized import, then explicitly
 refresh existing evidence. Root MultiPV supports the present bounded candidate
 and recorded-principal-reply comparison; no child tree or new scheduler is added.
+
+### Personal Study Workspace (Segment 20.8A)
+
+Open **Study** in the main navigation (`/study`) to organize
+**Study → Sub-study → Study Line**. Titles, descriptions, optional HTTP(S) source
+links and child ordering persist in an independent SQLite database. Lines have
+their own standard six-field starting FEN. The line detail page edits metadata;
+the interactive board editor and per-move notes are intentionally deferred.
+
+One-time explicit initialization (creates only the independent study database):
+
+```sh
+.venv/bin/python -m src.study_store init
+.venv/bin/python -m src.study_store status
+```
+
+The default is `data/studies.db`. Set `CHESS_COACH_STUDY_DB` on the API process
+for another dedicated canonical path, or pass `--db /canonical/studies.db` to the
+CLI. The parent directory must already exist. Never point it at another store.
+API startup, GET requests and CRUD against a missing store never initialize it.
+Missing/incompatible storage shows a setup message; refresh after operator setup.
+`run.sh` commands and startup paths are unchanged. `CHESS_COACH_READ_ONLY=true`
+permits browsing and rejects all study mutations; restart with the intended
+read-only setting after configuration changes. The browser uses the existing
+NEXT_PUBLIC_API_URL, with local JSON-action guards for mutations.
+
+Safe on-demand snapshot while the app is running:
+
+```sh
+.venv/bin/python -m src.study_store backup --output /canonical/private/study-snapshot.sqlite3
+.venv/bin/python -m src.study_store status --db /canonical/private/study-snapshot.sqlite3
+```
+
+This uses SQLite's consistent backup API, refuses existing destinations and
+never copies a live WAL/SHM pair by hand. Use a dedicated study-backup location;
+`data/backups/` is reserved for protected GameLibrary backups. Keep snapshots
+private. For recovery, stop study users, preserve the current study file and
+restore a verified snapshot to a **new independent path**, then point
+CHESS_COACH_STUDY_DB at it. No automatic restore/migration service is included.
+SQLite files, sidecars and snapshots remain covered by the existing Git ignore
+patterns.
+
+Lists are paginated; sub-studies and lines append in stable order. Each parent
+supports up to 500 children. Reordering requires the exact current sibling set;
+the UI offers arrows when all siblings fit on one 50-item page. Duplicate titles
+are allowed, identities are separate, and deletion requires explicit confirmation
+before cascading to descendants. No study move-editing endpoints exist yet.

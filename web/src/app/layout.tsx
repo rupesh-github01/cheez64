@@ -48,6 +48,7 @@ export default function RootLayout({
             </span>
           </Link>
           <nav style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            <Link href="/study" style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Study</Link>
             <Link href="/practice" style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Practice</Link>
             <Link
               href="/dashboard"

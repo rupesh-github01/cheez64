@@ -73,7 +73,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -85,6 +85,7 @@ from api.reasoning import router as reasoning_router
 from api.practice import router as practice_router
 from api.evaluations import router as evaluations_router
 from api.progressive import router as progressive_router
+from api.studies import router as studies_router
 
 app.include_router(management_router)
 app.include_router(positions_router)
@@ -95,6 +96,7 @@ app.include_router(reasoning_router)
 app.include_router(practice_router)
 app.include_router(evaluations_router)
 app.include_router(progressive_router)
+app.include_router(studies_router)
 
 
 @app.middleware("http")
