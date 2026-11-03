@@ -200,7 +200,8 @@ def build_lines(root, candidates, evidence_by_move, comparison, budget, claims, 
                 capture = event.get('capture')
                 description = f'{san} ({text[:2]} to {text[2:4]})'
                 if capture:
-                    description += f' captures {capture["piece"]} on {capture["square"]}'
+                    captured = chess.Piece.from_symbol(capture['piece'])
+                    description += f' captures a {"white" if captured.color else "black"} {chess.piece_name(captured.piece_type)} on {capture["square"]}'
                 if board.is_checkmate(): description += ' gives actual checkmate'
                 elif board.is_check(): description += ' gives check'
                 claim('BOARD_FACT', f'At {cid}, {description}. This is a fact about the shown line, not a forced-outcome claim.', [cid, line_id])
