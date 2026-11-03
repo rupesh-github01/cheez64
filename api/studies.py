@@ -5,8 +5,8 @@ import sqlite3
 from urllib.parse import urlsplit
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.routing import APIRoute
-from src.study_models import Metadata,SubStudyInput,StudyView,SubStudyView,LineView,Page,Reorder
-from src.study_store import StudyStore,StudyUnavailable,StudyConflict
+from src.study_models import Metadata,SubStudyInput,StudyView,SubStudyView,LineView,Page,Reorder,SequenceInput,SequenceView
+from src.study_store import StudyStore,StudyUnavailable,StudyConflict,StudySequenceError
 from src.evaluation_cache import CacheUnavailable
 
 
@@ -17,7 +17,7 @@ class StudyRoute(APIRoute):
             if request.method not in ('GET','HEAD','OPTIONS'):
                 body=bytearray()
                 async for chunk in request.stream():
-                    if len(body)+len(chunk)>32768:raise HTTPException(413,'Study metadata request exceeds 32 KiB')
+                    if len(body)+len(chunk)>32768:raise HTTPException(413,'Study request exceeds 32 KiB')
                     body.extend(chunk)
                 request._body=bytes(body)
             return await handler(request)
@@ -45,6 +45,7 @@ def invoke(call):
     try:return call(StudyStore())
     except KeyError:raise HTTPException(404,'Study item or parent not found') from None
     except StudyConflict as e:raise HTTPException(409,str(e)) from None
+    except StudySequenceError as e:raise HTTPException(400,str(e)) from None
     except (StudyUnavailable,CacheUnavailable):raise HTTPException(503,'Study store uninitialized, incompatible or unsafe. Explicit operator setup is required.') from None
     except ValueError:raise HTTPException(400,'Invalid study metadata or ordering') from None
     except sqlite3.IntegrityError:raise HTTPException(409,'Study relationship or order conflict') from None
@@ -137,3 +138,12 @@ def update_line(line_id:str,body:Metadata,request:Request):
 @router.delete('/lines/{line_id}')
 def delete_line(line_id:str,request:Request):
     authorize(request);return invoke(lambda s:s.delete('line',line_id))
+
+
+@router.get('/lines/{line_id}/sequence',response_model=SequenceView)
+def sequence(line_id:str):return invoke(lambda s:s.sequence(line_id))
+
+
+@router.put('/lines/{line_id}/sequence',response_model=SequenceView)
+def save_sequence(line_id:str,body:SequenceInput,request:Request):
+    authorize(request);return invoke(lambda s:s.save_sequence(line_id,body.model_dump()))

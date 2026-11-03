@@ -1,4 +1,4 @@
-"""Metadata only; move/FEN editing belongs to the subsequent workspace stage."""
+"""Strict study metadata and authoritative linear-sequence contracts."""
 from urllib.parse import urlsplit
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -58,6 +58,38 @@ class LineView(StudyView):
     sub_study_id: str
     initial_fen: str
     sort_order: int
+
+
+class SequenceInput(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    initial_fen: str = Field(min_length=15, max_length=200)
+    moves: list[str] = Field(max_length=500)
+    expected_updated_at: str = Field(min_length=1, max_length=64)
+    confirm_discard: bool = False
+
+    @field_validator('moves')
+    @classmethod
+    def uci_moves(cls, value):
+        import re
+        if any(re.fullmatch(r'[a-h][1-8][a-h][1-8][qrbn]?', move) is None for move in value):
+            raise ValueError('Use standard UCI moves, including a promotion piece where required')
+        return value
+
+
+class SequenceMove(BaseModel):
+    id: str
+    ply_index: int
+    uci: str
+    san: str
+    fen_after: str
+    has_comment: bool
+
+
+class SequenceView(BaseModel):
+    line_id: str
+    initial_fen: str
+    updated_at: str
+    moves: list[SequenceMove]
 
 
 from typing import Generic, TypeVar

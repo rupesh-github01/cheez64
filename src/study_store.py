@@ -9,11 +9,32 @@ import sqlite3
 import uuid
 import chess
 from .evaluation_cache import safe_path, CacheUnavailable, ROOT
-from .study_models import Metadata, SubStudyInput
+from .study_models import Metadata, SubStudyInput, SequenceInput
 
 
 class StudyUnavailable(ValueError):pass
 class StudyConflict(ValueError):pass
+class StudySequenceError(ValueError):pass
+
+
+def replay_sequence(fen, moves):
+    """Standard chess only; retain all six FEN fields, including the EP target."""
+    import re
+    fields=fen.split()
+    if len(fields)!=6 or not re.fullmatch(r'0|[1-9][0-9]*',fields[4]) or not re.fullmatch(r'[1-9][0-9]*',fields[5]):
+        raise StudySequenceError('Use a six-field FEN with valid move counters')
+    try:board=chess.Board(fen)
+    except ValueError:raise StudySequenceError('Invalid initial FEN') from None
+    if not board.is_valid():raise StudySequenceError('Initial position is not a valid standard chess position')
+    canonical=board.fen(en_passant='fen');records=[]
+    for index,uci in enumerate(moves,1):
+        if board.is_game_over(claim_draw=False):raise StudySequenceError(f'Ply {index}: no moves allowed after a terminal position')
+        try:move=chess.Move.from_uci(uci)
+        except ValueError:raise StudySequenceError(f'Ply {index}: invalid UCI move') from None
+        if move not in board.legal_moves:raise StudySequenceError(f'Ply {index}: illegal move {uci}')
+        san=board.san(move);board.push(move)
+        records.append({'ply_index':index,'uci':uci,'san':san,'fen_after':board.fen(en_passant='fen')})
+    return canonical,records
 
 
 DDL = (
@@ -137,6 +158,43 @@ class StudyStore:
         with self.connection(True) as c:
             self._get(c,table,identifier);c.execute(f'DELETE FROM {table} WHERE id=?',(identifier,))
             return {'deleted':identifier}
+
+    def _sequence(self,c,identifier):
+        line=self._get(c,'study_lines',identifier)
+        rows=[dict(r) for r in c.execute('SELECT * FROM line_moves WHERE line_id=? ORDER BY ply_index LIMIT 501',(identifier,))]
+        if len(rows)>500:raise StudyUnavailable('STUDY_SEQUENCE_TOO_LONG')
+        try:
+            fen,checked=replay_sequence(line['initial_fen'],[r['uci'] for r in rows])
+            if any(any(row[k]!=valid[k] for k in ('ply_index','uci','san','fen_after')) for row,valid in zip(rows,checked)):
+                raise StudyUnavailable('STUDY_SEQUENCE_INCONSISTENT')
+        except StudySequenceError:raise StudyUnavailable('STUDY_SEQUENCE_INCONSISTENT') from None
+        return {'line_id':identifier,'initial_fen':fen,'updated_at':line['updated_at'],
+                'moves':[{k:r[k] for k in ('id','ply_index','uci','san','fen_after')}|{'has_comment':bool(r['comment'])} for r in rows]}
+
+    def sequence(self,identifier):
+        with self.connection() as c:return self._sequence(c,identifier)
+
+    def save_sequence(self,identifier,body):
+        body=SequenceInput.model_validate(body)
+        # Validate bounded input before obtaining the write lock; nothing is written on failure.
+        fen,records=replay_sequence(body.initial_fen,body.moves)
+        with self.connection(True) as c:
+            old=self._sequence(c,identifier)
+            if old['updated_at']!=body.expected_updated_at:
+                raise StudyConflict('Line changed since it was loaded. Reload the saved line before editing again.')
+            prefix=0
+            if fen==old['initial_fen']:
+                for previous,current in zip(old['moves'],records):
+                    if previous['uci']!=current['uci']:break
+                    prefix+=1
+            if prefix<len(old['moves']) and not body.confirm_discard:
+                raise StudyConflict('Confirm replacement of the existing continuation and any associated comments')
+            c.execute('DELETE FROM line_moves WHERE line_id=? AND ply_index>?',(identifier,prefix))
+            for record in records[prefix:]:
+                c.execute('INSERT INTO line_moves(id,line_id,ply_index,uci,san,fen_after) VALUES(?,?,?,?,?,?)',
+                          (uuid.uuid4().hex,identifier,record['ply_index'],record['uci'],record['san'],record['fen_after']))
+            c.execute('UPDATE study_lines SET initial_fen=?,updated_at=? WHERE id=?',(fen,now(),identifier))
+            return self._sequence(c,identifier)
 
     def reorder(self,kind,parent,ids):
         from .study_models import Reorder

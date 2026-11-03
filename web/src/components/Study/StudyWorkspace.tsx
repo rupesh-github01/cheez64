@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { studyRequest, useStudy, type StudyItem, type StudyPage, type StudyStatus } from '@/lib/studies';
 import './study.css';
+import LineEditor from './LineEditor';
 type Kind = 'study' | 'sub-study' | 'line';
 function Message({ loading, error }: { loading?: boolean; error?: string }) { return loading ? <p role="status" className="study-muted">Loading study workspace…</p> : error ? <p role="alert" className="study-error">{error}</p> : null; }
 function StoreBanner({ status, error }: { status?: StudyStatus; error?: string }) {
@@ -28,13 +29,13 @@ function MetadataForm({ kind, initial, disabled, onSave, onCancel }: { kind: Kin
     <Message error={error} /><div className="study-actions"><button disabled={disabled || busy || !title.trim()}>{busy ? 'Saving…' : `${initial ? 'Save' : 'Create'} ${kind}`}</button>{onCancel && <button type="button" onClick={onCancel} disabled={busy}>Cancel edit</button>}</div>
   </form>;
 }
-function Entity({ item, kind, endpoint, href, writable, refresh, deleted, children }: { item: StudyItem; kind: Kind; endpoint: string; href?: string; writable: boolean; refresh: () => void; deleted?: () => void; children?: React.ReactNode }) {
+function Entity({ item, kind, endpoint, href, writable, refresh, deleted, children, onActivity }: { item: StudyItem; kind: Kind; endpoint: string; href?: string; writable: boolean; refresh: () => void; deleted?: () => void; children?: React.ReactNode; onActivity?: (busy: boolean) => void }) {
   const [editing, setEditing] = useState(false), [confirm, setConfirm] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
-  async function remove() { setBusy(true); setError(''); try { await studyRequest(endpoint, 'DELETE'); setConfirm(false); (deleted || refresh)(); } catch (e) { setError((e as Error).message); } finally { setBusy(false); } }
+  async function remove() { setBusy(true); onActivity?.(true); setError(''); try { await studyRequest(endpoint, 'DELETE'); setConfirm(false); (deleted || refresh)(); } catch (e) { setError((e as Error).message); } finally { setBusy(false); onActivity?.(false); } }
   return <article className="study-card"><div className="study-card-heading"><div><p className="study-kicker">{kind}{item.sort_order !== undefined ? ` · ${item.sort_order + 1}` : ''}</p><h2>{href ? <Link href={href}>{item.title}</Link> : item.title}</h2></div><div className="study-actions"><button disabled={!writable || busy} aria-label={`Edit ${kind} ${item.title}`} onClick={() => { setEditing(v => !v); setConfirm(false); }}>Edit</button><button disabled={!writable || busy} aria-label={`Delete ${kind} ${item.title}`} onClick={() => { setConfirm(true); setEditing(false); }}>Delete</button></div></div>
     <p className="study-description">{item.description || 'No description yet.'}</p>
     {item.source_url && <p><a href={item.source_url} target="_blank" rel="noopener noreferrer">Open source ↗</a><small className="study-url">{item.source_url}</small></p>}
-    {editing && <MetadataForm key={item.updated_at} kind={kind} initial={item} disabled={!writable} onCancel={() => setEditing(false)} onSave={async data => { await studyRequest(endpoint, 'PUT', data); setEditing(false); refresh(); }} />}
+    {editing && <MetadataForm key={item.updated_at} kind={kind} initial={item} disabled={!writable} onCancel={() => setEditing(false)} onSave={async data => { onActivity?.(true); try { await studyRequest(endpoint, 'PUT', data); setEditing(false); refresh(); } finally { onActivity?.(false); } }} />}
     {confirm && <div role="alertdialog" aria-label={`Delete ${kind} ${item.title}?`} className="study-notice"><p>Delete “{item.title}”? {kind === 'study' ? 'All its sub-studies, lines and saved moves will also be deleted.' : kind === 'sub-study' ? 'All its lines and saved moves will also be deleted.' : 'Any saved moves will also be deleted.'} This cannot be undone.</p><div className="study-actions"><button disabled={busy || !writable} onClick={() => void remove()}>Confirm delete</button><button disabled={busy} onClick={() => setConfirm(false)}>Keep {kind}</button></div></div>}
     <Message error={error} />{children}
   </article>;
@@ -84,8 +85,9 @@ export function StudyDetail({ id }: { id: string }) {
 }
 export function StudyLineDetail({ id }: { id: string }) {
   const router = useRouter(), status = useStudy<StudyStatus>('/status'); const available = status.data?.status === 'AVAILABLE', writable = !!(available && status.data?.writes_enabled);
+  const [dirty, setDirty] = useState(false), [metadataBusy, setMetadataBusy] = useState(false);
   const [revision, setRevision] = useState(0); const line = useStudy<StudyItem>(available ? `/lines/${id}` : null, revision), parent = useStudy<StudyItem>(line.data ? `/sub-studies/${line.data.sub_study_id}` : null);
   return <div className="study-workspace"><Link href="/study">Study Library</Link>{parent.data && <p><Link href={`/study/${parent.data.study_id}`}>← Parent study · {parent.data.title}</Link></p>}<h1>{line.data?.title || 'Study line'}</h1><StoreBanner status={status.data} error={status.error} /><Message loading={line.loading} error={line.error} />
-    {line.data && <><Entity item={line.data} kind="line" endpoint={`/lines/${id}`} writable={writable} refresh={() => setRevision(n => n + 1)} deleted={() => router.push(parent.data ? `/study/${parent.data.study_id}` : '/study')} /><section className="study-notice"><h2>Line editor coming in Segment 20.8B</h2><p>This page saves line metadata only. Interactive move entry is not available yet; per-move notes follow in Segment 20.8C.</p><h3>Starting position</h3><code>{line.data.initial_fen}</code></section><p className="study-muted">Created {line.data.created_at} · Updated {line.data.updated_at}</p></>}
+    {line.data && <><Entity item={line.data} kind="line" endpoint={`/lines/${id}`} writable={writable && !dirty && !metadataBusy} onActivity={setMetadataBusy} refresh={() => setRevision(n => n + 1)} deleted={() => router.push(parent.data ? `/study/${parent.data.study_id}` : '/study')} /><LineEditor key={id} id={id} writable={writable && !metadataBusy} onDirty={setDirty} /><p className="study-muted">Created {line.data.created_at} · Updated {line.data.updated_at}</p></>}
   </div>;
 }

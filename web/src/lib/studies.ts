@@ -6,7 +6,7 @@ export async function studyRequest<T>(path: string, method = 'GET', body?: unkno
   const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/studies${path}`, { method, signal, cache: 'no-store', headers: method === 'GET' ? {} : { 'content-type': 'application/json', 'x-study-action': 'local-study' }, body: body === undefined ? undefined : JSON.stringify(body) });
   if (!response.ok) {
     let message = `Study request failed (${response.status})`;
-    try { const data = await response.json(); message = typeof data.detail === 'string' ? data.detail : response.status === 422 ? 'Check the title, description and HTTP(S) source URL.' : message; } catch { /* Keep a bounded, useful fallback. */ }
+    try { const data = await response.json(); message = typeof data.detail === 'string' ? data.detail : response.status === 422 ? 'Check the study fields, six-field FEN, UCI moves and request limits.' : message; } catch { /* Keep a bounded, useful fallback. */ }
     throw Error(message);
   }
   return response.json();

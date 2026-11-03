@@ -831,13 +831,18 @@ locations; use an independent canonical directory. Configure the existing
 refresh existing evidence. Root MultiPV supports the present bounded candidate
 and recorded-principal-reply comparison; no child tree or new scheduler is added.
 
-### Personal Study Workspace (Segment 20.8A)
+### Personal Study Workspace (Segments 20.8A–B)
 
 Open **Study** in the main navigation (`/study`) to organize
 **Study → Sub-study → Study Line**. Titles, descriptions, optional HTTP(S) source
-links and child ordering persist in an independent SQLite database. Lines have
-their own standard six-field starting FEN. The line detail page edits metadata;
-the interactive board editor and per-move notes are intentionally deferred.
+links and child ordering persist in an independent SQLite database. Each line
+opens an interactive board with click/drag move entry, promotion choice, SAN/UCI
+keyboard entry, move navigation and board flip. Reset to standard chess or paste
+a custom six-field FEN, then explicitly **Save line**. The server validates the
+whole sequence and generates SAN/FEN; up to 500 plies are supported. Replacing a
+continuation requires confirmation. Unchanged move rows and any existing notes
+are preserved; per-move note editing remains deferred. Concurrent stale saves
+are rejected: reload the saved line before editing again. No engine runs here.
 
 One-time explicit initialization (creates only the independent study database):
 
