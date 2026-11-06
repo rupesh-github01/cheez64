@@ -1,9 +1,11 @@
 import Link from "next/link";
+import Script from "next/script";
+import { CINEMATIC_PREPAINT } from "./design-lab/cinematic/prepaint";
 import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Personal Chess Coach",
+  title: "Cheez64",
   description:
     "Evidence-based chess game review with move-level analysis, tactical detection, and coaching explanations.",
 };
@@ -14,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
@@ -22,6 +24,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <Script id="cheez64-prepaint" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: CINEMATIC_PREPAINT }} />
         <header
           style={{
             display: "flex",
@@ -33,7 +36,8 @@ export default function RootLayout({
           }}
         >
           <Link
-            href="/games"
+            href="/"
+            aria-label="Cheez64 homepage"
             style={{
               display: "flex",
               alignItems: "center",
@@ -44,7 +48,7 @@ export default function RootLayout({
           >
             <span style={{ fontSize: "1.3rem" }}>♟</span>
             <span style={{ fontWeight: 700, fontSize: "1rem", letterSpacing: "-0.02em" }}>
-              Personal Chess Coach
+              Cheez64
             </span>
           </Link>
           <nav style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>

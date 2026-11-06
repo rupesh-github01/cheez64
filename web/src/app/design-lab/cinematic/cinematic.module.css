@@ -264,3 +264,17 @@
  .landing[data-mode="static"] .chapter{padding:26px max(23px,env(safe-area-inset-left,0px)) 20px;}
  .landing[data-mode="static"] .staticArt{height:clamp(300px,55svh,460px);margin:16px -15px 0;}
 }
+
+/* Production entry links reuse the existing footer rather than adding a second header. */
+.workspaceNav {display:flex;flex-wrap:wrap;gap:12px 22px;max-width:460px;}
+.workspaceNav a {display:inline-flex;align-items:center;min-height:44px;font-size:12px;color:var(--cz-secondary);}
+.workspaceNav a:hover {color:var(--cz-text);}
+/* Keep text and board leaving the pinned story together as the workspace footer enters. */
+:is(.landing[data-mode="live"],:global(html[data-cheez64-cinematic="on"]) .landing[data-pending="true"]) .chapter .copy{min-height:calc(90svh - var(--header-size));}
+:is(.landing[data-mode="live"],:global(html[data-cheez64-cinematic="on"]) .landing[data-pending="true"]) .hero .copy{min-height:calc(85svh - var(--header-size));}
+@media(max-width:1100px){
+ :is(.landing[data-mode="live"],:global(html[data-cheez64-cinematic="on"]) .landing[data-pending="true"]) .chapter .copy{min-height:calc(100svh - var(--header-size) - 40px);}
+}
+@media(max-width:700px){
+ :is(.landing[data-mode="live"],:global(html[data-cheez64-cinematic="on"]) .landing[data-pending="true"]) .chapter .copy{min-height:calc(100svh - var(--header-size) - 22px);}
+}
