@@ -1,5 +1,7 @@
 "use client";
 
+import type {RefCallback} from "react";
+import styles from "./review.module.css";
 import { Chessboard } from "react-chessboard";
 import type { MoveData } from "@/lib/types";
 
@@ -13,6 +15,10 @@ interface Props {
   variationBanner?: { label: string; step: number; total: number } | null;
   variationSquares?: { from?: string; to?: string } | null;
   onExitVariation?: () => void;
+  evaluationRailRef?: RefCallback<HTMLDivElement>;
+  currentPly?: number;
+  maxPly?: number;
+  lastMove?: string;
 }
 
 export default function ChessboardPane({
@@ -25,6 +31,7 @@ export default function ChessboardPane({
   variationBanner,
   variationSquares,
   onExitVariation,
+  evaluationRailRef, currentPly, maxPly, lastMove,
 }: Props) {
   // Highlight squares for played move (amber) and best move (green) on critical positions
   const customSquareStyles: Record<string, React.CSSProperties> = {};
@@ -65,8 +72,12 @@ export default function ChessboardPane({
     }
   }
 
+  if (!currentMove && lastMove?.length && lastMove.length >= 4) {
+    customSquareStyles[lastMove.slice(0,2)] = {background:"rgba(234,179,8,.3)"};
+    customSquareStyles[lastMove.slice(2,4)] = {background:"rgba(234,179,8,.4)"};
+  }
   return (
-    <div>
+    <div className={styles.boardStage}>
       {/* Variation banner if stepping through PV */}
       {variationBanner && (
         <div className="variation-banner">
@@ -95,7 +106,9 @@ export default function ChessboardPane({
         </div>
       )}
 
-      <div className="board-container">
+      <div className={styles.boardRow}>
+        {evaluationRailRef && <div className={styles.evaluationRail} ref={evaluationRailRef} aria-label="Selected position evaluation bar"/>}
+      <div className={styles.board}>
         <Chessboard
           options={{
             position: fen,
@@ -111,28 +124,15 @@ export default function ChessboardPane({
         />
       </div>
 
-      {/* Navigation controls */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 4,
-          marginTop: 10,
-        }}
-      >
-        <button className="crit-nav-btn" onClick={onStart} title="Start">
-          ⏮
-        </button>
-        <button className="crit-nav-btn" onClick={onPrev} title="Previous (←)">
-          ◀
-        </button>
-        <button className="crit-nav-btn" onClick={onNext} title="Next (→)">
-          ▶
-        </button>
-        <button className="crit-nav-btn" onClick={onEnd} title="End">
-          ⏭
-        </button>
       </div>
+      {/* Navigation controls */}
+      <nav className={styles.boardNavigation} aria-label="Move navigation">
+        <button type="button" disabled={currentPly===0} onClick={onStart} aria-label="Start" title="Start (Home)">⏮</button>
+        <button type="button" disabled={currentPly===0} onClick={onPrev} aria-label="Previous" title="Previous (←)">←</button>
+        <span aria-live="polite">{currentPly===undefined?'Recorded position':`Ply ${currentPly} / ${maxPly}`}</span>
+        <button type="button" disabled={maxPly!==undefined&&currentPly===maxPly} onClick={onNext} aria-label="Next" title="Next (→)">→</button>
+        <button type="button" disabled={maxPly!==undefined&&currentPly===maxPly} onClick={onEnd} aria-label="End" title="End (End)">⏭</button>
+      </nav>
     </div>
   );
 }

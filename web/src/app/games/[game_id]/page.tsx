@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback, use, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
 import nextDynamic from "next/dynamic";
@@ -16,7 +17,11 @@ import CriticalNav from "@/components/GameReview/CriticalNav";
 import EpisodeList from "@/components/GameReview/EpisodeList";
 import PositionEvaluation from "@/components/GameReview/PositionEvaluation";
 import CoachChatPanel from "@/components/GameReview/CoachChatPanel";
-import GamePositionBrowser from "@/components/PlayerDashboard/GamePositionBrowser";
+import ReplayWorkspace from "@/components/GameReview/ReplayWorkspace";
+import {ReviewHeader} from "@/components/GameReview/ReviewChrome";
+import {isReviewTypingTarget} from "@/components/GameReview/review-navigation";
+import {Button,Panel,LoadingState,EmptyState,SectionHeading} from "@/components/ui/Primitives";
+import styles from "@/components/GameReview/review.module.css";
 import "@/components/Understanding/understanding.css";
 import PracticeLink from "@/components/Practice/PracticeLink";
 
@@ -43,6 +48,7 @@ interface VariationState {
   currentStepIndex: number;
 }
 
+const NO_MOVES: MoveData[] = [];
 const TACTICAL_CATEGORIES = new Set([
   "material_loss",
   "hanging_piece",
@@ -58,21 +64,7 @@ export default function GameReviewPage({
   const { game_id } = use(params);
 
   return (
-    <Suspense
-      fallback={
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "60vh",
-            color: "var(--text-muted)",
-          }}
-        >
-          Loading game review...
-        </div>
-      }
-    >
+    <Suspense fallback={<div className={styles.root}><LoadingState label="Loading game review"/></div>}>
       <GameReviewContent key={game_id} game_id={game_id} />
     </Suspense>
   );
@@ -85,6 +77,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [barTarget,setBarTarget]=useState<HTMLDivElement|null>(null);
   const [currentPly, setCurrentPly] = useState(0); // 0 = start position
   const [filterMode, setFilterMode] = useState<FilterMode>("all");
   const [activeTab, setActiveTab] = useState<ReviewTab>("coach");
@@ -117,13 +110,14 @@ function GameReviewContent({ game_id }: { game_id: string }) {
 
   // Load data
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    let current = true;
     getGame(game_id)
       .then((g) => {
+        if(!current)return;
         setGame(g);
         return getAnalysis(game_id)
           .then((a) => {
+            if(!current)return;
             setAnalysis(a);
             // Check if ply query parameter was passed from dashboard
             const plyParam = searchParams.get("ply");
@@ -136,15 +130,16 @@ function GameReviewContent({ game_id }: { game_id: string }) {
           })
           .catch(() => {
             // Game exists but analysis is missing or not yet analyzed
-            setAnalysis(null);
+            if(current)setAnalysis(null);
           });
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err) => {if(current)setError(err.message);})
+      .finally(() => {if(current)setLoading(false);});
+    return()=>{current=false;};
   }, [game_id, searchParams]);
 
   // Derive move arrays
-  const allMoves = analysis?.moves ?? [];
+  const allMoves = analysis?.moves ?? NO_MOVES;
 
   const filteredMoves = allMoves.filter((m) => {
     if (filterMode === "all") return true;
@@ -313,6 +308,8 @@ function GameReviewContent({ game_id }: { game_id: string }) {
   // Keyboard navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      if(!analysis||isReviewTypingTarget(e.target)||e.altKey||e.ctrlKey||e.metaKey)return;
+      if(["ArrowRight","ArrowLeft","Home","End"].includes(e.key))e.preventDefault();
       if (variationState?.active) {
         if (e.key === "ArrowRight") {
           e.preventDefault();
@@ -334,7 +331,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [
-    variationState,
+    analysis, variationState,
     goNext,
     goPrev,
     goStart,
@@ -343,313 +340,27 @@ function GameReviewContent({ game_id }: { game_id: string }) {
     handleExitVariation,
   ]);
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "60vh",
-          color: "var(--text-muted)",
-        }}
-      >
-        Loading game review...
-      </div>
-    );
-  }
-
-  if (error) {
-    const isConn =
-      error.toLowerCase().includes("failed to fetch") ||
-      error.toLowerCase().includes("networkerror") ||
-      error.toLowerCase().includes("connect");
-
-    return (
-      <div style={{ maxWidth: 600, margin: "40px auto", padding: 20 }}>
-        <div className="card" style={{ padding: 28, textAlign: "center" }}>
-          <span style={{ fontSize: "2rem" }}>{isConn ? "🔌" : "⚠️"}</span>
-          <p style={{ color: "var(--accent-red)", fontWeight: 600, marginTop: 8 }}>
-            {isConn ? "Cannot Connect to Backend API" : "Failed to load game"}
-          </p>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginTop: 6 }}>
-            {error}
-          </p>
-          {isConn && (
-            <p
-              style={{
-                fontSize: "0.8rem",
-                color: "var(--text-secondary)",
-                marginTop: 12,
-                lineHeight: 1.5,
-              }}
-            >
-              Make sure the FastAPI server is running:
-              <br />
-              <code
-                style={{
-                  background: "var(--bg-secondary)",
-                  padding: "2px 8px",
-                  borderRadius: 4,
-                  display: "inline-block",
-                  marginTop: 6,
-                }}
-              >
-                ./run.sh api
-              </code>{" "}
-              or{" "}
-              <code
-                style={{
-                  background: "var(--bg-secondary)",
-                  padding: "2px 8px",
-                  borderRadius: 4,
-                  display: "inline-block",
-                  marginTop: 6,
-                }}
-              >
-                python api/main.py
-              </code>
-            </p>
-          )}
-          <div style={{ marginTop: 18 }}>
-            <a
-              href="/games"
-              className="btn-secondary"
-              style={{ textDecoration: "none", fontSize: "0.82rem", padding: "6px 14px" }}
-            >
-              ← Back to Game Library
-            </a>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className={styles.root}><LoadingState label="Loading game review"/></div>;
+  if (error) return <div className={styles.root}><EmptyState role="alert"><h1>Game review unavailable</h1><p>{error}</p><Link href="/games" prefetch={false}>Return to Game Library</Link></EmptyState></div>;
 
   if (!game) return null;
 
-  // Unanalyzed game view
-  if (!analysis) {
-    return (
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px 20px" }}>
-        <div className="pd-root" style={{ padding: 0 }}><GamePositionBrowser key={game_id} pgn={game.pgn} understandingGameID={game.game_id} initialPly={Number(searchParams.get("ply") || 0)} /></div>
-        {/* Game header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            marginBottom: 24,
-            flexWrap: "wrap",
-          }}
-        >
-          <a
-            href="/games"
-            style={{
-              color: "var(--text-muted)",
-              fontSize: "0.8rem",
-              textDecoration: "none",
-            }}
-          >
-            ← Library
-          </a>
-          <h1 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0 }}>
-            {game.white} vs {game.black}
-          </h1>
-          <span
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-            }}
-          >
-            {game.result}
-          </span>
-          {game.opening && (
-            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              <span style={{ color: "var(--accent-cyan)", fontWeight: 600 }}>
-                {game.opening.eco}
-              </span>{" "}
-              {game.opening.opening_name}
-            </span>
-          )}
-        </div>
-
-        <div className="card" style={{ padding: 48, textAlign: "center" }}>
-          <span style={{ fontSize: "2.5rem" }}>⏳</span>
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, margin: "12px 0 8px" }}>
-            Analysis Not Available
-          </h2>
-          <p
-            style={{
-              color: "var(--text-secondary)",
-              fontSize: "0.9rem",
-              maxWidth: 520,
-              margin: "0 auto 16px",
-            }}
-          >
-            This game is saved in your library (Status: <strong>{game.analysis_status}</strong>
-            ), but has not yet been processed with Stockfish.
-          </p>
-          <div
-            style={{
-              background: "var(--bg-secondary)",
-              borderRadius: "var(--radius-sm)",
-              padding: "12px 18px",
-              display: "inline-block",
-              fontSize: "0.82rem",
-              color: "var(--text-muted)",
-              textAlign: "left",
-              border: "1px solid var(--border-color)",
-            }}
-          >
-            <div>Run analysis from your terminal:</div>
-            <code
-              style={{
-                display: "block",
-                marginTop: 6,
-                color: "var(--accent-cyan)",
-                fontFamily: "monospace",
-              }}
-            >
-              python src/analyzer.py --pgn data/games/test_game.pgn
-            </code>
-          </div>
-          <div
-            style={{
-              marginTop: 24,
-              display: "flex",
-              gap: 12,
-              justifyContent: "center",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <button
-              onClick={handleQueueAnalysis}
-              disabled={queueing || !!queueSuccess}
-              className="btn-primary"
-              style={{
-                cursor: queueing || queueSuccess ? "default" : "pointer",
-                padding: "8px 18px",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                opacity: queueing ? 0.7 : 1,
-              }}
-            >
-              {queueing ? "Queueing..." : queueSuccess ? "✓ Queued" : "⚡ Queue for Analysis"}
-            </button>
-            <a
-              href="/library/manage"
-              style={{
-                color: "var(--accent-primary, #6366f1)",
-                textDecoration: "none",
-                fontSize: "0.85rem",
-                fontWeight: 500,
-                padding: "8px 12px",
-              }}
-            >
-              View Analysis Queue →
-            </a>
-            <a
-              href="/games"
-              style={{
-                color: "var(--text-muted)",
-                textDecoration: "none",
-                fontSize: "0.85rem",
-                padding: "8px 12px",
-              }}
-            >
-              ← Return to Game Library
-            </a>
-          </div>
-          {queueSuccess && (
-            <div
-              style={{
-                marginTop: 12,
-                color: "var(--accent-green, #10b981)",
-                fontSize: "0.85rem",
-              }}
-            >
-              {queueSuccess} Ensure the worker is running to begin analysis.
-            </div>
-          )}
-          {queueError && (
-            <div
-              style={{
-                marginTop: 12,
-                color: "var(--accent-red, #ef4444)",
-                fontSize: "0.85rem",
-              }}
-            >
-              {queueError}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
+  // PGN replay retains its existing bounded worker and exact-context evaluation.
+  if (!analysis) return <div className={styles.root}><ReviewHeader game={game}/><ReplayWorkspace key={game_id} pgn={game.pgn} gameID={game.game_id} initialPly={Number(searchParams.get("ply")||0)}/>
+    <details className={styles.savedAnalysis}><summary>Saved game analysis & queue</summary><p>Saved status: {game.analysis_status}. Full-game analysis is not available here. Live browser estimates are separate from saved analysis and coaching.</p><Button onClick={handleQueueAnalysis} disabled={queueing||!!queueSuccess}>{queueing?'Queueing…':queueSuccess?'Queued':'Queue for Analysis'}</Button> <Link href="/library/manage" prefetch={false}>View Analysis Queue →</Link>{queueSuccess&&<p role="status">{queueSuccess} Ensure the worker is running to begin analysis.</p>}{queueError&&<p role="alert">{queueError}</p>}</details>
+  </div>;
 
   return (
-    <div style={{ maxWidth: 1400, margin: "0 auto", padding: "16px 20px" }}>
-      {/* Game header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          marginBottom: 16,
-          flexWrap: "wrap",
-        }}
-      >
-        <a
-          href="/games"
-          style={{
-            color: "var(--text-muted)",
-            fontSize: "0.8rem",
-            textDecoration: "none",
-          }}
-        >
-          ← Library
-        </a>
-        <h1 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0 }}>
-          {game.white} vs {game.black}
-        </h1>
-        <span
-          style={{
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            color: "var(--text-secondary)",
-          }}
-        >
-          {game.result}
-        </span>
-        {game.opening && (
-          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            <span style={{ color: "var(--accent-cyan)", fontWeight: 600 }}>
-              {game.opening.eco}
-            </span>{" "}
-            {game.opening.opening_name}
-          </span>
-        )}
-        {game.date && (
-          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-            {game.date.replace(/\./g, "-").slice(0, 10)}
-          </span>
-        )}
-      </div>
-
+    <div className={styles.root}>
+      <ReviewHeader game={game}/>
       {/* Main layout */}
-      <div className="understanding-review-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "auto 1fr",
-          gap: 16,
-          alignItems: "start",
-        }}
-      >
+      <div className={styles.primary}>
         {/* Left: Board */}
-        <div>
+        <div className={styles.boardColumn}>
           <ChessboardPane
+            evaluationRailRef={setBarTarget}
+            currentPly={variationState?.active?variationState.currentStepIndex:currentPly}
+            maxPly={variationState?.active?variationState.steps.length-1:(allMoves.at(-1)?.ply??0)}
             fen={displayedFen}
             currentMove={currentMove}
             variationBanner={variationBanner}
@@ -676,16 +387,12 @@ function GameReviewContent({ game_id }: { game_id: string }) {
                 : goEnd
             }
           />
+          <p className={styles.positionLabel}>{variationState?.active?'Variation preview · return to mainline for compatible evidence':currentMove?`After ${currentMove.played_move}`:'Initial position'}</p>
+          <details className={styles.technical}><summary>Selected position FEN</summary><code>{displayedFen}</code></details>
         </div>
 
         {/* Right: Panels */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
-          <PositionEvaluation pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} legacy={{
-            value: currentMove ? currentMove.evaluation_after : allMoves[0]?.evaluation_before ?? null,
-            color: currentMove?.color || allMoves[0]?.color || "",
-            fen: currentMove?.fen_after || allMoves[0]?.fen_before || "",
-            schema: analysis.schema_version,
-          }} />
+        <div className={styles.analysisColumn}>
           {/* Critical navigation */}
           <CriticalNav
             criticalMoves={criticalMoves}
@@ -693,25 +400,63 @@ function GameReviewContent({ game_id }: { game_id: string }) {
             onNavigate={goToMove}
           />
 
-          {/* Mode Switcher Tabs */}
-          <div className="mode-toggle-group">
+          {/* Filter tabs */}
+          <div className={styles.filterTabs} aria-label="Saved move filters">
+            {(["all", "critical", "tactical", "positional", "endgame"] as FilterMode[]).map(
+              (mode) => (
+                <button
+                  key={mode}
+                  aria-pressed={filterMode===mode}
+                  onClick={() => setFilterMode(mode)}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  {mode === "critical" && ` (${criticalMoves.length})`}
+                </button>
+              )
+            )}
+          </div>
+
+          {/* Move list */}
+          <Panel className={styles.movesPanel}><div className={styles.panelHeading}><SectionHeading>Score sheet</SectionHeading><span>{allMoves.length} saved plies</span></div><button className={styles.initialMove} aria-current={currentPly===0?"step":undefined} onClick={goStart}>Initial position</button>
+            <MoveList
+              moves={filterMode === "all" ? allMoves : filteredMoves}
+              currentPly={currentPly}
+              onSelectMove={goToMove}
+              highlightEpisode={currentMove?.episode_index ?? null}
+            />
+          </Panel>
+
+          <PositionEvaluation barTarget={barTarget} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} legacy={{
+            value: currentMove ? currentMove.evaluation_after : allMoves[0]?.evaluation_before ?? null,
+            color: currentMove?.color || allMoves[0]?.color || "",
+            fen: currentMove?.fen_after || allMoves[0]?.fen_before || "",
+            schema: analysis.schema_version,
+          }} />
+        </div>
+      </div>
+      <section className={styles.insights} aria-label="Position insights"><div className={styles.insightHeading}><div><p className={styles.kicker}>EXAMINE THE POSITION</p><h2>From moves to ideas.</h2></div>
+          <PracticeLink gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
+      </div><Understanding gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
+          <details className={styles.reasoningDisclosure}><summary>Compare continuations · existing reasoning evidence</summary><Reasoning gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} /></details>
+          <details className={styles.savedAnalysis} open><summary>Saved coaching & move explorer</summary><p className={styles.muted}>Existing legacy analysis. Live browser results do not update these judgments.</p>          {/* Mode Switcher Tabs */}
+          <div className={styles.modeTabs} aria-label="Saved analysis sections">
             <button
-              className={`mode-toggle-btn ${activeTab === "coach" ? "active" : ""}`}
+              aria-pressed={activeTab==="coach"}
               onClick={() => setActiveTab("coach")}
             >
-              🎓 Coach Explanation
+              Coach explanation
             </button>
             <button
-              className={`mode-toggle-btn ${activeTab === "chat" ? "active" : ""}`}
+              aria-pressed={activeTab==="chat"}
               onClick={() => setActiveTab("chat")}
             >
-              💬 Ask Coach
+              Ask coach
             </button>
             <button
-              className={`mode-toggle-btn ${activeTab === "explorer" ? "active" : ""}`}
+              aria-pressed={activeTab==="explorer"}
               onClick={() => setActiveTab("explorer")}
             >
-              🔍 Position & Move Explorer
+              Position & move explorer
               {currentMove?.candidates && currentMove.candidates.length > 0 && (
                 <span
                   style={{
@@ -730,35 +475,7 @@ function GameReviewContent({ game_id }: { game_id: string }) {
             </button>
           </div>
 
-          {/* Filter tabs */}
-          <div className="filter-tabs">
-            {(["all", "critical", "tactical", "positional", "endgame"] as FilterMode[]).map(
-              (mode) => (
-                <button
-                  key={mode}
-                  className={`filter-tab ${filterMode === mode ? "active" : ""}`}
-                  onClick={() => setFilterMode(mode)}
-                >
-                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  {mode === "critical" && ` (${criticalMoves.length})`}
-                </button>
-              )
-            )}
-          </div>
 
-          {/* Move list */}
-          <div className="card" style={{ padding: 12, maxHeight: 240, overflowY: "auto" }}>
-            <MoveList
-              moves={filterMode === "all" ? allMoves : filteredMoves}
-              currentPly={currentPly}
-              onSelectMove={goToMove}
-              highlightEpisode={currentMove?.episode_index ?? null}
-            />
-          </div>
-
-          <PracticeLink gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
-          <Understanding gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
-          <Reasoning gameID={game.game_id} pgn={game.pgn} ply={currentPly} disabled={!!variationState?.active} />
 
           {/* Main content pane: Coach vs Chat vs Explorer */}
           {activeTab === "coach" ? (
@@ -815,9 +532,8 @@ function GameReviewContent({ game_id }: { game_id: string }) {
               />
             </div>
           )}
-        </div>
-      </div>
+          </details>
+      </section>
     </div>
   );
 }
-

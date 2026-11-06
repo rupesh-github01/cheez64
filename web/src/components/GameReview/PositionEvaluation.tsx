@@ -9,13 +9,13 @@ import EvaluationBar from "./EvaluationBar";
 import EvaluationCoverage from "./EvaluationCoverage";
 import LiveAnalysis from "./LiveAnalysis";
 import "./position-evaluation.css";
-export default function PositionEvaluation({ pgn, ply, replay: supplied, disabled = false, legacy }: { pgn: string; ply: number; replay?: Replay; disabled?: boolean; legacy?: LegacySample }) {
+export default function PositionEvaluation({ pgn, ply, replay: supplied, disabled = false, legacy, barTarget }: { pgn: string; ply: number; replay?: Replay; disabled?: boolean; legacy?: LegacySample; barTarget?: HTMLElement | null }) {
   const loaded = usePGNReplay(pgn, supplied);
   const replay = loaded.replay;
   const reason = disabled ? "Return to the recorded mainline for context-compatible evaluation." : loaded.error || (ply > 1000 ? "Evaluation unavailable: complete history exceeds 1,000 plies." : undefined);
-  return <section className="position-evaluation" aria-label="Position evaluation"><h3>Position evaluation</h3>{reason || !replay ? <div className="position-eval-layout"><EvaluationBar loading={!reason} /><p role="status">{reason || "Loading legal game history…"}</p></div> : <><LiveAnalysis key={pgn} replay={replay} ply={ply} pgn={pgn} /><div className="cached-position-evaluation"><EvaluationSession key={JSON.stringify([pgn, ply])} replay={replay} ply={ply} legacy={legacy} /></div></>}{replay && !disabled && <EvaluationCoverage key={pgn} replay={replay} />}</section>;
+  return <section className="position-evaluation" aria-label="Position evaluation"><h3>Position evaluation</h3>{reason || !replay ? <div className="position-eval-layout"><EvaluationBar loading={!reason} target={barTarget} /><p role="status">{reason || "Loading legal game history…"}</p></div> : <><LiveAnalysis key={pgn} replay={replay} ply={ply} pgn={pgn} barTarget={barTarget} /><div className="cached-position-evaluation"><EvaluationSession key={JSON.stringify([pgn, ply])} replay={replay} ply={ply} legacy={legacy} barTarget={barTarget} /></div></>}{replay && !disabled && <EvaluationCoverage key={pgn} replay={replay} />}</section>;
 }
-function EvaluationSession({ replay, ply, legacy }: { replay: Replay; ply: number; legacy?: LegacySample }) {
+function EvaluationSession({ replay, ply, legacy, barTarget }: { replay: Replay; ply: number; legacy?: LegacySample; barTarget?: HTMLElement | null }) {
   const context = useMemo(() => lookupContext(replay, ply), [replay, ply]);
   const [config, setConfig] = useState("");
   const [action, setAction] = useState<{ id: number; key?: string }>({ id: 0 });
@@ -44,12 +44,11 @@ function EvaluationSession({ replay, ply, legacy }: { replay: Replay; ply: numbe
   const cachedScore = !invalid ? lines[0]?.score : undefined;
   const legacyFallback = !loading && !cachedScore ? estimate : undefined;
   function chooseConfig(value: string) { setConfig(value); setAction(a => ({ id: a.id + 1 })); }
-  return <div className="position-eval-layout"><EvaluationBar score={cachedScore || legacyFallback} loading={loading} tier={legacyFallback ? "LEGACY_ESTIMATE" : undefined} /><div className="position-eval-details" aria-live="polite">
+  return <div className="position-eval-layout"><EvaluationBar score={cachedScore || legacyFallback} loading={loading} target={barTarget} tier={legacyFallback ? "LEGACY_ESTIMATE" : undefined} /><div className="position-eval-details" aria-live="polite">
     {loading ? <p role="status">{action.key === undefined ? "Looking up this position in the existing cache…" : "Fetching explicitly requested advisory cloud evidence…"}</p> : <>
       {(current.error || invalid) && <p role="alert">{current.error || invalid}</p>}
-      {item && <><p>{evaluation ? evaluation.source.kind === "lichess_cloud" ? "ADVISORY_CLOUD · " : item.context_compatibility === "TRUSTED_CONTEXT_MATCH" ? "CONTEXT_COMPATIBLE_CACHE · " : "ADVISORY_CACHE · " : "NO_COMPATIBLE_EVIDENCE · "}{item.status} · {item.context_compatibility}{item.reason ? ` · ${item.reason}` : ""}</p>
+      {item && <><p className="position-eval-status"><strong>{evaluation ? evaluation.source.kind === "lichess_cloud" ? "Advisory cloud evaluation" : item.context_compatibility === "TRUSTED_CONTEXT_MATCH" ? "Context-compatible cache" : "Advisory cached evaluation" : "No compatible evaluation"}</strong></p><details><summary>Cache status & compatibility</summary><p>{item.status} · {item.context_compatibility}{item.reason ? ` · ${item.reason}` : ""}</p>{item.requested_pvs && <p>Requested {item.requested_pvs} lines · goal {item.pv_goal_met && !invalid ? "met" : "not met"} · cloud attempt: {item.cloud_resolution_status} {item.cloud_resolution_reason}</p>}</details>
         {!evaluation && <p>{unavailableReason(item)} Absence is not an equal position or evidence that no analysis exists.</p>}
-        {item.requested_pvs && <p>Requested {item.requested_pvs} lines · goal {item.pv_goal_met && !invalid ? "met" : "not met"} · cloud attempt: {item.cloud_resolution_status} {item.cloud_resolution_reason}</p>}
         {item.status === "CONFIG_REQUIRED" && <p>Select an engine configuration; incompatible searches are not compared.</p>}
         {!!item.available?.length && <label>Engine configuration<select value={config} onChange={e => chooseConfig(e.target.value)}><option value="">Server compatibility selection</option>{item.available.map(c => <option key={c.config_hash} value={c.config_hash}>{c.source.engine_name || c.source.kind} · depth {c.available_depths.join(", ")} · {c.config_hash.slice(0, 12)}</option>)}</select></label>}
         {item.available_truncated && <p>Configuration list is bounded.</p>}
