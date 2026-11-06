@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
+import { Button, Panel as Surface, SectionHeading, LoadingState, EmptyState } from "@/components/ui/Primitives";
 import type { Metric } from "@/lib/player-dashboard";
 import { metricText } from "@/lib/player-dashboard";
 export function Panel({ title, kicker, children, id }: { title: string; kicker?: string; children: ReactNode; id?: string }) {
-  return <section className="pd-panel" id={id}><header className="pd-panel-heading"><div>{kicker && <p className="pd-kicker">{kicker}</p>}<h2>{title}</h2></div></header>{children}</section>;
+  return <Surface className="pd-panel" id={id}><header className="pd-panel-heading"><div>{kicker && <p className="pd-kicker">{kicker}</p>}<SectionHeading>{title}</SectionHeading></div></header>{children}</Surface>;
 }
 export function State({ loading, error, empty, retry }: { loading?: boolean; error?: string; empty?: string; retry?: () => void }) {
-  if (loading) return <div className="pd-skeleton" role="status" aria-label="Loading section"><span /><span /><span /></div>;
-  return <div className={error ? "pd-state pd-error" : "pd-state"} role={error ? "alert" : undefined}><p>{error || empty}</p>{retry && <button onClick={retry}>Try again</button>}</div>;
+  if (loading) return <LoadingState label="Loading section" className="pd-skeleton"/>;
+  return <EmptyState className={error ? "pd-state pd-error" : "pd-state"} role={error ? "alert" : undefined}><p>{error || empty}</p>{retry && <Button onClick={retry}>Try again</Button>}</EmptyState>;
 }
 export function Evidence({ value }: { value: string }) { return <span className={`pd-evidence ${value === "HEURISTIC" ? "pd-heuristic" : ""}`}>{value.replaceAll("_", " ").toLowerCase()}</span>; }
 export function Fact({ title, metric }: { title: string; metric?: Metric }) {

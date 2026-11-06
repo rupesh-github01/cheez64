@@ -119,7 +119,7 @@ test('server entry contains no raw script and root uses Next beforeInteractive w
  const content=await Landing({searchParams:Promise.resolve({artwork:'1',diagnostics:'1'}),production:true});
  assert.equal(content.props.production,true);assert.equal(content.props.exportMode,false);assert.equal(content.props.diagnostics,false);
  const landing=fs.readFileSync(new URL('CinematicLanding.tsx',base),'utf8');assert.doesNotMatch(landing,/<script|dangerouslySetInnerHTML/);
- const root=fs.readFileSync(new URL('../src/app/layout.tsx',import.meta.url),'utf8');assert.match(root,/from "next\/script"/);assert.match(root,/strategy="beforeInteractive"/);assert.match(root,/href="\/"/);assert.match(root,/aria-label="Cheez64 homepage"/);
+ const root=fs.readFileSync(new URL('../src/app/layout.tsx',import.meta.url),'utf8');assert.match(root,/from "next\/script"/);assert.match(root,/strategy="beforeInteractive"/);assert.match(root,/<AppShell>\{children\}<\/AppShell>/);
  const config=load('../../../..//next.config.ts').default;
  assert.deepEqual(Object.keys(config.turbopack.rules),['globals.css']); // CSS modules must retain native Turbopack exports.
 });

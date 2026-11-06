@@ -1,0 +1,14 @@
+.button{display:inline-flex;align-items:center;justify-content:center;gap:var(--cz-space-2);min-height:44px;padding:9px 16px;border:1px solid var(--cz-border);border-radius:var(--cz-radius-sm);font:600 var(--cz-text-sm)/1.4 var(--cz-font);cursor:pointer;transition:background var(--cz-motion-fast) var(--cz-ease),border-color var(--cz-motion-fast) var(--cz-ease);}
+.primary{background:var(--cz-brand);color:#fff5f8;border-color:var(--cz-brand);}.primary:hover:not(:disabled){background:var(--cz-brand-hover);}
+.secondary{background:var(--cz-panel);color:var(--cz-text);}.secondary:hover:not(:disabled){background:var(--cz-hover);border-color:var(--cz-border-strong);}
+.quiet{background:transparent;color:var(--cz-secondary);border-color:transparent;}.quiet:hover:not(:disabled){background:var(--cz-hover);color:var(--cz-text);}
+.button:disabled{opacity:.5;cursor:not-allowed;}.button:focus-visible{outline:2px solid var(--cz-focus);outline-offset:3px;}
+.panel{min-width:0;padding:var(--cz-space-5);border:1px solid var(--cz-border);border-radius:var(--cz-radius-md);background:var(--cz-surface);box-shadow:var(--cz-shadow);}
+.pageHeading h1{font:500 var(--cz-heading)/1.15 var(--cz-editorial);letter-spacing:-.035em;margin:0;}.pageHeading p{font-size:var(--cz-text-sm);color:var(--cz-secondary);line-height:1.6;margin:8px 0 0;}
+.sectionHeading{font:600 var(--cz-text-lg)/1.4 var(--cz-font);letter-spacing:-.02em;margin:0;}
+.status{display:inline-flex;align-items:center;max-width:100%;padding:4px 10px;font:500 var(--cz-text-xs)/1.5 var(--cz-font);border:1px solid var(--cz-border);border-radius:99px;}
+.neutral{background:var(--cz-surface);color:var(--cz-secondary);}.success{background:#183127;color:var(--cz-success);}.warning{background:#33291b;color:var(--cz-warning);}.danger{background:#3b1c27;color:var(--cz-danger);}
+.tabs{display:flex;gap:var(--cz-space-2);}.tabs a{min-height:44px;display:inline-flex;align-items:center;text-decoration:none;}
+.empty{padding:var(--cz-space-5);color:var(--cz-secondary);line-height:1.6;border:1px dashed var(--cz-border);border-radius:var(--cz-radius-md);}.empty p{margin:0 0 12px;}
+.loading{padding:var(--cz-space-4);display:grid;gap:12px;min-height:110px;}.loading span{height:12px;border-radius:4px;background:var(--cz-hover);animation:breathe 1.8s ease-in-out infinite alternate;}.loading span:nth-child(2){width:80%;}.loading span:last-child{width:55%;}@keyframes breathe{to{opacity:.45;}}
+@media(prefers-reduced-motion:reduce){.loading span{animation:none;}.button{transition:none;}}

@@ -1,0 +1,36 @@
+/* Workspace-only foundation. The cinematic homepage owns its independent palette.
+   Breakpoints: 640px compact, 1024px desktop navigation; CSS cannot use var() in media queries. */
+[data-workspace-shell] {
+  --cz-bg:#110c10; --cz-surface:#1a1219; --cz-panel:#211820; --cz-hover:#30222c; --cz-selected:#3a2330;
+  --cz-text:#f4e9ed; --cz-secondary:#d0bac4; --cz-muted:#b49fa8;
+  --cz-border:#503a46; --cz-border-strong:#805a6a;
+  --cz-brand:#a53650; --cz-brand-hover:#bb425e; --cz-rose:#e6a5b6; --cz-focus:#f3be94;
+  --cz-success:#a6dec0; --cz-warning:#edcf91; --cz-danger:#ffb0b8;
+  --cz-radius-sm:6px; --cz-radius-md:12px; --cz-radius-lg:18px;
+  --cz-shadow:0 8px 28px #00000024; --cz-shadow-raised:0 16px 40px #00000040;
+  --cz-font: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+  --cz-editorial: Georgia, "Times New Roman", serif; --cz-mono: "SF Mono", ui-monospace, monospace;
+  --cz-text-xs:.75rem; --cz-text-sm:.875rem; --cz-text-md:1rem; --cz-text-lg:1.125rem;
+  --cz-heading:clamp(1.65rem,2.8vw,2.25rem);
+  --cz-space-1:4px; --cz-space-2:8px; --cz-space-3:12px; --cz-space-4:16px;
+  --cz-space-5:24px; --cz-space-6:32px; --cz-space-7:48px;
+  --cz-motion-fast:120ms; --cz-motion-normal:180ms; --cz-ease:cubic-bezier(.2,.65,.3,1);
+  /* Compatibility aliases for existing pages; chess/score/accent semantics stay independent. */
+  --bg-primary:var(--cz-bg); --bg-secondary:var(--cz-surface); --bg-tertiary:var(--cz-panel);
+  --bg-card:var(--cz-panel); --bg-hover:var(--cz-hover); --bg-active:var(--cz-selected);
+  --text-primary:var(--cz-text); --text-secondary:var(--cz-secondary); --text-muted:var(--cz-muted);
+  --border-color:var(--cz-border); --border-hover:var(--cz-border-strong);
+  --radius-sm:var(--cz-radius-sm); --radius-md:var(--cz-radius-md); --radius-lg:var(--cz-radius-lg);
+  --shadow-card:var(--cz-shadow); --shadow-elevated:var(--cz-shadow-raised); --accent-primary:var(--cz-brand);
+  color-scheme:dark;
+}
+[data-workspace-shell] :is(a,button,input,select,textarea,summary):focus-visible {
+  outline:2px solid var(--cz-focus) !important; outline-offset:3px;
+}
+[data-workspace-shell] :is(button,input,select,textarea):disabled {cursor:not-allowed;}
+[data-workspace-shell] ::selection {background:#793348;color:#fff5f8;}
+@media(prefers-reduced-motion:reduce) {
+  [data-workspace-shell] *,[data-workspace-shell] *::before,[data-workspace-shell] *::after {
+    animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;
+  }
+}
