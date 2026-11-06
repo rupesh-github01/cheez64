@@ -1,0 +1,10 @@
+{
+  "result-mobile.webp": {
+    "bytes": 22492,
+    "sha256": "47b4440fe5610681a1b104cfbf8d7c8d0e57b3cc70ff8a66200e8483ef79f7be"
+  },
+  "result-desktop.webp": {
+    "bytes": 62474,
+    "sha256": "278dbb15ad3545325b5ac1a3fd2849bb527439adb1d2124db7795cdf4031d2e5"
+  }
+}

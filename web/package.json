@@ -16,13 +16,15 @@
     "react": "19.3.0",
     "react-chessboard": "^5.12.1",
     "react-dom": "19.3.0",
-    "stockfish": "19.0.1"
+    "stockfish": "19.0.1",
+    "three": "0.187.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "0.187.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "tailwindcss": "^4",

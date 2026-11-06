@@ -1,0 +1,42 @@
+{
+  "version": "ui.1.6",
+  "provenance": "Original procedural prototype geometry, materials and studio; actual renderer-exported posters",
+  "fixture_fen": "rnbq1rk1/2p1bppp/p2p1n2/1p2p3/4P3/1BP2N1P/PP1P1PP1/RNBQR1K1 w - - 1 10",
+  "recorded_plies": 18,
+  "engine_evidence": null,
+  "original_sources": {
+    "web/src/app/design-lab/cinematic/scene/geometry.ts": "f26f30eb74c2117eb034afc5e17ec92907e78643ad65fa9b95f6b60a6d6a1acd",
+    "web/src/app/design-lab/cinematic/scene/create-scene.ts": "3eb453c98daaa3448a89aa6905f54f04346585e3a33471a4eed3500997335ad5",
+    "web/src/app/design-lab/cinematic/scene/timeline.ts": "2bf4a3e4b67cd06d666efa0828b5de551ad2efab6327436b5791c34981c49df5"
+  },
+  "images": [
+    {
+      "file": "analyze-desktop.webp",
+      "bytes": 51364,
+      "sha256": "d12a6cd7b6290edae064525f3f8ccf5cc37606d716ed89f8715304c4b0f3ef2d",
+      "width": 903,
+      "height": 812
+    },
+    {
+      "file": "analyze-mobile.webp",
+      "bytes": 17952,
+      "sha256": "c25bd37bdb5e023f33739db25570d49d3c70761cabe55f74fc6062075b66e2dd",
+      "width": 384,
+      "height": 490
+    },
+    {
+      "file": "hero-desktop.webp",
+      "bytes": 51600,
+      "sha256": "1ad3060139df8991c2538ba0e17a489103395c887a2d48e78638d0b30ca93456",
+      "width": 903,
+      "height": 812
+    },
+    {
+      "file": "hero-mobile.webp",
+      "bytes": 18202,
+      "sha256": "3745e1d8447cdc99b9b2b21be3958857df786d215be9e93b76c049a17aef902e",
+      "width": 384,
+      "height": 490
+    }
+  ]
+}
